@@ -1,0 +1,15 @@
+/*******************************************************************************
+ * Copyright (C) 2015 International Business Machines Corporation
+ * All Rights Reserved
+ *******************************************************************************/
+
+namespace com.ibm.streamsx.jdbc.types;
+
+/*
+ * SQL Status
+ * errorCode: The error number associated with the SQLException, 0: successful
+ * sqlState: The five-digit XOPEN SQLState code for a database error, 00000: Successful
+ */
+type
+	sqlStatusType = int32 errorCode,
+					rstring sqlState;
