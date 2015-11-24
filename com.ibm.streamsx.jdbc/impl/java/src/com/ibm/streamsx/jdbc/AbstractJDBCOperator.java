@@ -15,9 +15,12 @@ import java.util.logging.Logger;
 
 import com.ibm.json.java.JSONObject;
 import com.ibm.streams.operator.AbstractOperator;
+import com.ibm.streams.operator.Attribute;
 import com.ibm.streams.operator.OperatorContext;
+import com.ibm.streams.operator.StreamSchema;
 import com.ibm.streams.operator.OperatorContext.ContextCheck;
 import com.ibm.streams.operator.StreamingData.Punctuation;
+import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.StreamingInput;
 import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
@@ -203,6 +206,24 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
 	}	
 
+	@ContextCheck
+	public static void checkControlPortInputAttribute(OperatorContextChecker checker) {
+		OperatorContext context = checker.getOperatorContext();
+
+		if(context.getNumberOfStreamingInputs() == 2) {
+			StreamSchema schema = context.getStreamingInputs().get(1).getStreamSchema();
+			
+			//the first attribute must be of type rstring
+			Attribute jsonAttr = schema.getAttribute(0);
+			
+			//check if the output attribute is present where the result will be stored
+			if(jsonAttr != null && jsonAttr.getType().getMetaType() != MetaType.RSTRING) {
+				LOGGER.log(TraceLevel.ERROR, "WRONG_CONTROLPORT_TYPE", jsonAttr.getType());
+				checker.setInvalidContext();
+			}
+		}
+	}
+	
     /**
      * Initialize this operator. Called once before any tuples are processed.
      * @param context OperatorContext for this operator.
@@ -292,6 +313,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
+			// Roll back the transaction
+			jdbcConnectionHelper.rollbackWithClearBatch();
 	        // Reset JDBC connection
 			jdbcConnectionHelper.resetConnection(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties);
 		}catch (FileNotFoundException e){

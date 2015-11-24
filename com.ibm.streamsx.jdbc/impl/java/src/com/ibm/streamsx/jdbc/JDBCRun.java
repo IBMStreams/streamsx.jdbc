@@ -235,24 +235,6 @@ public class JDBCRun extends AbstractJDBCOperator{
 	
 	} 	
 
-	@ContextCheck
-	public static void checkControlPortInputAttribute(OperatorContextChecker checker) {
-		OperatorContext context = checker.getOperatorContext();
-		
-		if(context.getNumberOfStreamingInputs() == 2) {
-			StreamSchema schema = context.getStreamingInputs().get(1).getStreamSchema();
-			
-			//the first attribute must be of type rstring
-			Attribute jsonAttr = schema.getAttribute(0);
-			
-			//check if the output attribute is present where the result will be stored
-			if(jsonAttr != null && jsonAttr.getType().getMetaType() != MetaType.RSTRING) {
-				LOGGER.log(TraceLevel.ERROR, "WRONG_CONTROLPORT_TYPE", jsonAttr.getType());
-				checker.setInvalidContext();
-			}
-		}
-	}
-	
 	@ContextCheck(compile = true, runtime = false)
 	public static void checkCompileTimeConsistentRegion(OperatorContextChecker checker) {
 		ConsistentRegionContext consistentRegionContext = checker.getOperatorContext().getOptionalContext(ConsistentRegionContext.class);

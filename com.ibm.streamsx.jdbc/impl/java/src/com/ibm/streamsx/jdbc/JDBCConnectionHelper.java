@@ -186,8 +186,6 @@ public class JDBCConnectionHelper {
 		// Commit the transaction
 		if (connection != null){
 			connection.commit();
-		}else{
-			throw new SQLException("JDBC connection does not exist");
 		}
 	}
 
@@ -203,8 +201,6 @@ public class JDBCConnectionHelper {
 		// Commit the transaction
 		if (connection != null){
 			connection.commit();
-		}else{
-			throw new SQLException("JDBC connection does not exist");
 		}
 	}
 	
@@ -236,8 +232,6 @@ public class JDBCConnectionHelper {
 		// Roll back the transaction
 		if (connection != null){
 			connection.rollback();
-		}else{
-			throw new SQLException("JDBC connection does not exist");
 		}
 	}
 
@@ -246,8 +240,6 @@ public class JDBCConnectionHelper {
 		// Roll back the transaction
 		if (connection != null){
 			connection.rollback();
-		}else{
-			throw new SQLException("JDBC connection does not exist");
 		}
 	}
 
@@ -284,11 +276,8 @@ public class JDBCConnectionHelper {
 	// Execute the statement
 	public ResultSet executeStatement(String statement) throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
         // Init Statement interface
-		if (stmt == null){
+		if (connection != null && stmt == null){
 			stmt = connection.createStatement();
 		}
 		
@@ -306,9 +295,6 @@ public class JDBCConnectionHelper {
 	// Add batch for statement
 	public void addStatementBatch(String statement) throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
         // Init Statement interface
 		if (stmt == null){
 			stmt = connection.createStatement();
@@ -323,9 +309,6 @@ public class JDBCConnectionHelper {
 	// Execute batch for statement
 	public void executeStatementBatch() throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
 		// Execute the batch
 		if (stmt != null){
 			stmt.executeBatch();
@@ -335,9 +318,6 @@ public class JDBCConnectionHelper {
 	// Clear batch for statement
 	public void clearStatementBatch() throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
 		// Clear the batch
 		if (stmt != null){
 			stmt.clearBatch();
@@ -346,10 +326,6 @@ public class JDBCConnectionHelper {
 	
 	// Execute the preparedStatement
 	public ResultSet executePreparedStatement(StatementParameter[] stmtParameters) throws SQLException{
-		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
 		
 		ResultSet rs = null;
 		
@@ -368,10 +344,6 @@ public class JDBCConnectionHelper {
 	// Add batch for preparedStatement
 	public void addPreparedStatementBatch (StatementParameter[] stmtParameters) throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
-		
 		if (stmtParameters != null){
 			for (int i=0; i< stmtParameters.length; i++){
 				preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
@@ -384,19 +356,11 @@ public class JDBCConnectionHelper {
 	// Execute batch for preparedStatement
 	public void executePreparedStatementBatch () throws SQLException{
 		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
-		
 		preparedStmt.executeBatch();
 	}
 
 	// Clear batch for preparedStatement
 	public void clearPreparedStatementBatch () throws SQLException{
-		
-		if (connection == null){
-			throw new SQLException("JDBC connection does not exist");
-		}
 		
 		preparedStmt.clearBatch();
 	}
