@@ -193,10 +193,10 @@ public class JDBCRun extends AbstractJDBCOperator{
         if (sqlStatusAttr != null){
     		String sqlStatus[] = sqlStatusAttr.split(",");
     		if (sqlStatus.length > 0 && !sqlStatus[0].trim().isEmpty()){
-    			sqlStatusDataOutput = sqlStatus[0];
+    			sqlStatusDataOutput = sqlStatus[0].trim();
     		}
     		if (sqlStatus.length > 1 && !sqlStatus[1].trim().isEmpty()){
-    			sqlStatusErrorOutput = sqlStatus[1];
+    			sqlStatusErrorOutput = sqlStatus[1].trim();
     		}
         }
 
@@ -282,7 +282,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 				String sqlStatusAttr = context.getParameterValues("sqlStatusAttr").get(0);
 	    		String sqlStatus[] = sqlStatusAttr.split(",");
 	    		if (sqlStatus.length > 0 && !sqlStatus[0].trim().isEmpty()){
-					if (schema.getAttribute(sqlStatus[0]) == null){
+					if (schema.getAttribute(sqlStatus[0].trim()) == null){
 		                LOGGER.log(TraceLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[0]);
 						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[0], null);
 					}
@@ -297,7 +297,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 				String sqlStatusAttr = context.getParameterValues("sqlStatusAttr").get(0);
 	    		String sqlStatus[] = sqlStatusAttr.split(",");
 	    		if (sqlStatus.length > 1 && !sqlStatus[1].trim().isEmpty()){
-					if (schema.getAttribute(sqlStatus[1]) == null){
+					if (schema.getAttribute(sqlStatus[1].trim()) == null){
 		                LOGGER.log(TraceLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[1]);
 						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[1], null);
 					}
@@ -650,7 +650,7 @@ public class JDBCRun extends AbstractJDBCOperator{
         Tuple embeddedInputTuple = errorTuple.getTuple(0);
         if (embeddedInputTuple != null){
         	StreamSchema embeddedSchema = embeddedInputTuple.getStreamSchema();
-        	Tuple embeddedTuple = embeddedSchema.getTuple();
+        	Tuple embeddedTuple = embeddedSchema.getTuple(inputTuple);
         	errorTuple.setTuple(0, embeddedTuple);
         }
         
