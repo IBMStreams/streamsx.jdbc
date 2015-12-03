@@ -110,9 +110,9 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// This parameter specifies the value of any valid SQL statement.
 	private String statement;
 	// This parameter specifies the value of statement parameters.
-	private String statementParameterAttrs;
+	private String statementParamAttrs;
 	// StatementParameter arrays
-	StatementParameter[] stmtParameterArrays = null;
+	StatementParameter[] statementParamArrays = null;
 	// This parameter specifies the value of SQL statement that is from stream attribute (no parameter markers).
 	private TupleAttribute<Tuple, String> statementAttr;
 
@@ -151,14 +151,14 @@ public class JDBCRun extends AbstractJDBCOperator{
 
 	//Parameter statementParameters
 	@Parameter(optional = true, description="This optional parameter specifies the value of statement parameters. The statementParameter value and SQL statement parameter markers are associated in lexicographic order. For example, the first parameter marker in the SQL statement is associated with the first statementParameter value.")
-    public void setStatementParameterAttrs(String statementParameterAttrs){
-    	this.statementParameterAttrs = statementParameterAttrs;
+    public void setStatementParamAttrs(String statementParamAttrs){
+    	this.statementParamAttrs = statementParamAttrs;
 
-    	String stmtParameterNames[] = statementParameterAttrs.split(",");
-		stmtParameterArrays = new StatementParameter[stmtParameterNames.length];
-		for (int i = 0; i< stmtParameterNames.length; i++){
-			stmtParameterArrays[i] = new StatementParameter();
-			stmtParameterArrays[i].setSplAttributeName(stmtParameterNames[i]);
+    	String statementParamNames[] = statementParamAttrs.split(",");
+		statementParamArrays = new StatementParameter[statementParamNames.length];
+		for (int i = 0; i< statementParamNames.length; i++){
+			statementParamArrays[i] = new StatementParameter();
+			statementParamArrays[i].setSplAttributeName(statementParamNames[i]);
 		}
     }
 	
@@ -358,7 +358,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 
             if (isStaticStatement){
             	if (batchSize > 1){
-            		jdbcConnectionHelper.addPreparedStatementBatch(getStatementParameterArrays(stmtParameterArrays, tuple));
+            		jdbcConnectionHelper.addPreparedStatementBatch(getStatementParameterArrays(statementParamArrays, tuple));
             		batchCount ++;
             		if (batchCount >= batchSize){
             			jdbcConnectionHelper.executePreparedStatementBatch();
@@ -366,7 +366,7 @@ public class JDBCRun extends AbstractJDBCOperator{
             			transactionCount ++;
             		}
             	}else{
-            		rs = jdbcConnectionHelper.executePreparedStatement(getStatementParameterArrays(stmtParameterArrays, tuple));
+            		rs = jdbcConnectionHelper.executePreparedStatement(getStatementParameterArrays(statementParamArrays, tuple));
             		transactionCount ++;
             	}
 	        }else{
