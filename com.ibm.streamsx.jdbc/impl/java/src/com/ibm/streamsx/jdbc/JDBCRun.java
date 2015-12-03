@@ -57,9 +57,7 @@ import com.ibm.streams.operator.types.XML;
 		" In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets." +
 		" On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port." +
 		" On checkpoint: A database commit is performed." +
-		" On reset: Any pending statements are discarded. A rollback is performed." +
-		" # Exceptions" +
-		" If NoRetry is specified for the reconnectionPolicy parameter and the initial connection attempt fails while the JDBCRun operator is starting, it throws a JDBCOperatorShutdownException.")
+		" On reset: Any pending statements are discarded. A rollback is performed.")
 @InputPorts({@InputPortSet(cardinality=1, description="The `JDBCRun` operator has one required input port. When a tuple is received on the required input port, the operator runs an SQL statement."), 
 			@InputPortSet(cardinality=1, optional=true, controlPort = true, description="The `JDBCRun` operator has one optional input port. This port allows operator to change jdbc connection information at run time.")})
 @OutputPorts({@OutputPortSet(cardinality=1, description="The `JDBCRun` operator has one required output port. The output port submits a tuple for each row in the result set of the SQL statement if the statement produces a result set. The output tuple values are assigned in the following order: 1. Columns that are returned in the result set that have same name from the output tuple 2. Auto-assigned attributes of the same name from the input tuple"), 
