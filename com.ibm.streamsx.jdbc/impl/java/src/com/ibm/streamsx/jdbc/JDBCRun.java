@@ -461,8 +461,6 @@ public class JDBCRun extends AbstractJDBCOperator{
             		// Submit result set as output tuple
             		submitOutputTuple(dataOutputPort, tuple, rs);
             	}
-            	// Close result set
-            	rs.close();
             	// Generate a window punctuation after all of the tuples are submitted 
             	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
 			}else{
@@ -471,6 +469,8 @@ public class JDBCRun extends AbstractJDBCOperator{
         		// Submit output tuple
         		submitOutputTuple(dataOutputPort, tuple, null);
 			}
+        	// Close result set
+        	rs.close();
 			
         }else{
         	// Set reultSetCountAttr to 0 if the statement does not produce result sets
