@@ -457,14 +457,21 @@ public class JDBCRun extends AbstractJDBCOperator{
 				TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
         		// Submit result set as output tuple
         		submitOutputTuple(dataOutputPort, tuple, rs);
+            	while (rs.next()){
+            		// Submit result set as output tuple
+            		submitOutputTuple(dataOutputPort, tuple, rs);
+            	}
+            	// Generate a window punctuation after all of the tuples are submitted 
+            	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
+			}else{
+				hasResultSetValue = false;
+				TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
+        		// Submit output tuple
+        		submitOutputTuple(dataOutputPort, tuple, null);
 			}
+        	// Close result set
+        	rs.close();
 			
-        	while (rs.next()){
-        		// Submit result set as output tuple
-        		submitOutputTuple(dataOutputPort, tuple, rs);
-        	}
-        	// Generate a window punctuation after all of the tuples are submitted 
-        	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
         }else{
         	// Set reultSetCountAttr to 0 if the statement does not produce result sets
         	hasResultSetValue = false;
