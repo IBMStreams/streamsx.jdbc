@@ -443,7 +443,6 @@ public class JDBCRun extends AbstractJDBCOperator{
         		return;
         	}
         }
-			
         // Commit the transactions according to transactionSize
 		if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
 			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");

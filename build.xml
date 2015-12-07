@@ -5,7 +5,7 @@
 // *******************************************************************************
 -->
 <project name="streamsx.jdbc" default="all" basedir=".">
-	<description>
+    <description>
         Build file for streamsx.jdbc project, built the toolkits and samples.
     </description>
 	<!-- set global properties for this build -->
@@ -14,7 +14,7 @@
 	<property name="toolkit" location="com.ibm.streamsx.jdbc" />
 	<property name="tmp" location="tmp" />
 
-	<target name="all" depends="toolkit,samples" />
+	<target name="all" depends="toolkit" />
 
 	<target name="setcommitversion">
 		<!-- Create the time stamp -->
