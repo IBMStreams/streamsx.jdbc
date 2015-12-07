@@ -351,72 +351,41 @@ public class JDBCRun extends AbstractJDBCOperator{
     	sqlState = IJDBCConstants.SQL_STATE_SUCCESS;
 
         // Execute the statement
+        ResultSet rs = null;
         try{
-            ResultSet rs = null;
-
             if (isStaticStatement){
             	if (batchSize > 1){
-            		jdbcConnectionHelper.addPreparedStatementBatch(getStatementParameterArrays(statementParamArrays, tuple));
             		batchCount ++;
+            		jdbcConnectionHelper.addPreparedStatementBatch(getStatementParameterArrays(statementParamArrays, tuple));
             		if (batchCount >= batchSize){
-            			jdbcConnectionHelper.executePreparedStatementBatch();
             			batchCount = 0;
             			transactionCount ++;
+            			jdbcConnectionHelper.executePreparedStatementBatch();
             		}
             	}else{
-            		rs = jdbcConnectionHelper.executePreparedStatement(getStatementParameterArrays(statementParamArrays, tuple));
             		transactionCount ++;
+            		rs = jdbcConnectionHelper.executePreparedStatement(getStatementParameterArrays(statementParamArrays, tuple));
             	}
 	        }else{
 	        	String statementFromAttribute = statementAttr.getValue(tuple);
 	        	if (statementFromAttribute != null && ! statementFromAttribute.isEmpty()){
         			TRACE.log(TraceLevel.DEBUG, "Statement: " + statementFromAttribute);
 	        		if (batchSize > 1){
-	            		jdbcConnectionHelper.addStatementBatch(statementFromAttribute);
 	            		batchCount ++;
+	            		jdbcConnectionHelper.addStatementBatch(statementFromAttribute);
 	            		if (batchCount >= batchSize){
-	            			jdbcConnectionHelper.executeStatementBatch();
 	            			batchCount = 0;
 	            			transactionCount ++;
+	            			jdbcConnectionHelper.executeStatementBatch();
 	            		}
 	        		}else{
-	        			rs = jdbcConnectionHelper.executeStatement(statementFromAttribute);
 	        			transactionCount ++;
+	        			rs = jdbcConnectionHelper.executeStatement(statementFromAttribute);
 	        			TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
 	        		}
 	        	}else{
 	                LOGGER.log(TraceLevel.ERROR, "SQL_STATEMENT_NULL");
 	        	}
-	        }
-			
-            // Commit the transactions according to transactionSize
-			if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
-    			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-				transactionCount = 0;
-				jdbcConnectionHelper.commit();
-			}
-	        
-			if (rs != null){
-	        	// Set hasReultSetValue
-				if (rs.next()){
-					hasResultSetValue = true;
-					TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
-	        		// Submit result set as output tuple
-	        		submitOutputTuple(dataOutputPort, tuple, rs);
-				}
-				
-	        	while (rs.next()){
-	        		// Submit result set as output tuple
-	        		submitOutputTuple(dataOutputPort, tuple, rs);
-	        	}
-	        	// Generate a window punctuation after all of the tuples are submitted 
-	        	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
-	        }else{
-	        	// Set reultSetCountAttr to 0 if the statement does not produce result sets
-	        	hasResultSetValue = false;
-	            // Submit output tuple without result set
-	            submitOutputTuple(dataOutputPort, tuple, null);
-	            
 	        }
         }catch (SQLException e){
 			errorCode = e.getErrorCode();
@@ -432,7 +401,6 @@ public class JDBCRun extends AbstractJDBCOperator{
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
         		// The error is logged, and the error condition is cleared
             	LOGGER.log(TraceLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
-            	submitOutputTuple(dataOutputPort, tuple, null);
         		
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
         		
@@ -455,6 +423,7 @@ public class JDBCRun extends AbstractJDBCOperator{
     				// Reset the transaction counter
     				transactionCount = 0;
     			}
+            	return;
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)){
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
         		// The error is logged and the operator terminates.
@@ -471,9 +440,39 @@ public class JDBCRun extends AbstractJDBCOperator{
         		// Reset transaction counter
         		transactionCount = 0;
         		shutdown();
+        		return;
         	}
         }
-    	
+			
+        // Commit the transactions according to transactionSize
+		if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
+			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+			transactionCount = 0;
+			jdbcConnectionHelper.commit();
+		}
+        
+		if (rs != null){
+        	// Set hasReultSetValue
+			if (rs.next()){
+				hasResultSetValue = true;
+				TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
+        		// Submit result set as output tuple
+        		submitOutputTuple(dataOutputPort, tuple, rs);
+			}
+			
+        	while (rs.next()){
+        		// Submit result set as output tuple
+        		submitOutputTuple(dataOutputPort, tuple, rs);
+        	}
+        	// Generate a window punctuation after all of the tuples are submitted 
+        	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
+        }else{
+        	// Set reultSetCountAttr to 0 if the statement does not produce result sets
+        	hasResultSetValue = false;
+            // Submit output tuple without result set
+            submitOutputTuple(dataOutputPort, tuple, null);
+            
+        }
 	}
     
 	// Return SPL value according to SPL type
