@@ -1,0 +1,104 @@
+/*******************************************************************************
+ * Copyright (C) 2015 International Business Machines Corporation
+ * All Rights Reserved
+ *******************************************************************************/
+namespace com.ibm.streamsx.jdbc.sample.jdbcrun;
+use com.ibm.streamsx.jdbc::*;
+/*******************************************************************************
+ * JDBCRunSample demonstrates how to insert/select data into/from database using
+ * JDBCRun operator.
+ * 
+ * The sample uses DB2 JDBC driver as default. 
+ * * The DB2 JDBC library (db2jcc4.jar) is located in etc folder.
+ * * JDBC driver and class name are specified in the jdbcDriverLib and jdbcClassName parameters.
+ * 
+ * To connect to database, jdbcUrl/jdbcUser/jdbcPassword parameters need to be specified.
+ * 
+ * In the SPL sample:
+ * * "insert" operator demonstrates how to run SQL statement with parameter markers via statement/statementParamAttrs parameters
+ * * "select" operator demonstrates how to run SQL statement from stream attribute via statementAttr parameter
+ * 
+ *******************************************************************************/
+
+composite JDBCRunSample {
+
+	type
+		insertSchema = 	int32 		ID, 
+						rstring 	FNAME,
+						rstring 	LNAME,
+						int32	 	AGE,
+						rstring 	GENDER,
+						float32 	SCORE,
+						float64 	TOTAL;
+		rsSchema = 		int32 		ID, 
+						rstring 	FNAME,
+						rstring 	LNAME,
+						int32	 	AGE,
+						rstring 	GENDER,
+						float32 	SCORE,
+						float64 	TOTAL;
+		selectSchema = 	rstring		sql; 
+	graph
+		stream<insertSchema> pulse = Beacon() {
+			param
+				iterations : 1u ;
+			output
+				pulse : ID 				= 1,
+						FNAME			= "Mike",
+						LNAME			= "Ward",
+						AGE				= 31,
+						GENDER			= "M",
+						SCORE			= 33.3w,
+						TOTAL			= 912.3l;
+		}
+		stream<insertSchema> create = JDBCRun(pulse){
+			param
+				jdbcDriverLib: "etc/db2jcc4.jar";
+				jdbcClassName: "com.ibm.db2.jcc.DB2Driver";
+				jdbcUrl: "jdbc:db2://<server:port>/<database>";
+				jdbcUser: "user";
+				jdbcPassword: "password";
+				statement:    "CREATE TABLE JDBCRUN_SAMPLE (ID INTEGER NOT NULL, FNAME CHAR(10), LNAME CHAR(10), AGE INTEGER, GENDER CHAR(1), SCORE REAL, TOTAL DOUBLE)";
+		}
+		stream<insertSchema> insert = JDBCRun(create){
+			param
+				jdbcDriverLib: "etc/db2jcc4.jar";
+				jdbcClassName: "com.ibm.db2.jcc.DB2Driver";
+				jdbcUrl: "jdbc:db2://<server:port>/<database>";
+				jdbcUser: "user";
+				jdbcPassword: "password";
+				statement:    "INSERT INTO JDBCRUN_SAMPLE (ID, FNAME, LNAME, AGE, GENDER, SCORE, TOTAL)
+									VALUES (?, ?, ?, ?, ?, ?, ?)";
+				statementParamAttrs: "ID, FNAME, LNAME, AGE, GENDER, SCORE, TOTAL";
+		}
+		
+		stream<selectSchema> genSelect = Functor(insert){
+			output
+				genSelect: sql="SELECT ID, FNAME, LNAME, AGE, GENDER, SCORE, TOTAL FROM JDBCRUN_SAMPLE";
+		}
+		
+		stream<rsSchema> select = JDBCRun(genSelect){
+			param
+				jdbcDriverLib: "etc/db2jcc4.jar";
+				jdbcClassName: "com.ibm.db2.jcc.DB2Driver";
+				jdbcUrl: "jdbc:db2://<server:port>/<database>";
+				jdbcUser: "user";
+				jdbcPassword: "password";
+				statementAttr:    sql;
+		}
+		
+		() as mySink = FileSink(select){
+			param
+				file : "JDBCRunSample.output" ;
+				format : csv ;
+		}
+		stream<rsSchema> drop = JDBCRun(select){
+			param
+				jdbcDriverLib: "etc/db2jcc4.jar";
+				jdbcClassName: "com.ibm.db2.jcc.DB2Driver";
+				jdbcUrl: "jdbc:db2://<server:port>/<database>";
+				jdbcUser: "user";
+				jdbcPassword: "password";
+				statement:    "DROP TABLE JDBCRUN_SAMPLE";
+		}
+}
