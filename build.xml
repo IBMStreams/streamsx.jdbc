@@ -14,7 +14,7 @@
 	<property name="toolkit" location="com.ibm.streamsx.jdbc" />
 	<property name="tmp" location="tmp" />
 
-	<target name="all" depends="toolkit" />
+	<target name="all" depends="toolkit,samples" />
 
 	<target name="setcommitversion">
 		<!-- Create the time stamp -->
