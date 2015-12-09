@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<srcCode:sourceModel xmlns:srcCode="http://www.ibm.com/xmlns/prod/streams/spl/sourceCode" xmlns:common="http://www.ibm.com/xmlns/prod/streams/spl/common" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <srcCode:sourceFile uri="com.ibm.streamsx.jdbc.types/JDBCRunTypes.spl">
+    <srcCode:compilationUnit>
+      <srcCode:splDoc>
+        <srcCode:description>
+          <srcCode:description>*****************************************************************************
+Copyright (C) 2015 International Business Machines Corporation
+All Rights Reserved
+******************************************************************************</srcCode:description>
+        </srcCode:description>
+      </srcCode:splDoc>
+      <srcCode:splNamespace column="11" line="6" name="com.ibm.streamsx.jdbc.types"/>
+      <srcCode:definitions>
+        <srcCode:typeDefinition endColumn="22" endLine="15" name="sqlStatusType" startColumn="1" startLine="13" value="int32 errorCode, rstring sqlState"/>
+      </srcCode:definitions>
+    </srcCode:compilationUnit>
+  </srcCode:sourceFile>
+
+</srcCode:sourceModel>
