@@ -579,31 +579,33 @@ public class JDBCRun extends AbstractJDBCOperator{
 				String columnName = rsmd.getColumnName(i);
 				Attribute attr = schema.getAttribute(columnName);
 				if (attr != null){
-					String splAttrName = attr.getName();
-					MetaType splType = attr.getType().getMetaType();
-	
-					// Assign value from result set
-					if (splType == MetaType.RSTRING) outputTuple.setString(splAttrName, rs.getString(i));
-					else if (splType == MetaType.USTRING) outputTuple.setString(splAttrName, rs.getString(i));
-					else if (splType == MetaType.INT8) outputTuple.setByte(splAttrName, rs.getByte(i));
-					else if (splType == MetaType.INT16) outputTuple.setShort(splAttrName, rs.getShort(i));
-					else if (splType == MetaType.INT32) outputTuple.setInt(splAttrName, rs.getInt(i));
-					else if (splType == MetaType.INT64) outputTuple.setLong(splAttrName, rs.getLong(i));
-					else if (splType == MetaType.UINT8) outputTuple.setByte(splAttrName, rs.getByte(i));
-					else if (splType == MetaType.UINT16) outputTuple.setShort(splAttrName, rs.getShort(i));
-					else if (splType == MetaType.UINT32) outputTuple.setInt(splAttrName, rs.getInt(i));
-					else if (splType == MetaType.UINT64) outputTuple.setLong(splAttrName, rs.getLong(i));
-					else if (splType == MetaType.FLOAT32) outputTuple.setFloat(splAttrName, rs.getFloat(i));
-					else if (splType == MetaType.FLOAT64) outputTuple.setDouble(splAttrName, rs.getDouble(i));
-					else if (splType == MetaType.DECIMAL32) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-					else if (splType == MetaType.DECIMAL64) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-					else if (splType == MetaType.DECIMAL128) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-					else if (splType == MetaType.BLOB) outputTuple.setBlob(splAttrName, (Blob)rs.getBlob(i));
-					else if (splType == MetaType.TIMESTAMP) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
-					else if (splType == MetaType.XML) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
-					else if (splType == MetaType.BOOLEAN) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
-					else LOGGER.log(TraceLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType);
-					
+					rs.getObject(i);
+					if (!rs.wasNull()){
+						String splAttrName = attr.getName();
+						MetaType splType = attr.getType().getMetaType();
+		
+						// Assign value from result set
+						if (splType == MetaType.RSTRING) outputTuple.setString(splAttrName, rs.getString(i));
+						else if (splType == MetaType.USTRING) outputTuple.setString(splAttrName, rs.getString(i));
+						else if (splType == MetaType.INT8) outputTuple.setByte(splAttrName, rs.getByte(i));
+						else if (splType == MetaType.INT16) outputTuple.setShort(splAttrName, rs.getShort(i));
+						else if (splType == MetaType.INT32) outputTuple.setInt(splAttrName, rs.getInt(i));
+						else if (splType == MetaType.INT64) outputTuple.setLong(splAttrName, rs.getLong(i));
+						else if (splType == MetaType.UINT8) outputTuple.setByte(splAttrName, rs.getByte(i));
+						else if (splType == MetaType.UINT16) outputTuple.setShort(splAttrName, rs.getShort(i));
+						else if (splType == MetaType.UINT32) outputTuple.setInt(splAttrName, rs.getInt(i));
+						else if (splType == MetaType.UINT64) outputTuple.setLong(splAttrName, rs.getLong(i));
+						else if (splType == MetaType.FLOAT32) outputTuple.setFloat(splAttrName, rs.getFloat(i));
+						else if (splType == MetaType.FLOAT64) outputTuple.setDouble(splAttrName, rs.getDouble(i));
+						else if (splType == MetaType.DECIMAL32) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType == MetaType.DECIMAL64) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType == MetaType.DECIMAL128) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType == MetaType.BLOB) outputTuple.setBlob(splAttrName, (Blob)rs.getBlob(i));
+						else if (splType == MetaType.TIMESTAMP) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
+						else if (splType == MetaType.XML) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
+						else if (splType == MetaType.BOOLEAN) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
+						else LOGGER.log(TraceLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType);
+					}					
 				}
 			}
         }
