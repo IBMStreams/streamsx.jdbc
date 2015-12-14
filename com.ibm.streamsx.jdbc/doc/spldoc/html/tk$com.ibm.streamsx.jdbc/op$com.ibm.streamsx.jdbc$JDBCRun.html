@@ -473,22 +473,7 @@ This operator supports 18 parameters.<dl class="dl">
 <dt class="dt dlterm" id="spldoc_operator__parameter_jdbcUrl"><tt class="ph tt">jdbcUrl</tt></dt>
 
 <dd class="dd">
-<p class="p">This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example:
-</p>
-
-<p class="p">DB2, jdbc:db2://${file:server}:${file:port}/${file:database}
-</p>
-
-<p class="p">   jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.
-</p>
-
-<p class="p">   server, the domain name or IP address of the data source.
-</p>
-
-<p class="p">   port, the TCP/IP server port number that is assigned to the data source.
-</p>
-
-<p class="p">   database, a name for the data source
+<p class="p">This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://&lt;server&gt;:&lt;port&gt;/&lt;database&gt; . jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows. . server, the domain name or IP address of the data source. . port, the TCP/IP server port number that is assigned to the data source. . database, a name for the data source
 </p>
 <dl class="dl">
 
