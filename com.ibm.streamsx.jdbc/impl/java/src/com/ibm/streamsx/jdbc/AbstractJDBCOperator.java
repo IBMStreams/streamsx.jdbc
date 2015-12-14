@@ -106,10 +106,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     }
 	
 	//Parameter jdbcUrl
-	@Parameter(optional = false, description="This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n"
-			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n"
-			+ ". server, the domain name or IP address of the data source.\\n" 
-			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n"
+	@Parameter(optional = false, description="This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n\\n"
+			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
+			+ ". server, the domain name or IP address of the data source.\\n\\n" 
+			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
 			+ ". database, a name for the data source")
     public void setJdbcUrl(String jdbcUrl){
     	this.jdbcUrl = jdbcUrl;
