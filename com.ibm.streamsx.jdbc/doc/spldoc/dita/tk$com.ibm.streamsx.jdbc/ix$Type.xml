@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
 <reference id="spldoc_index">
-<title>Types: com.ibm.streamsx.jdbc 0.1.0</title>
+<title>Types: com.ibm.streamsx.jdbc 0.9.0</title>
 <refbody>
 <section>
 <p>
-<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.1.0</xref> &gt; Types</p>
+<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.9.0</xref> &gt; Types</p>
 </section>
 <section>
   <title outputclass="splhead-1">Types</title>

@@ -5,12 +5,7 @@
 <refbody>
 <section>
 <p>
-<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.1.0</xref> &gt; <xref href="ns$com.ibm.streamsx.jdbc.types.xml">com.ibm.streamsx.jdbc.types</xref> &gt; JDBCRunTypes.spl</p>
-</section>
-<section>
-
-<p>!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!***** Copyright (C) 2015 International Business Machines Corporation All Rights Reserved !!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!****!!!!!!ERROR:!!!!!!******
-</p>
+<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.9.0</xref> &gt; <xref href="ns$com.ibm.streamsx.jdbc.types.xml">com.ibm.streamsx.jdbc.types</xref> &gt; JDBCRunTypes.spl</p>
 </section>
 <section>
   <title outputclass="splhead-1">Content</title>

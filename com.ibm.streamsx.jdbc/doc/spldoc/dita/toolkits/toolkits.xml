@@ -16,7 +16,7 @@
   <title outputclass="splhead-1">Toolkits</title>
 <dl>
 <dlentry>
-  <dt><xref href="../tk$com.ibm.streamsx.jdbc/tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.1.0</xref></dt>
+  <dt><xref href="../tk$com.ibm.streamsx.jdbc/tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.9.0</xref></dt>
   <dd>The JDBCRun operator runs a user-defined SQL statement that is based on an input tuple.</dd>
 </dlentry>
 </dl>

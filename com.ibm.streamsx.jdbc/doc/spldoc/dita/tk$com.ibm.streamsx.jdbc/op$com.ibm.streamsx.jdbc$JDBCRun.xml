@@ -5,7 +5,7 @@
 <refbody>
 <section>
 <p>
-<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.1.0</xref> &gt; <xref href="ns$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc</xref> &gt; JDBCRun</p>
+<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.9.0</xref> &gt; <xref href="ns$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc</xref> &gt; JDBCRun</p>
 </section>
 <section outputclass="splprimop">
   <image href="../../image/tk$com.ibm.streamsx.jdbc/op$com.ibm.streamsx.jdbc$JDBCRun.svg" width="672" height="112">
@@ -313,7 +313,7 @@
 <dlentry>
 <dt id="parameter_jdbcUrl"><tt>jdbcUrl</tt></dt>
 <dd>
-<p>This parameter specifies the database url and it must have exactly one value of type rstring.
+<p>This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example: DB2, jdbc:db2://${file:server}:${file:port}/${file:database}    jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.    server, the domain name or IP address of the data source.    port, the TCP/IP server port number that is assigned to the data source.    database, a name for the data source
 </p><dl>
 <dlentry>
  <dt>Properties </dt>

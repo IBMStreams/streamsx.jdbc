@@ -9,7 +9,7 @@
 </topicref>
 <topicref navtitle="Types" locktitle="yes" href="toolkits/ix$Type.xml" toc="yes" linking="none">
 </topicref>
-<topicref navtitle="com.ibm.streamsx.jdbc 0.1.0" locktitle="yes" href="tk$com.ibm.streamsx.jdbc/tk$com.ibm.streamsx.jdbc.xml" toc="yes" linking="none">
+<topicref navtitle="com.ibm.streamsx.jdbc 0.9.0" locktitle="yes" href="tk$com.ibm.streamsx.jdbc/tk$com.ibm.streamsx.jdbc.xml" toc="yes" linking="none">
 <topicref navtitle="Namespaces" locktitle="yes" href="tk$com.ibm.streamsx.jdbc/ix$Namespace.xml" toc="yes" linking="none">
 </topicref>
 <topicref navtitle="Operators" locktitle="yes" href="tk$com.ibm.streamsx.jdbc/ix$Operator.xml" toc="yes" linking="none">

@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
 <reference id="spldoc_toolkit">
-<title outputclass="spltoolkitname">Toolkit <tt>com.ibm.streamsx.jdbc 0.1.0</tt></title>
+<title outputclass="spltoolkitname">Toolkit <tt>com.ibm.streamsx.jdbc 0.9.0</tt></title>
 <refbody>
 <section>
 <p>
-<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; com.ibm.streamsx.jdbc 0.1.0</p>
+<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; com.ibm.streamsx.jdbc 0.9.0</p>
 </section>
 <section>
 <title outputclass="splhead-1">General Information</title>
 
-<p>The JDBCRun operator runs a user-defined SQL statement that is based on an input tuple. The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. The JDBCRun operator is commonly used to update, merge, and delete database management system (DBMS) records. This operator is also used to retrieve records, create and drop tables, and to call stored procedures.  Behavior in a consistent region:   The <tt>JDBCRun</tt> operator can be used in a consistent region. It cannot be the start operator of a consistent region. In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets.   On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port.   On checkpoint: A database commit is performed.   On reset: Any pending statements are discarded. A rollback is performed.
+<p>The JDBCRun operator runs a user-defined SQL statement that is based on an input tuple. The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. The JDBCRun operator is commonly used to update, merge, and delete database management system (DBMS) records. This operator is also used to retrieve records, create and drop tables, and to call stored procedures.  Behavior in a consistent region:   The JDBCRun operator can be used in a consistent region. It cannot be the start operator of a consistent region. In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets.   On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port.   On checkpoint: A database commit is performed.   On reset: Any pending statements are discarded. A rollback is performed.
 </p>
 <dl>
   <dlentry>
   <dt>Version</dt>
-  <dd>0.1.0</dd>
+  <dd>0.9.0</dd>
   </dlentry>
   <dlentry>
   <dt>Required Product Version</dt>
-  <dd>4.0.1.0</dd>
+  <dd>4.0.0.0</dd>
   </dlentry>
   <dlentry>
   <dt>Author</dt>
