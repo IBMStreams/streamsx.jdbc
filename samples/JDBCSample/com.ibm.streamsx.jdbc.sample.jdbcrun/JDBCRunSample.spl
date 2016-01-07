@@ -88,10 +88,9 @@ composite JDBCRunSample {
 				statementAttr:    sql;
 		}
 		
-		() as mySink = FileSink(select){
-			param
-				file : "JDBCRunSample.output" ;
-				format : csv ;
+		() as printer = Custom(select) {
+			logic onTuple select:
+				printStringLn((rstring)ID + "," + FNAME + "," + LNAME + "," + (rstring)AGE + "," + GENDER + "," + (rstring)SCORE + "," + (rstring)TOTAL);
 		}
 		stream<rsSchema> drop = JDBCRun(select){
 			param
