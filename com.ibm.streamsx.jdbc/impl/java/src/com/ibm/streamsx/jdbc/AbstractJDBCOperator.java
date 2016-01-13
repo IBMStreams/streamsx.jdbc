@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.sql.SQLException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
@@ -27,7 +26,6 @@ import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
-import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.model.Parameter;
 import com.ibm.streams.operator.state.Checkpoint;
 import com.ibm.streams.operator.state.ConsistentRegionContext;
@@ -39,13 +37,12 @@ import com.ibm.streams.operator.state.StateHandler;
 public abstract class AbstractJDBCOperator extends AbstractOperator implements StateHandler{
 	
 	private static final String PACKAGE_NAME = "com.ibm.streamsx.jdbc";
-	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.AbstractJDBCOperator";
 
 	/**
 	 * Create a logger specific to this class
 	 */
-	private static Logger LOGGER = Logger.getLogger(LoggerNames.LOG_FACILITY
-		+ "." + CLASS_NAME, "com.ibm.streamsx.jdbc.JDBCMessages");
+	protected static Logger LOGGER = Logger.getLogger(LoggerNames.LOG_FACILITY
+		+ "." + PACKAGE_NAME, "com.ibm.streamsx.jdbc.JDBCMessages");
 	
 	// logger for trace/debug information
 	protected static Logger TRACE = Logger.getLogger(PACKAGE_NAME);
@@ -178,7 +175,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		if ((context.getParameterNames().contains("reconnectionBound"))) {
 			// reconnectionBound value should be non negative.
 			if (Integer.parseInt(context.getParameterValues("reconnectionBound").get(0)) < 0) {
-    			LOGGER.log(LogLevel.ERROR, "REC_BOUND_NEG");
+    			LOGGER.log(TraceLevel.ERROR, "REC_BOUND_NEG");
 				checker.setInvalidContext("reconnectionBound value {0} should be zero or greater than zero  ",
 						new String[] { context.getParameterValues(
 								"reconnectionBound").get(0) });
@@ -190,7 +187,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				// reconnectionBound can appear only when the reconnectionPolicy
 				// parameter is set to BoundedRetry and cannot appear otherwise
 				if (! strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)) {
-	    			LOGGER.log(LogLevel.ERROR, "REC_BOUND_NOT_ALLOWED");
+	    			LOGGER.log(TraceLevel.ERROR, "REC_BOUND_NOT_ALLOWED");
 					checker.setInvalidContext("reconnectionBound {0} can appear only when the reconnectionPolicy parameter is set to BoundedRetry and cannot appear otherwise ",
 							new String[] { context.getParameterValues(
 									"reconnectionBound").get(0) });
@@ -225,7 +222,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			
 			//check if the output attribute is present where the result will be stored
 			if(jsonAttr != null && jsonAttr.getType().getMetaType() != MetaType.RSTRING) {
-				LOGGER.log(LogLevel.ERROR, "WRONG_CONTROLPORT_TYPE", jsonAttr.getType());
+				LOGGER.log(TraceLevel.ERROR, "WRONG_CONTROLPORT_TYPE", jsonAttr.getType());
 				checker.setInvalidContext();
 			}
 		}
@@ -299,8 +296,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	protected void processControlPort(StreamingInput<Tuple> stream, Tuple tuple) throws Exception{
 		
 		String jsonString = tuple.getString(0);
-
-		try{
+		try {
 			JSONObject jdbcConnections = JSONObject.parse(jsonString);
 			String jdbcClassName = (String)jdbcConnections.get("jdbcClassName");
 			String jdbcUrl = (String)jdbcConnections.get("jdbcUrl");
@@ -310,11 +306,11 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			
 			// jdbcClassName is required
 			if (jdbcClassName == null || jdbcClassName.trim().isEmpty()){
-				LOGGER.log(LogLevel.ERROR, "JDBCCLASSNAME_NOT_EXIST");
+				LOGGER.log(TraceLevel.ERROR, "JDBCCLASSNAME_NOT_EXIST");
 			}
 			// jdbcUrl is required
 			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
-				LOGGER.log(LogLevel.ERROR, "JDBCURL_NOT_EXIST");
+				LOGGER.log(TraceLevel.ERROR, "JDBCURL_NOT_EXIST");
 			}
 			// if jdbcProperties is relative path, convert to absolute path
 			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
@@ -326,10 +322,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	        // Reset JDBC connection
 			jdbcConnectionHelper.resetConnection(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties);
 		}catch (FileNotFoundException e){
-			LOGGER.log(LogLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", new Object[]{jdbcProperties});
+			LOGGER.log(TraceLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", jdbcProperties);
 			throw e;
-		}catch (SQLException e){
-			LOGGER.log(LogLevel.ERROR, "RESET_CONNECTION_FAILED", new Object[]{e.toString()});
+		}catch (Exception e){
+			LOGGER.log(TraceLevel.ERROR, "RESET_CONNECTION_FAILED", e.toString());
 			throw e;
 		}			
 	}
@@ -386,24 +382,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// Initiate JDBCConnectionHelper instance
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName);
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
-		try{
-			// if jdbcProperties is relative path, convert to absolute path
-			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
-			{
-				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
-			}
-			jdbcConnectionHelper = new JDBCConnectionHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUser: " + jdbcUser);
+        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcPassword: " + jdbcPassword);
+		// if jdbcProperties is relative path, convert to absolute path
+		if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
+		{
+			jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+		}
 
-			jdbcConnectionHelper.createConnection();
-        }catch (FileNotFoundException e){
-            TRACE.log(TraceLevel.DEBUG, "JDBCPROPERTIES_NOT_EXIST: " + e.toString());
-        	LOGGER.log(LogLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", new Object[]{jdbcProperties});
-    		throw e;
-    	}catch (SQLException e){
-            TRACE.log(TraceLevel.DEBUG, "Create Connection Failed: " + e.toString());
-    		LOGGER.log(LogLevel.ERROR, "CONNECTION_FAILED_ERROR", new Object[]{e.toString()});
-    		throw e;
-    	}
+		jdbcConnectionHelper = new JDBCConnectionHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+
+		jdbcConnectionHelper.createConnection();
 	}
 
 	// JDBC connection need to be auto-committed or not
@@ -418,37 +407,37 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	
 	@Override
 	public void close() throws IOException {
-		LOGGER.log(LogLevel.INFO, "CR_CLOSE");
+		LOGGER.log(TraceLevel.INFO, "CR_CLOSE");
 	}
 
 	@Override
 	public void checkpoint(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
+		LOGGER.log(TraceLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
 
 		jdbcConnectionHelper.commit();
 	}
 
 	@Override
 	public void drain() throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_DRAIN");
+		LOGGER.log(TraceLevel.INFO, "CR_DRAIN");
 	}
 
 	@Override
 	public void reset(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
+		LOGGER.log(TraceLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
 	
 		jdbcConnectionHelper.rollback();
 	}
 
 	@Override
 	public void resetToInitialState() throws Exception {
-		LOGGER.log(LogLevel.INFO, "RESET_TO_INITIAL");
+		LOGGER.log(TraceLevel.INFO, "RESET_TO_INITIAL");
 		
 		jdbcConnectionHelper.rollback();
 	}
 
 	@Override
 	public void retireCheckpoint(long id) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RETIRE");
+		LOGGER.log(TraceLevel.INFO, "CR_RETIRE");
 	}
 }
