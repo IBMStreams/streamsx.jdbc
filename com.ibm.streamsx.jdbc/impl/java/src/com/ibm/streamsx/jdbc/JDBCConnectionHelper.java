@@ -14,12 +14,13 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+
 /* This class contains all the JDBC connection related information, 
  * creating maintaining and closing a connection to the JDBC driver
- * Execute, commit and roll back SQL statement
+ * Execute, commit and rollback SQL statement
  */
 public class JDBCConnectionHelper {
-
+	
 	// JDBC connection
 	private Connection connection = null;
 	
@@ -100,7 +101,7 @@ public class JDBCConnectionHelper {
 			jdbcConnectionProps.load(fileInput);
 			fileInput.close();
         }   
-
+        
         //Establish connection
 		int nConnectionAttempts = 0;
 		// Reconnection interval in milliseconds as specified in reconnectionInterval parameter
@@ -113,7 +114,7 @@ public class JDBCConnectionHelper {
 			try {
 				nConnectionAttempts ++;
 				
-				if (jdbcConnectionProps != null){
+		        if (jdbcConnectionProps != null){
 		        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 		        }else if (jdbcUser != null && jdbcPassword != null){
 		        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
@@ -164,16 +165,7 @@ public class JDBCConnectionHelper {
         
 	}
 
-	// Reset the JDBC connection with the same configuration information
-	public void resetConnection() throws Exception{
-		// Close existing JDBC connection
-		closeConnection();
-		// Create new JDBC connection
-		createConnection();
-		
-	}
-
-	// Reset the JDBC connection
+	// Rest the JDBC connection
 	public void resetConnection(String jdbcClassName, String jdbcUrl,
 			String jdbcUser, String jdbcPassword, String jdbcProperties) throws Exception{
 		this.jdbcClassName = jdbcClassName;
@@ -285,7 +277,7 @@ public class JDBCConnectionHelper {
 	public ResultSet executeStatement(String statement) throws SQLException{
 		
         // Init Statement interface
-		if (stmt == null){
+		if (connection != null && stmt == null){
 			stmt = connection.createStatement();
 		}
 		

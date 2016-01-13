@@ -28,7 +28,6 @@ import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
-import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.meta.TupleType;
 import com.ibm.streams.operator.model.InputPortSet;
 import com.ibm.streams.operator.model.InputPorts;
@@ -214,19 +213,19 @@ public class JDBCRun extends AbstractJDBCOperator{
 			StreamingOutput<OutputTuple> errorOutputPort = context.getStreamingOutputs().get(1);
 			// The optional error output port can have no more than two attributes.
 			if (errorOutputPort.getStreamSchema().getAttributeCount() > 2) {
-				LOGGER.log(LogLevel.ERROR, "ATMOST_TWO_ATTR");
+				LOGGER.log(TraceLevel.ERROR, "ATMOST_TWO_ATTR");
 
 			}
 			// The optional error output port must have at least one attribute.
 			if (errorOutputPort.getStreamSchema().getAttributeCount() < 1) {
-				LOGGER.log(LogLevel.ERROR, "ATLEAST_ONE_ATTR");
+				LOGGER.log(TraceLevel.ERROR, "ATLEAST_ONE_ATTR");
 
 			}
 			// If two attributes are specified, the first attribute in the
 			// optional error output port must be a tuple.
 			if (errorOutputPort.getStreamSchema().getAttributeCount() == 2) {
 				if (errorOutputPort.getStreamSchema().getAttribute(0).getType().getMetaType() != Type.MetaType.TUPLE) {
-					LOGGER.log(LogLevel.ERROR, "ERROR_PORT_FIRST_ATTR_TUPLE");
+					LOGGER.log(TraceLevel.ERROR, "ERROR_PORT_FIRST_ATTR_TUPLE");
 
 				}
 			}
@@ -254,7 +253,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 			// Check hasResultSetAttr parameters at runtime
 			if ((context.getParameterNames().contains("hasResultSetAttr"))) {
 				if (schema.getAttribute(context.getParameterValues("hasResultSetAttr").get(0)) == null){
-	                LOGGER.log(LogLevel.ERROR, "HASRSATTR_NOT_EXIST", context.getParameterValues("hasResultSetAttr").get(0));
+	                LOGGER.log(TraceLevel.ERROR, "HASRSATTR_NOT_EXIST", context.getParameterValues("hasResultSetAttr").get(0));
 					checker.setInvalidContext("The attribute specified in hasResultSetAttr parameter does not exist: " + context.getParameterValues("hasResultSetAttr").get(0), null);
 				}
 			}
@@ -264,7 +263,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	    		String sqlStatus[] = sqlStatusAttr.split(",");
 	    		if (sqlStatus.length > 0 && !sqlStatus[0].trim().isEmpty()){
 					if (schema.getAttribute(sqlStatus[0].trim()) == null){
-		                LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[0]);
+		                LOGGER.log(TraceLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[0]);
 						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[0], null);
 					}
 	    		}
@@ -279,7 +278,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	    		String sqlStatus[] = sqlStatusAttr.split(",");
 	    		if (sqlStatus.length > 1 && !sqlStatus[1].trim().isEmpty()){
 					if (schema.getAttribute(sqlStatus[1].trim()) == null){
-		                LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[1]);
+		                LOGGER.log(TraceLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[1]);
 						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[1], null);
 					}
 	    		}
@@ -326,21 +325,15 @@ public class JDBCRun extends AbstractJDBCOperator{
 		dataOutputPort = getOutput(0);
 		
 		// Initiate PreparedStatement
-		initPreparedStatement();
+		if (statement != null) {
+			isStaticStatement = true;
+			TRACE.log(TraceLevel.DEBUG, "Initializing PreparedStatement: " + statement);
+			jdbcConnectionHelper.initPreparedStatement(statement);
+			TRACE.log(TraceLevel.DEBUG, "Initializing PreparedStatement - Completed");
+		}
 		
 	}
 
-    // Process control port
-    // The port allows operator to change JDBC connection information at runtime
-    // The port expects a value with JSON format
-	@Override
-	protected void processControlPort(StreamingInput<Tuple> stream, Tuple tuple) throws Exception{
-		super.processControlPort(stream, tuple);
-
-		// Initiate PreparedStatement
-		initPreparedStatement();
-	}
-	
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit(){
@@ -391,7 +384,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	        			TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
 	        		}
 	        	}else{
-	                LOGGER.log(LogLevel.ERROR, "SQL_STATEMENT_NULL");
+	                LOGGER.log(TraceLevel.ERROR, "SQL_STATEMENT_NULL");
 	        	}
 	        }
         }catch (SQLException e){
@@ -404,27 +397,15 @@ public class JDBCRun extends AbstractJDBCOperator{
         		submitErrorTuple(errorOutputPort, tuple);
         	}
         	
-        	// Check if JDBC connection valid
-        	if (jdbcConnectionHelper.getConnection() == null || !jdbcConnectionHelper.getConnection().isValid(0)){
-        		// JDBC Connection is not valid
-        		// Reset JDBC connection
-        		jdbcConnectionHelper.resetConnection();
-        		
-        		// Initiate PreparedStatement
-        		initPreparedStatement();
-
-        		return;
-        	}
-        	
         	if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)){
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
         		// The error is logged, and the error condition is cleared
-            	LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
+            	LOGGER.log(TraceLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
         		
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
         		
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
-            	LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
+            	LOGGER.log(TraceLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
 
             	if (consistentRegionContext != null){
     				// The error is logged, and request a reset of the consistent region.
@@ -446,7 +427,7 @@ public class JDBCRun extends AbstractJDBCOperator{
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)){
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
         		// The error is logged and the operator terminates.
-            	LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
+            	LOGGER.log(TraceLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
             	if (batchSize > 1){
 					// Clear statement batch & Roll back the transaction
             		jdbcConnectionHelper.rollbackWithClearBatch();
@@ -500,16 +481,6 @@ public class JDBCRun extends AbstractJDBCOperator{
         }
 	}
     
-    // Initiate PreparedStatement
-    private void initPreparedStatement() throws SQLException{
-    	if (statement != null) {
-    		isStaticStatement = true;
-    		TRACE.log(TraceLevel.DEBUG, "Initializing PreparedStatement: " + statement);
-    		jdbcConnectionHelper.initPreparedStatement(statement);
-    		TRACE.log(TraceLevel.DEBUG, "Initializing PreparedStatement - Completed");
-    	}
-    }
-    
 	// Return SPL value according to SPL type
 	protected Object getSplValue(Attribute attribute, Tuple tuple){
 		
@@ -544,7 +515,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 
 		if (splType.getMetaType() == MetaType.XML)			return tuple.getXML(index);
 		
-		LOGGER.log(LogLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType.getMetaType());
+		LOGGER.log(TraceLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType.getMetaType());
 		return null;
 		
 	}
@@ -556,7 +527,7 @@ public class JDBCRun extends AbstractJDBCOperator{
     			TRACE.log(TraceLevel.DEBUG, "Parameter statementParameter Name: " + stmtParameterArrays[i].getSplAttributeName());
     			Attribute attribute = tuple.getStreamSchema().getAttribute(stmtParameterArrays[i].getSplAttributeName().trim());
     			if (attribute == null){
-        			LOGGER.log(LogLevel.ERROR, "STATEMENT_PARAMETER_NOT_EXIST", stmtParameterArrays[i].getSplAttributeName());
+        			LOGGER.log(TraceLevel.ERROR, "STATEMENT_PARAMETER_NOT_EXIST", stmtParameterArrays[i].getSplAttributeName());
     			}else{
     				stmtParameterArrays[i].setSplAttribute(attribute);
     				stmtParameterArrays[i].setSplValue(getSplValue(stmtParameterArrays[i].getSplAttribute(), tuple));
@@ -633,7 +604,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 						else if (splType == MetaType.TIMESTAMP) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
 						else if (splType == MetaType.XML) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
 						else if (splType == MetaType.BOOLEAN) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
-						else LOGGER.log(LogLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType);
+						else LOGGER.log(TraceLevel.ERROR, "SPLTYPE_NOT_SUPPORT", splType);
 					}					
 				}
 			}
@@ -694,7 +665,7 @@ public class JDBCRun extends AbstractJDBCOperator{
     
 	@Override
 	public void checkpoint(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
+		LOGGER.log(TraceLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
 		
 		// Commit the transaction
 		jdbcConnectionHelper.commit();
@@ -715,7 +686,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	
 	@Override
 	public void reset(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
+		LOGGER.log(TraceLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
 		
 		// Roll back the transaction
 		jdbcConnectionHelper.rollback();
@@ -736,7 +707,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	
 	@Override
 	public void resetToInitialState() throws Exception {
-		LOGGER.log(LogLevel.INFO, "RESET_TO_INITIAL");
+		LOGGER.log(TraceLevel.INFO, "RESET_TO_INITIAL");
 		if (batchSize > 1){
 			jdbcConnectionHelper.rollbackWithClearBatch();
 			batchCount = 0;
