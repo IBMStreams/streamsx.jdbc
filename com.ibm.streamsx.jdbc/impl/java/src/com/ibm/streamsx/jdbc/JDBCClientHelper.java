@@ -18,11 +18,13 @@ import java.util.concurrent.TimeUnit;
  * creating maintaining and closing a connection to the JDBC driver
  * Execute, commit and roll back SQL statement
  */
-public class JDBCConnectionHelper {
-
+public class JDBCClientHelper {
 	// JDBC connection
 	private Connection connection = null;
-	
+    // JDBC connection status
+    private boolean connected = false;
+
+
 	// the class name for jdbc driver.
 	private String jdbcClassName;
 	// the database url, jdbc:subprotocol:subname.
@@ -53,20 +55,8 @@ public class JDBCConnectionHelper {
 	// The PreparedStatement for SQL statement with parameter markers
 	PreparedStatement preparedStmt = null;
 	
-	// This constructor sets the jdbc connection information required
-	public JDBCConnectionHelper(String jdbcClassName, String jdbcUrl,
-			String jdbcUser, String jdbcPassword, String jdbcProperties, boolean autoCommit, String isolationLevel) {
-		this.jdbcClassName = jdbcClassName;
-		this.jdbcUrl = jdbcUrl;
-		this.jdbcUser = jdbcUser;
-		this.jdbcPassword = jdbcPassword;
-		this.jdbcProperties = jdbcProperties;
-		this.autoCommit = autoCommit;
-		this.isolationLevel = isolationLevel;
-	}
-
 	// This constructor sets the jdbc connection information with reconnection policy
-	public JDBCConnectionHelper(String jdbcClassName, String jdbcUrl,
+	public JDBCClientHelper(String jdbcClassName, String jdbcUrl,
 			String jdbcUser, String jdbcPassword, String jdbcProperties, boolean autoCommit, String isolationLevel, 
 			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval) {
 		this.jdbcClassName = jdbcClassName;
@@ -87,94 +77,114 @@ public class JDBCConnectionHelper {
 	}
 	
 	// Create the JDBC connection
-	public void createConnection() throws Exception{
+	public synchronized void createConnection() throws Exception{
 		
-        //Load class into memory
-        Class.forName(jdbcClassName);
-        
-        // Load jdbc properties
-        Properties jdbcConnectionProps = null;
-        if (jdbcProperties != null){
-			FileInputStream fileInput = new FileInputStream(jdbcProperties);
-			jdbcConnectionProps = new Properties();
-			jdbcConnectionProps.load(fileInput);
-			fileInput.close();
-        }   
-
-        //Establish connection
-		int nConnectionAttempts = 0;
-		// Reconnection interval in milliseconds as specified in reconnectionInterval parameter
-		final long interval = TimeUnit.MILLISECONDS.convert((long) reconnectionInterval, TimeUnit.SECONDS);
-		
-		while (!Thread.interrupted()) {
-			// make a call to connect subroutine to create a connection
-			// for each unsuccessful attempt increment the
-			// nConnectionAttempts
-			try {
-				nConnectionAttempts ++;
-				
-				if (jdbcConnectionProps != null){
-		        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
-		        }else if (jdbcUser != null && jdbcPassword != null){
-		        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
-		        }else{
-		        	connection = DriverManager.getConnection(jdbcUrl);
-		        }
-				break;
-			} catch (SQLException e) {
-    			// If Reconnection Policy is NoRetry, throw SQLException
-				if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
-					throw e;
-				}
-
-				// If Reconnection Policy is BoundedRetry, reconnect until maximum reconnectionBound value
-				if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY) {
-					if (nConnectionAttempts == reconnectionBound){
-						//Throw SQLException if the connection attempts reach to maximum reconnectionBound value
+		// Attempt to create connection only when existing connection is invalid.
+		if (!isConnected()){
+	        //Load class into memory
+	        Class.forName(jdbcClassName);
+	        
+	        // Load jdbc properties
+	        Properties jdbcConnectionProps = null;
+	        if (jdbcProperties != null){
+				FileInputStream fileInput = new FileInputStream(jdbcProperties);
+				jdbcConnectionProps = new Properties();
+				jdbcConnectionProps.load(fileInput);
+				fileInput.close();
+	        }   
+	
+	        //Establish connection
+			int nConnectionAttempts = 0;
+			// Reconnection interval in milliseconds as specified in reconnectionInterval parameter
+			final long interval = TimeUnit.MILLISECONDS.convert((long) reconnectionInterval, TimeUnit.SECONDS);
+			
+			while (!Thread.interrupted()) {
+				// make a call to connect subroutine to create a connection
+				// for each unsuccessful attempt increment the
+				// nConnectionAttempts
+				try {
+					nConnectionAttempts ++;
+					
+					if (jdbcConnectionProps != null){
+			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
+			        }else if (jdbcUser != null && jdbcPassword != null){
+			        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+			        }else{
+			        	connection = DriverManager.getConnection(jdbcUrl);
+			        }
+					break;
+				} catch (SQLException e) {
+	    			// If Reconnection Policy is NoRetry, throw SQLException
+					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
 						throw e;
-					}else{
+					}
+	
+					// If Reconnection Policy is BoundedRetry, reconnect until maximum reconnectionBound value
+					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY) {
+						if (nConnectionAttempts == reconnectionBound){
+							//Throw SQLException if the connection attempts reach to maximum reconnectionBound value
+							throw e;
+						}else{
+							// Sleep for specified wait period
+							Thread.sleep(interval);
+						}
+					}
+					// If Reconnection Policy is InfiniteRetry, reconnect
+					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_INFINITERETRY) {
 						// Sleep for specified wait period
 						Thread.sleep(interval);
 					}
+	
 				}
-				// If Reconnection Policy is InfiniteRetry, reconnect
-				if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_INFINITERETRY) {
-					// Sleep for specified wait period
-					Thread.sleep(interval);
-				}
-
 			}
+			
+	        connection.setAutoCommit(autoCommit);
+	        
+	        // set isolation level
+	        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_READ_UNCOMMITTED)){
+	        	connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+	        }
+	        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_READ_COMMITTED)){
+	        	connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+	        }
+	        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_REPEATABLE_READ)){
+	        	connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+	        }
+	        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_SERIALIZABLE)){
+	        	connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+	        }
+	        
+	        // Set JDBC connection status as true
+	        connected = true;
+		}        
+	}
+
+	// Check if JDBC connection is valid
+	public synchronized boolean isValidConnection() throws SQLException{
+		if (connection == null || !connection.isValid(0)){
+			connected = false;
+			return false;
 		}
-		
-        connection.setAutoCommit(autoCommit);
-        
-        // set isolation level
-        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_READ_UNCOMMITTED)){
-        	connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-        }
-        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_READ_COMMITTED)){
-        	connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-        }
-        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_REPEATABLE_READ)){
-        	connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
-        }
-        if (isolationLevel.equalsIgnoreCase(IJDBCConstants.TRANSACTION_SERIALIZABLE)){
-        	connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-        }
-        
+		return true;
+	}
+
+	// Return JDBC connection status
+	public boolean isConnected(){
+		return connected;
 	}
 
 	// Reset the JDBC connection with the same configuration information
-	public void resetConnection() throws Exception{
-		// Close existing JDBC connection
-		closeConnection();
-		// Create new JDBC connection
-		createConnection();
-		
+	public synchronized void resetConnection() throws Exception{
+		if (!isConnected()){
+			// Close existing JDBC connection
+			closeConnection();
+			// Create new JDBC connection
+			createConnection();
+		}
 	}
 
 	// Reset the JDBC connection
-	public void resetConnection(String jdbcClassName, String jdbcUrl,
+	public synchronized void resetConnection(String jdbcClassName, String jdbcUrl,
 			String jdbcUser, String jdbcPassword, String jdbcProperties) throws Exception{
 		this.jdbcClassName = jdbcClassName;
 		this.jdbcUrl = jdbcUrl;
@@ -182,11 +192,10 @@ public class JDBCConnectionHelper {
 		this.jdbcPassword = jdbcPassword;
 		this.jdbcProperties = jdbcProperties;
 		
-		// Close existing JDBC connection
-		closeConnection();
-		// Create new JDBC connection
-		createConnection();
-		
+		// Set JDBC Connection Status as false
+		connected = false;
+		// Reset JDBC Connection
+		resetConnection();
 	}
 	
 	// Commit the transaction
@@ -252,7 +261,7 @@ public class JDBCConnectionHelper {
 	}
 
 	// Close the JDBC connection
-	public void closeConnection() throws SQLException{
+	public synchronized void closeConnection() throws SQLException{
 		try{
 			// Close Statement object
 			if (stmt != null){
@@ -270,6 +279,8 @@ public class JDBCConnectionHelper {
 				connection.close();
 				connection = null;
 			}
+			// Set JDBC Connection Status as false
+			connected = false;
 		}
 	}
 

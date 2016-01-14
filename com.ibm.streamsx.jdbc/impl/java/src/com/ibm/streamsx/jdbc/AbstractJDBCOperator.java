@@ -88,7 +88,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
 
 	// Create an instance of JDBCConnectionhelper
-	protected JDBCConnectionHelper jdbcConnectionHelper;
+	protected JDBCClientHelper jdbcClientHelper;
 	
 	// Lock for JDBC connection reset
 	private ReadWriteLock lock = new ReentrantReadWriteLock();  
@@ -251,7 +251,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		
 		// Create the JDBC connection
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");
-		setupJDBCconnect();
+		setupJDBCConnection();
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " Setting up JDBC connection - Completed");
 	}
 
@@ -270,6 +270,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	
     	if(inputStream.isControl()) {
     		TRACE.log(TraceLevel.DEBUG, "Process control port...");
+			// Acquire write lock to reset the JDBC Connection
     		lock.writeLock().lock();
     		try{
     			processControlPort(inputStream, tuple);
@@ -279,9 +280,30 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			TRACE.log(TraceLevel.DEBUG, "Process control port - Completed");
 		}else{
 			TRACE.log(TraceLevel.DEBUG, "Process input tuple...");
+			
+			// Reset JDBC connection if JDBC connection is not valid
+			if (!jdbcClientHelper.isConnected()){
+				try {
+					// Acquire write lock to reset the JDBC Connection
+					lock.writeLock().lock();
+					// Reset JDBC connection
+					resetJDBCConnection();
+				}finally {
+					lock.writeLock().unlock();
+				}
+			}
+
+			// Acquire read lock to process SQL statement
 			lock.readLock().lock();
 			try{
 				processTuple(inputStream, tuple);
+			}catch (Exception e){
+        		LOGGER.log(LogLevel.ERROR, "CONNECTION_FAILED_ERROR", new Object[]{e.toString()});
+	        	// Check if JDBC connection valid
+	        	if (jdbcClientHelper.isValidConnection()){
+	        		// Throw exception for operator to process if JDBC connection is valid
+	        		throw e;
+	        	}
 			}finally{
 				lock.readLock().unlock();
 			}
@@ -322,9 +344,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
 			// Roll back the transaction
-			jdbcConnectionHelper.rollbackWithClearBatch();
+			jdbcClientHelper.rollbackWithClearBatch();
 	        // Reset JDBC connection
-			jdbcConnectionHelper.resetConnection(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties);
+			jdbcClientHelper.resetConnection(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties);
 		}catch (FileNotFoundException e){
 			LOGGER.log(LogLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", new Object[]{jdbcProperties});
 			throw e;
@@ -357,10 +379,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " shutting down in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());
         
         // Roll back the transaction
-        jdbcConnectionHelper.rollback();
+        jdbcClientHelper.rollback();
         
         // close JDBC connection
-        jdbcConnectionHelper.closeConnection();
+        jdbcClientHelper.closeConnection();
 
         // Must call super.shutdown()
         super.shutdown();
@@ -381,7 +403,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
     
 	// Set up JDBC connection
-	private synchronized void setupJDBCconnect() throws Exception{
+	private synchronized void setupJDBCConnection() throws Exception{
 		
 		// Initiate JDBCConnectionHelper instance
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName);
@@ -392,9 +414,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
-			jdbcConnectionHelper = new JDBCConnectionHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
 
-			jdbcConnectionHelper.createConnection();
+			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
             TRACE.log(TraceLevel.DEBUG, "JDBCPROPERTIES_NOT_EXIST: " + e.toString());
         	LOGGER.log(LogLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", new Object[]{jdbcProperties});
@@ -404,6 +426,13 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     		LOGGER.log(LogLevel.ERROR, "CONNECTION_FAILED_ERROR", new Object[]{e.toString()});
     		throw e;
     	}
+	}
+
+	// Reset JDBC connection
+	protected void resetJDBCConnection() throws Exception{
+		// Reset JDBC connection
+		jdbcClientHelper.resetConnection();
+
 	}
 
 	// JDBC connection need to be auto-committed or not
@@ -425,7 +454,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	public void checkpoint(Checkpoint checkpoint) throws Exception {
 		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
 
-		jdbcConnectionHelper.commit();
+		jdbcClientHelper.commit();
 	}
 
 	@Override
@@ -437,14 +466,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	public void reset(Checkpoint checkpoint) throws Exception {
 		LOGGER.log(LogLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
 	
-		jdbcConnectionHelper.rollback();
+		jdbcClientHelper.rollback();
 	}
 
 	@Override
 	public void resetToInitialState() throws Exception {
 		LOGGER.log(LogLevel.INFO, "RESET_TO_INITIAL");
 		
-		jdbcConnectionHelper.rollback();
+		jdbcClientHelper.rollback();
 	}
 
 	@Override
