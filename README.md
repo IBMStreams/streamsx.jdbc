@@ -1,6 +1,6 @@
 # streamsx.jdbc
 
-The IBMStreams/streamsx.jdbc toolkit project is an open source Streams toolkit project focused on the development of operators and functions that extend IBM InfoSphere Streams ability to interact with database via JDBC.
+The IBMStreams/streamsx.jdbc toolkit project is an open source Streams toolkit project focused on the development of operators and functions that extend IBM Streams ability to interact with database via JDBC.
 
 To learn more about Streams:
 
