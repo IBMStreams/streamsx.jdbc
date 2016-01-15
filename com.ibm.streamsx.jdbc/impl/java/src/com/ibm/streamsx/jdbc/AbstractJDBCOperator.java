@@ -90,8 +90,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// Create an instance of JDBCConnectionhelper
 	protected JDBCClientHelper jdbcClientHelper;
 	
-	// Lock for JDBC connection reset
-	private ReadWriteLock lock = new ReentrantReadWriteLock();  
+	// Lock (fair mode) for JDBC connection reset
+	private ReadWriteLock lock = new ReentrantReadWriteLock(true);  
 	
 	// consistent region context
     protected ConsistentRegionContext consistentRegionContext;
@@ -418,11 +418,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
-            TRACE.log(TraceLevel.DEBUG, "JDBCPROPERTIES_NOT_EXIST: " + e.toString());
         	LOGGER.log(LogLevel.ERROR, "JDBCPROPERTIES_NOT_EXIST", new Object[]{jdbcProperties});
     		throw e;
     	}catch (SQLException e){
-            TRACE.log(TraceLevel.DEBUG, "Create Connection Failed: " + e.toString());
     		LOGGER.log(LogLevel.ERROR, "CONNECTION_FAILED_ERROR", new Object[]{e.toString()});
     		throw e;
     	}
