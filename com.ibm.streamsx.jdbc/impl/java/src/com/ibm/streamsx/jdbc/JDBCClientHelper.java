@@ -14,10 +14,9 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-
 /* This class contains all the JDBC connection related information,
  * creating maintaining and closing a connection to the JDBC driver
- * Execute, commit and rollback SQL statement
+ * Execute, commit and roll back SQL statement
  */
 public class JDBCClientHelper {
 	// JDBC connection
@@ -80,48 +79,43 @@ public class JDBCClientHelper {
 	// Create the JDBC connection
 	public synchronized void createConnection() throws Exception{
 
-        //Load class into memory
-        Class.forName(jdbcClassName);
+		// Attempt to create connection only when existing connection is invalid.
+		if (!isConnected()){
+	        //Load class into memory
+	        Class.forName(jdbcClassName);
 
-        // Load jdbc properties
-        Properties jdbcConnectionProps = null;
-        if (jdbcProperties != null){
-			FileInputStream fileInput = new FileInputStream(jdbcProperties);
-			jdbcConnectionProps = new Properties();
-			jdbcConnectionProps.load(fileInput);
-			fileInput.close();
-        }
+	        // Load jdbc properties
+	        Properties jdbcConnectionProps = null;
+	        if (jdbcProperties != null){
+				FileInputStream fileInput = new FileInputStream(jdbcProperties);
+				jdbcConnectionProps = new Properties();
+				jdbcConnectionProps.load(fileInput);
+				fileInput.close();
+	        }
 
-        //Establish connection
-		int nConnectionAttempts = 0;
-		// Reconnection interval in milliseconds as specified in reconnectionInterval parameter
-		final long interval = TimeUnit.MILLISECONDS.convert((long) reconnectionInterval, TimeUnit.SECONDS);
+	        //Establish connection
+			int nConnectionAttempts = 0;
+			// Reconnection interval in milliseconds as specified in reconnectionInterval parameter
+			final long interval = TimeUnit.MILLISECONDS.convert((long) reconnectionInterval, TimeUnit.SECONDS);
 
-		while (!Thread.interrupted()) {
-			// make a call to connect subroutine to create a connection
-			// for each unsuccessful attempt increment the
-			// nConnectionAttempts
-			try {
-				nConnectionAttempts ++;
+			while (!Thread.interrupted()) {
+				// make a call to connect subroutine to create a connection
+				// for each unsuccessful attempt increment the
+				// nConnectionAttempts
+				try {
+					nConnectionAttempts ++;
 
-		        if (jdbcConnectionProps != null){
-		        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
-		        }else if (jdbcUser != null && jdbcPassword != null){
-		        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
-		        }else{
-		        	connection = DriverManager.getConnection(jdbcUrl);
-		        }
-				break;
-			} catch (SQLException e) {
-    			// If Reconnection Policy is NoRetry, throw SQLException
-				if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
-					throw e;
-				}
-
-				// If Reconnection Policy is BoundedRetry, reconnect until maximum reconnectionBound value
-				if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY) {
-					if (nConnectionAttempts == reconnectionBound){
-						//Throw SQLException if the connection attempts reach to maximum reconnectionBound value
+					if (jdbcConnectionProps != null){
+			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
+			        }else if (jdbcUser != null && jdbcPassword != null){
+			        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+			        }else{
+			        	connection = DriverManager.getConnection(jdbcUrl);
+			        }
+					break;
+				} catch (SQLException e) {
+	    			// If Reconnection Policy is NoRetry, throw SQLException
+					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
 						throw e;
 					}
 
@@ -302,7 +296,7 @@ public class JDBCClientHelper {
 	public ResultSet executeStatement(String statement) throws SQLException{
 
         // Init Statement interface
-		if (connection != null && stmt == null){
+		if (stmt == null){
 			stmt = connection.createStatement();
 		}
 
