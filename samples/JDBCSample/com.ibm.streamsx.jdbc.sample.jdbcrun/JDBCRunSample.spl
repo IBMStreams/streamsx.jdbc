@@ -23,6 +23,12 @@ use com.ibm.streamsx.jdbc::*;
 
 composite JDBCRunSample {
 
+	param
+		expression<rstring> $jdbcDriverLib : getSubmissionTimeValue("jdbcDriverLib", "opt/db2jcc4.jar");
+		expression<rstring> $jdbcClassName : getSubmissionTimeValue("jdbcClassName", "com.ibm.db2.jcc.DB2Driver");
+		expression<rstring> $jdbcUrl : getSubmissionTimeValue("jdbcUrl");
+		expression<rstring> $jdbcUser : getSubmissionTimeValue("jdbcUser");
+		expression<rstring> $jdbcPassword : getSubmissionTimeValue("jdbcPassword");
 	type
 		insertSchema = 	int32 		ID, 
 						rstring 	FNAME,
@@ -54,20 +60,20 @@ composite JDBCRunSample {
 		}
 		stream<insertSchema> create = JDBCRun(pulse){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "CREATE TABLE JDBCRUN_SAMPLE (ID INTEGER NOT NULL, FNAME CHAR(10), LNAME CHAR(10), AGE INTEGER, GENDER CHAR(1), SCORE REAL, TOTAL DOUBLE)";
 		}
 		stream<insertSchema> insert = JDBCRun(create){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "INSERT INTO JDBCRUN_SAMPLE (ID, FNAME, LNAME, AGE, GENDER, SCORE, TOTAL)
 									VALUES (?, ?, ?, ?, ?, ?, ?)";
 				statementParamAttrs: "ID, FNAME, LNAME, AGE, GENDER, SCORE, TOTAL";
@@ -80,11 +86,11 @@ composite JDBCRunSample {
 		
 		stream<rsSchema> select = JDBCRun(genSelect){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statementAttr:    sql;
 		}
 		
@@ -94,11 +100,11 @@ composite JDBCRunSample {
 		}
 		stream<rsSchema> drop = JDBCRun(select){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "DROP TABLE JDBCRUN_SAMPLE";
 		}
 }
