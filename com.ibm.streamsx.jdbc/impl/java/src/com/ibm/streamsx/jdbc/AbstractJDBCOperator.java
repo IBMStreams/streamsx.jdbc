@@ -29,14 +29,11 @@ import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.model.Parameter;
-import com.ibm.streams.operator.state.Checkpoint;
-import com.ibm.streams.operator.state.ConsistentRegionContext;
-import com.ibm.streams.operator.state.StateHandler;
 
 /**
  * AbstractJDBCOperator provides the base class for all JDBC operators.
  */
-public abstract class AbstractJDBCOperator extends AbstractOperator implements StateHandler{
+public abstract class AbstractJDBCOperator extends AbstractOperator {
 
 	private static final String PACKAGE_NAME = "com.ibm.streamsx.jdbc";
 	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.AbstractJDBCOperator";
@@ -93,8 +90,6 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// Lock (fair mode) for JDBC connection reset
 	private ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
-	// consistent region context
-    protected ConsistentRegionContext consistentRegionContext;
 
 	//Parameter jdbcDriverLib
 	@Parameter(optional = false, description="This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.")
@@ -247,8 +242,6 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		setupClassPath(context);
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed");
 
-		consistentRegionContext = context.getOptionalContext(ConsistentRegionContext.class);
-
 		// Create the JDBC connection
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");
 		setupJDBCConnection();
@@ -268,7 +261,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     public void process(StreamingInput<Tuple> inputStream, Tuple tuple)
             throws Exception {
 
-    	if(inputStream.isControl()) {
+    	if(inputStream.getPortNumber() == 1) {
     		TRACE.log(TraceLevel.DEBUG, "Process control port...");
 			// Acquire write lock to reset the JDBC Connection
     		lock.writeLock().lock();
@@ -435,47 +428,6 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// JDBC connection need to be auto-committed or not
 	protected boolean isAutoCommit(){
-        if (consistentRegionContext != null){
-        	// Set automatic commit to false when it is a consistent region.
-        	return false;
-        }
 		return true;
-	}
-
-
-	@Override
-	public void close() throws IOException {
-		LOGGER.log(LogLevel.INFO, "CR_CLOSE");
-	}
-
-	@Override
-	public void checkpoint(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
-
-		jdbcClientHelper.commit();
-	}
-
-	@Override
-	public void drain() throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_DRAIN");
-	}
-
-	@Override
-	public void reset(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
-
-		jdbcClientHelper.rollback();
-	}
-
-	@Override
-	public void resetToInitialState() throws Exception {
-		LOGGER.log(LogLevel.INFO, "RESET_TO_INITIAL");
-
-		jdbcClientHelper.rollback();
-	}
-
-	@Override
-	public void retireCheckpoint(long id) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RETIRE");
 	}
 }
