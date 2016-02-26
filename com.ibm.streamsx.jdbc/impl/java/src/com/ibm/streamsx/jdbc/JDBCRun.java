@@ -333,6 +333,10 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit(){
+        if (transactionSize > 1){
+        	// Set automatic commit to false when transaction size is more than 1 or it is a consistent region.
+        	return false;
+        }
 		return true;
 	}
 
@@ -380,6 +384,13 @@ public class JDBCRun extends AbstractJDBCOperator{
 	                LOGGER.log(LogLevel.ERROR, "SQL_STATEMENT_NULL");
 	        	}
 	        }
+
+            // Commit the transactions according to transactionSize
+    		if ((transactionSize > 1) && (transactionCount >= transactionSize)){
+    			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+    			transactionCount = 0;
+    			jdbcClientHelper.commit();
+    		}
 
     		if (rs != null){
             	// Set hasReultSetValue
@@ -431,7 +442,11 @@ public class JDBCRun extends AbstractJDBCOperator{
         		// The error is logged, and the error condition is cleared
             	LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
                 // Commit the transactions according to transactionSize
-        		
+        		if ((transactionSize > 1) && (transactionCount >= transactionSize)){
+        			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+        			transactionCount = 0;
+        			jdbcClientHelper.commit();
+        		}
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
 
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
