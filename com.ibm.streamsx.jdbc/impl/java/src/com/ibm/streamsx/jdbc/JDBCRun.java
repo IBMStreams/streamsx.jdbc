@@ -138,10 +138,6 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// sqlStatus attribute for error output port
 	private String sqlStatusErrorOutput = null;
 
-	// SQL ErrorCode & SQLState
-	private int errorCode = IJDBCConstants.SQL_ERRORCODE_SUCCESS;
-	private String sqlState = IJDBCConstants.SQL_STATE_SUCCESS;
-
 	//Parameter statement
 	@Parameter(optional = true, description="This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
     public void setStatement(String statement){
@@ -354,10 +350,6 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// Process input tuple
     protected void processTuple(StreamingInput<Tuple> stream, Tuple tuple) throws Exception{
 
-    	// Set errorCode and sqlState to default value.
-    	errorCode = IJDBCConstants.SQL_ERRORCODE_SUCCESS;
-    	sqlState = IJDBCConstants.SQL_STATE_SUCCESS;
-
         try{
             // Execute the statement
             ResultSet rs = null;
@@ -433,13 +425,15 @@ public class JDBCRun extends AbstractJDBCOperator{
 
             }
         }catch (SQLException e){
-			errorCode = e.getErrorCode();
-        	sqlState = e.getSQLState();
+        	// SQL ErrorCode & SQLState
+        	int errorCode = e.getErrorCode();
+        	String sqlState = e.getSQLState();
+
         	TRACE.log(TraceLevel.DEBUG, "SQL Exception Error Code: " + errorCode);
         	TRACE.log(TraceLevel.DEBUG, "SQL EXCEPTION SQL State: " + sqlState);
         	if (hasErrorPort){
         		// submit error message
-        		submitErrorTuple(errorOutputPort, tuple);
+        		submitErrorTuple(errorOutputPort, tuple, errorCode, sqlState);
         	}
 
         	// Check if JDBC connection valid
@@ -578,6 +572,10 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// Submit output tuple according to result set
 	protected void submitOutputTuple(StreamingOutput<OutputTuple> outputPort, Tuple inputTuple, ResultSet rs) throws Exception {
 
+    	// Set errorCode and sqlState to default value.
+    	int errorCode = IJDBCConstants.SQL_ERRORCODE_SUCCESS;
+    	String sqlState = IJDBCConstants.SQL_STATE_SUCCESS;
+
 		OutputTuple outputTuple = outputPort.newTuple();
 
 		//Pass all incoming attributes as is to the output tuple
@@ -651,7 +649,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	}
 
     // Submit error tuple
-	protected void submitErrorTuple(StreamingOutput<OutputTuple> errorOutputPort, Tuple inputTuple) throws Exception{
+	protected void submitErrorTuple(StreamingOutput<OutputTuple> errorOutputPort, Tuple inputTuple, int errorCode, String sqlState) throws Exception{
 		OutputTuple errorTuple = errorOutputPort.newTuple();
 
 		// Assign SQL status according to sqlStatusAttr parameter
