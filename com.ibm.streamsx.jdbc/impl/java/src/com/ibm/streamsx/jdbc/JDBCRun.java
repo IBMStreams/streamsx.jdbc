@@ -22,7 +22,6 @@ import com.ibm.streams.operator.StreamingData.Punctuation;
 import com.ibm.streams.operator.StreamingInput;
 import com.ibm.streams.operator.StreamingOutput;
 import com.ibm.streams.operator.Tuple;
-import com.ibm.streams.operator.TupleAttribute;
 import com.ibm.streams.operator.Type;
 import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
@@ -36,8 +35,6 @@ import com.ibm.streams.operator.model.OutputPortSet;
 import com.ibm.streams.operator.model.OutputPorts;
 import com.ibm.streams.operator.model.Parameter;
 import com.ibm.streams.operator.model.PrimitiveOperator;
-import com.ibm.streams.operator.state.Checkpoint;
-import com.ibm.streams.operator.state.ConsistentRegionContext;
 import com.ibm.streams.operator.types.Blob;
 import com.ibm.streams.operator.types.RString;
 import com.ibm.streams.operator.types.Timestamp;
@@ -113,7 +110,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// StatementParameter arrays
 	StatementParameter[] statementParamArrays = null;
 	// This parameter specifies the value of SQL statement that is from stream attribute (no parameter markers).
-	private TupleAttribute<Tuple, String> statementAttr;
+	private String statementAttr;
 
 	// This parameter specifies the number of statements to execute as a batch.
 	// The default transaction size is 1.
@@ -163,7 +160,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 
 	//Parameter statementAttr
 	@Parameter(optional = true, description="This parameter specifies the value of complete SQL or stored procedure statement that is from stream attribute (no parameter markers).")
-    public void setStatementAttr(TupleAttribute<Tuple, String> statementAttr){
+    public void setStatementAttr(String statementAttr){
     	this.statementAttr = statementAttr;
     }
 
@@ -234,14 +231,6 @@ public class JDBCRun extends AbstractJDBCOperator{
 
 	}
 
-	@ContextCheck(compile = true, runtime = false)
-	public static void checkCompileTimeConsistentRegion(OperatorContextChecker checker) {
-		ConsistentRegionContext consistentRegionContext = checker.getOperatorContext().getOptionalContext(ConsistentRegionContext.class);
-
-		if(consistentRegionContext != null && consistentRegionContext.isStartOfRegion()) {
-			checker.setInvalidContext("The following operator cannot be the start of a consistent region: JDBCRun", new String[] {});
-		}
-	}
 
 	@ContextCheck(compile = false, runtime = true)
 	public static void checkParameterAttributes(OperatorContextChecker checker) {
@@ -344,7 +333,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit(){
-        if ((consistentRegionContext != null) || (transactionSize > 1)){
+        if (transactionSize > 1){
         	// Set automatic commit to false when transaction size is more than 1 or it is a consistent region.
         	return false;
         }
@@ -375,7 +364,7 @@ public class JDBCRun extends AbstractJDBCOperator{
             		rs = jdbcClientHelper.executePreparedStatement(getStatementParameterArrays(statementParamArrays, tuple));
             	}
 	        }else{
-	        	String statementFromAttribute = statementAttr.getValue(tuple);
+	        	String statementFromAttribute = tuple.getString(statementAttr);
 	        	if (statementFromAttribute != null && ! statementFromAttribute.isEmpty()){
         			TRACE.log(TraceLevel.DEBUG, "Statement: " + statementFromAttribute);
 	        		if (batchSize > 1){
@@ -397,7 +386,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	        }
 
             // Commit the transactions according to transactionSize
-    		if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
+    		if ((transactionSize > 1) && (transactionCount >= transactionSize)){
     			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
     			transactionCount = 0;
     			jdbcClientHelper.commit();
@@ -453,7 +442,7 @@ public class JDBCRun extends AbstractJDBCOperator{
         		// The error is logged, and the error condition is cleared
             	LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
                 // Commit the transactions according to transactionSize
-        		if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
+        		if ((transactionSize > 1) && (transactionCount >= transactionSize)){
         			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
         			transactionCount = 0;
         			jdbcClientHelper.commit();
@@ -463,22 +452,19 @@ public class JDBCRun extends AbstractJDBCOperator{
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
             	LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
 
-            	if (consistentRegionContext != null){
-    				// The error is logged, and request a reset of the consistent region.
-    				consistentRegionContext.reset();
-    			}else{
-    				if (batchSize > 1){
-    					// Clear statement batch & roll back the transaction
-    					jdbcClientHelper.rollbackWithClearBatch();
-    					// Reset the batch counter
-    					batchCount = 0;
-    				}else{
-    					// Roll back the transaction
-    					jdbcClientHelper.rollback();
-    				}
-    				// Reset the transaction counter
-    				transactionCount = 0;
-    			}
+        
+				if (batchSize > 1){
+					// Clear statement batch & roll back the transaction
+					jdbcClientHelper.rollbackWithClearBatch();
+					// Reset the batch counter
+					batchCount = 0;
+				}else{
+					// Roll back the transaction
+					jdbcClientHelper.rollback();
+				}
+				// Reset the transaction counter
+				transactionCount = 0;
+    			
         	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)){
     			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
         		// The error is logged and the operator terminates.
@@ -698,59 +684,5 @@ public class JDBCRun extends AbstractJDBCOperator{
         super.shutdown();
 
     }
-
-
-	@Override
-	public void checkpoint(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
-
-		// Commit the transaction
-		jdbcClientHelper.commit();
-
-		// Save current batch information
-		if (batchSize > 1){
-			TRACE.log(TraceLevel.DEBUG, "Checkpoint batchCount: " + batchCount);
-			checkpoint.getOutputStream().writeInt(batchCount);
-			if (isStaticStatement){
-				TRACE.log(TraceLevel.DEBUG, "Checkpoint preparedStatement");
-				checkpoint.getOutputStream().writeObject(jdbcClientHelper.getPreparedStatement());
-			}else{
-				TRACE.log(TraceLevel.DEBUG, "Checkpoint statement");
-				checkpoint.getOutputStream().writeObject(jdbcClientHelper.getStatement());
-			}
-		}
-	}
-
-	@Override
-	public void reset(Checkpoint checkpoint) throws Exception {
-		LOGGER.log(LogLevel.INFO, "CR_RESET", checkpoint.getSequenceId());
-
-		// Roll back the transaction
-		jdbcClientHelper.rollback();
-
-		// Reset the batch information
-		if (batchSize > 1){
-			batchCount = checkpoint.getInputStream().readInt();
-			TRACE.log(TraceLevel.DEBUG, "Reset batchCount: " + batchCount);
-			if (isStaticStatement){
-				jdbcClientHelper.setPreparedStatement((PreparedStatement)checkpoint.getInputStream().readObject());
-				TRACE.log(TraceLevel.DEBUG, "Reset preparedStatement");
-			}else{
-				jdbcClientHelper.setStatement((Statement)checkpoint.getInputStream().readObject());
-				TRACE.log(TraceLevel.DEBUG, "Reset statement");
-			}
-		}
-	}
-
-	@Override
-	public void resetToInitialState() throws Exception {
-		LOGGER.log(LogLevel.INFO, "RESET_TO_INITIAL");
-		if (batchSize > 1){
-			jdbcClientHelper.rollbackWithClearBatch();
-			batchCount = 0;
-		}else{
-			jdbcClientHelper.rollback();
-		}
-	}
 
 }
