@@ -11,5 +11,5 @@ namespace com.ibm.streamsx.jdbc.types;
  * sqlState: The five-digit XOPEN SQLState code for a database error, 00000: Successful
  */
 type
-	sqlStatusType = int32 errorCode,
-					rstring sqlState;
+	JdbcSqlStatus_T = 	int32 errorCode,
+						rstring sqlState;

@@ -46,7 +46,7 @@ composite JDBCRunErrorPort {
 				statementParamAttrs: "ID, NAME";
 		}
 		
-		(stream<insertSchema> insert2; stream <tuple<insertSchema> inTuple, sqlStatusType error> errors)= JDBCRun(insert1){
+		(stream<insertSchema> insert2; stream <tuple<insertSchema> inTuple, JdbcSqlStatus_T error> errors)= JDBCRun(insert1){
 			param
 				jdbcDriverLib: "jdbcDriverLib";
 				jdbcClassName: "jdbcClassName";
@@ -56,7 +56,7 @@ composite JDBCRunErrorPort {
 				statement:    "INSERT INTO JDBCRUN_ERRORPORT (ID, NAME)
 									VALUES (?, ?)";
 				statementParamAttrs: "ID, NAME";
-				sqlStatusAttr: ", error";
+				sqlStatusErrorAttr: "error";
 		}
 
 		stream<selectSchema> genSelect = Functor(insert1){
