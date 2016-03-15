@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -131,13 +132,13 @@ public class JDBCRun extends AbstractJDBCOperator{
 	private String hasResultSetAttr = null;
 	private boolean hasResultSetValue = false;
 
-	// This parameter points to an output attribute and returns the SQL status information.
+	// This parameter points to an error output attribute and returns the SQL status information.
 	private String sqlStatusAttr = null;
 	// sqlStatus attribute for data output port
-	private String sqlStatusDataOutput = null;
+	private String[] sqlStatusDataAttrs = null;
 	// sqlStatus attribute for error output port
-	private String sqlStatusErrorOutput = null;
-
+	private String[] sqlStatusErrorAttrs = null;
+	
 	//Parameter statement
 	@Parameter(optional = true, description="This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
     public void setStatement(String statement){
@@ -182,25 +183,15 @@ public class JDBCRun extends AbstractJDBCOperator{
     }
 
 	//Parameter sqlStatusAttr
-	@Parameter(optional = true, description="This parameter points to an output attribute and returns the SQL status information, including SQL error code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)")
+	@Parameter(optional = true, description="This parameter points to one or more output attributes and returns the SQL status information, including SQL code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)")
     public void setSqlStatusAttr(String sqlStatusAttr){
     	this.sqlStatusAttr = sqlStatusAttr;
-        if (sqlStatusAttr != null){
-    		String sqlStatus[] = sqlStatusAttr.split(",");
-    		if (sqlStatus.length > 0 && !sqlStatus[0].trim().isEmpty()){
-    			sqlStatusDataOutput = sqlStatus[0].trim();
-    		}
-    		if (sqlStatus.length > 1 && !sqlStatus[1].trim().isEmpty()){
-    			sqlStatusErrorOutput = sqlStatus[1].trim();
-    		}
-        }
-
     }
 
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
-	 * and a sqlStatusType which will contain the error message in order.
+	 * and a JdbcSqlStatus_T which will contain the error message in order.
 	 */
 	@ContextCheck
 	public static void checkErrorOutputPort(OperatorContextChecker checker) {
@@ -254,33 +245,95 @@ public class JDBCRun extends AbstractJDBCOperator{
 					checker.setInvalidContext("The attribute specified in hasResultSetAttr parameter does not exist: " + context.getParameterValues("hasResultSetAttr").get(0), null);
 				}
 			}
-			// Check sqlStatusAttr parameters at runtime
-			if ((context.getParameterNames().contains("sqlStatusAttr"))) {
-				String sqlStatusAttr = context.getParameterValues("sqlStatusAttr").get(0);
-	    		String sqlStatus[] = sqlStatusAttr.split(",");
-	    		if (sqlStatus.length > 0 && !sqlStatus[0].trim().isEmpty()){
-					if (schema.getAttribute(sqlStatus[0].trim()) == null){
-		                LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[0]);
-						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[0], null);
-					}
+		}
+		
+		// Check sqlStatusAttr parameter
+		if ((context.getParameterNames().contains("sqlStatusAttr"))) {
+			String strSqlStatusAttr = context.getParameterValues("sqlStatusAttr").get(0);
+			if (strSqlStatusAttr == null){
+			    LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", "null");
+			    checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: null", null);
+			}
+			if (strSqlStatusAttr != null){
+				// Data port
+				StreamingOutput<OutputTuple> dataPort = context.getStreamingOutputs().get(0);
+	    		// Error port
+	    		StreamingOutput<OutputTuple> errorPort = null;
+	    		if (checker.getOperatorContext().getNumberOfStreamingOutputs() > 1){
+	    			errorPort = context.getStreamingOutputs().get(1);
+	    		}
+				
+	    		String sqlStatus[] = strSqlStatusAttr.split(",");
+	    		for (int i=0; i<sqlStatus.length; i++){
+	    			String strSqlStatus = sqlStatus[i].trim();
+	    			if (strSqlStatus.isEmpty()){
+	    			    LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", "null");
+	    			    checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: null", null);
+	    			}
+	    			if (!strSqlStatus.isEmpty()){
+	    				if (findSqlStatusAttr(dataPort, errorPort, strSqlStatus) == -1){
+	    				    LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", strSqlStatus);
+	    				    checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + strSqlStatus, null);
+	    					
+	    				}
+	    			}
 	    		}
 			}
+			
 		}
-		if (checker.getOperatorContext().getNumberOfStreamingOutputs() > 1){
-			StreamingOutput<OutputTuple> errorPort = context.getStreamingOutputs().get(1);
-			StreamSchema schema = errorPort.getStreamSchema();
-			// Check sqlStatusAttr parameters at runtime
-			if ((context.getParameterNames().contains("sqlStatusAttr"))) {
-				String sqlStatusAttr = context.getParameterValues("sqlStatusAttr").get(0);
-	    		String sqlStatus[] = sqlStatusAttr.split(",");
-	    		if (sqlStatus.length > 1 && !sqlStatus[1].trim().isEmpty()){
-					if (schema.getAttribute(sqlStatus[1].trim()) == null){
-		                LOGGER.log(LogLevel.ERROR, "SQLSTATUSATTR_NOT_EXIST", sqlStatus[1]);
-						checker.setInvalidContext("The attribute specified in sqlStatusAttr parameter does not exist: " + sqlStatus[1], null);
-					}
-	    		}
+		
+	}
+	
+	// Find sqlStatusAttr on data port and error port
+	// Return value: 0 - data port; 1 - error port; -1 - not found
+	private static int findSqlStatusAttr(StreamingOutput<OutputTuple> dataPort, StreamingOutput<OutputTuple> errorPort, String strSqlStatus) {
+		
+		// Data port stream name
+		String dataStreamName = dataPort.getName();
+		// Error port stream name
+		String errorStreamName = null;
+		if (errorPort != null){
+			errorStreamName = errorPort.getName();
+		}
+
+		if (strSqlStatus.contains(".")){
+			// The attribute is a full qualified name
+			String strs[] = strSqlStatus.split("\\.");
+			if (strs.length > 1){
+				if (dataStreamName.equals(strs[0])){
+					StreamSchema schema = dataPort.getStreamSchema();
+	    			Attribute attr = schema.getAttribute(strs[1]);
+	    			if (attr != null){
+	    				return 0;
+	    			}
+				}
+				if (errorStreamName != null && errorStreamName.equals(strs[0])){
+					StreamSchema schema = errorPort.getStreamSchema();
+	    			Attribute attr = schema.getAttribute(strs[1]);
+	    			if (attr != null){
+	    				return 1;
+	    			}
+				}
 			}
 		}
+		
+		if (!strSqlStatus.contains(".")){
+			// The attribute isn't a full qualified name
+			// Find the first stream that contains the attribute name
+			StreamSchema dataSchema = dataPort.getStreamSchema();
+			if (dataSchema.getAttribute(strSqlStatus) != null){
+				return 0;
+			}
+			if (errorPort != null){
+				StreamSchema errorSchema = errorPort.getStreamSchema();
+				if (errorSchema.getAttribute(strSqlStatus) != null){
+					return 1;
+				}    						
+			}
+		}
+		
+		return -1;
+		
 	}
 
 	/*
@@ -321,6 +374,9 @@ public class JDBCRun extends AbstractJDBCOperator{
 		// set the data output port
 		dataOutputPort = getOutput(0);
 
+		// Initiate parameter sqlStatusAttr
+		initSqlStatusAttr();
+		
 		// Initiate PreparedStatement
 		initPreparedStatement();
 
@@ -401,10 +457,10 @@ public class JDBCRun extends AbstractJDBCOperator{
     				hasResultSetValue = true;
     				TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
             		// Submit result set as output tuple
-            		submitOutputTuple(dataOutputPort, tuple, rs);
+            		submitOutputTuple(dataOutputPort, tuple, rs, null);
                 	while (rs.next()){
                 		// Submit result set as output tuple
-                		submitOutputTuple(dataOutputPort, tuple, rs);
+                		submitOutputTuple(dataOutputPort, tuple, rs, null);
                 	}
                 	// Generate a window punctuation after all of the tuples are submitted
                 	dataOutputPort.punctuate(Punctuation.WINDOW_MARKER);
@@ -412,7 +468,7 @@ public class JDBCRun extends AbstractJDBCOperator{
     				hasResultSetValue = false;
     				TRACE.log(TraceLevel.DEBUG, "Has Result Set: " + hasResultSetValue);
             		// Submit output tuple
-            		submitOutputTuple(dataOutputPort, tuple, null);
+            		submitOutputTuple(dataOutputPort, tuple, null, null);
     			}
             	// Close result set
             	rs.close();
@@ -421,19 +477,20 @@ public class JDBCRun extends AbstractJDBCOperator{
             	// Set reultSetCountAttr to 0 if the statement does not produce result sets
             	hasResultSetValue = false;
                 // Submit output tuple without result set
-                submitOutputTuple(dataOutputPort, tuple, null);
+                submitOutputTuple(dataOutputPort, tuple, null, null);
 
             }
         }catch (SQLException e){
-        	// SQL ErrorCode & SQLState
-        	int errorCode = e.getErrorCode();
-        	String sqlState = e.getSQLState();
+        	// SQL Code & SQL State
+        	JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
+        	jSqlStatus.setSqlCode(e.getErrorCode());
+        	jSqlStatus.setSqlState(e.getSQLState());
 
-        	TRACE.log(TraceLevel.DEBUG, "SQL Exception Error Code: " + errorCode);
-        	TRACE.log(TraceLevel.DEBUG, "SQL EXCEPTION SQL State: " + sqlState);
+        	TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+        	TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
         	if (hasErrorPort){
         		// submit error message
-        		submitErrorTuple(errorOutputPort, tuple, errorCode, sqlState);
+        		submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
         	}
 
         	// Check if JDBC connection valid
@@ -512,6 +569,57 @@ public class JDBCRun extends AbstractJDBCOperator{
     	}
     }
 
+    // Initiate sqlStatusAttr
+    private void initSqlStatusAttr(){
+    	if (sqlStatusAttr != null) {
+    		ArrayList<String> arrDataAttrs = new ArrayList<String>();
+    		ArrayList<String> arrErrorAttrs = new ArrayList<String>();
+    		
+    		String sqlStatus[] = sqlStatusAttr.split(",");
+    		for (int i=0; i<sqlStatus.length; i++){
+    			String strSqlStatus = sqlStatus[i].trim();
+    			if (!strSqlStatus.isEmpty()){
+    				
+    	    		TRACE.log(TraceLevel.DEBUG, "SQL Status Attr: " + strSqlStatus);
+    				int found = findSqlStatusAttr(dataOutputPort, errorOutputPort, strSqlStatus);
+    				
+    				// Found sqlStatusAttr on data port
+    				if (found == 0){
+        				if (strSqlStatus.contains(".")){
+        					// The attribute is a full qualified name
+        					String strs[] = strSqlStatus.split("\\.");
+    						arrDataAttrs.add(strs[1]);
+        				}else{
+        					arrDataAttrs.add(strSqlStatus);
+        				}
+        	    		TRACE.log(TraceLevel.DEBUG, "The attribute added to data output stream: " + strSqlStatus);
+    				}
+    				if (found == 1){
+        				if (strSqlStatus.contains(".")){
+        					// The attribute is a full qualified name
+        					String strs[] = strSqlStatus.split("\\.");
+    						arrErrorAttrs.add(strs[1]);
+        				}else{
+        					arrErrorAttrs.add(strSqlStatus);
+        				}
+        	    		TRACE.log(TraceLevel.DEBUG, "The attribute added to error output stream: " + strSqlStatus);
+    				}
+    				
+    			}
+    		}
+    		
+    		// Convert to string array
+    		if (arrDataAttrs.size() > 0){
+    			sqlStatusDataAttrs = new String[arrDataAttrs.size()];
+    			arrDataAttrs.toArray(sqlStatusDataAttrs);
+    		}
+    		if (arrErrorAttrs.size() > 0){
+    			sqlStatusErrorAttrs = new String[arrErrorAttrs.size()];
+    			arrErrorAttrs.toArray(sqlStatusErrorAttrs);
+    		}
+    	}
+    }
+
 	// Return SPL value according to SPL type
 	protected Object getSplValue(Attribute attribute, Tuple tuple){
 
@@ -570,11 +678,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	}
 
 	// Submit output tuple according to result set
-	protected void submitOutputTuple(StreamingOutput<OutputTuple> outputPort, Tuple inputTuple, ResultSet rs) throws Exception {
-
-    	// Set errorCode and sqlState to default value.
-    	int errorCode = IJDBCConstants.SQL_ERRORCODE_SUCCESS;
-    	String sqlState = IJDBCConstants.SQL_STATE_SUCCESS;
+	protected void submitOutputTuple(StreamingOutput<OutputTuple> outputPort, Tuple inputTuple, ResultSet rs, JDBCSqlStatus jSqlStatus) throws Exception {
 
 		OutputTuple outputTuple = outputPort.newTuple();
 
@@ -590,23 +694,25 @@ public class JDBCRun extends AbstractJDBCOperator{
 			outputTuple.setBoolean(hasResultSetAttr, hasResultSetValue);
 		}
 
-		// Assign sqlStatus value according to sqlStatusAtr parameter
-        // Check if sqlStatus has been specified
-        if (sqlStatusDataOutput != null){
-			// Assign SQL status according to sqlStatusAttr parameter
-			TRACE.log(TraceLevel.DEBUG, "sqlStatusDataOutput: " + sqlStatusDataOutput);
-			Attribute attr = schema.getAttribute(sqlStatusDataOutput);
-			TupleType dTupleType = (TupleType) attr.getType();
-			StreamSchema dSchema = dTupleType.getTupleSchema();
-			// Create a tuple with desired value
-			Map<String, Object> attrmap = new HashMap<String, Object>();
-			attrmap.put("errorCode", errorCode);
-			attrmap.put("sqlState", new RString(sqlState));
-			Tuple sqlStatusT = dSchema.getTuple(attrmap);
-			// Assign the values to the output tuple
-			outputTuple.setObject(sqlStatusDataOutput, sqlStatusT);
+		// Assign SQL status according to sqlStatusAttr parameter
+        if (sqlStatusDataAttrs != null && sqlStatusDataAttrs.length > 0 && jSqlStatus != null){
+        	TRACE.log(TraceLevel.DEBUG, "Assign SQL status information");
+        	for (int i=0; i<sqlStatusDataAttrs.length; i++){
+    			Attribute attr = schema.getAttribute(sqlStatusDataAttrs[i]);
+    			TupleType dTupleType = (TupleType) attr.getType();
+    			StreamSchema dSchema = dTupleType.getTupleSchema();
+    			// Create a tuple with desired value
+    			Map<String, Object> attrmap = new HashMap<String, Object>();
+    			attrmap.put("sqlCode", jSqlStatus.getSqlCode());
+    			if (jSqlStatus.getSqlState() != null)
+    				attrmap.put("sqlState", new RString(jSqlStatus.getSqlState()));
+    			Tuple sqlStatusT = dSchema.getTuple(attrmap);
+    			// Assign the values to the output tuple
+    			outputTuple.setObject(sqlStatusErrorAttrs[i], sqlStatusT);
+        	}
         }
 
+		
         // Assign values from result set
         if (rs != null){
 			ResultSetMetaData rsmd = rs.getMetaData();
@@ -649,23 +755,31 @@ public class JDBCRun extends AbstractJDBCOperator{
 	}
 
     // Submit error tuple
-	protected void submitErrorTuple(StreamingOutput<OutputTuple> errorOutputPort, Tuple inputTuple, int errorCode, String sqlState) throws Exception{
+	protected void submitErrorTuple(StreamingOutput<OutputTuple> errorOutputPort, Tuple inputTuple, JDBCSqlStatus jSqlStatus) throws Exception{
 		OutputTuple errorTuple = errorOutputPort.newTuple();
-
+		
+    	TRACE.log(TraceLevel.DEBUG, "Submit error tuple...");
+		
 		// Assign SQL status according to sqlStatusAttr parameter
-        if (sqlStatusErrorOutput != null){
-        	TRACE.log(TraceLevel.DEBUG, "sqlStatusErrorOutput: " + sqlStatusErrorOutput);
+        if (sqlStatusErrorAttrs != null && sqlStatusErrorAttrs.length > 0 && jSqlStatus != null){
+        	TRACE.log(TraceLevel.DEBUG, "Assign SQL status information");
         	StreamSchema schema = errorTuple.getStreamSchema();
-			Attribute attr = schema.getAttribute(sqlStatusErrorOutput);
-			TupleType dTupleType = (TupleType) attr.getType();
-			StreamSchema dSchema = dTupleType.getTupleSchema();
-			// Create a tuple with desired value
-			Map<String, Object> attrmap = new HashMap<String, Object>();
-			attrmap.put("errorCode", errorCode);
-			attrmap.put("sqlState", new RString(sqlState));
-			Tuple sqlStatusT = dSchema.getTuple(attrmap);
-			// Assign the values to the output tuple
-			errorTuple.setObject(sqlStatusErrorOutput, sqlStatusT);
+        	for (int i=0; i<sqlStatusErrorAttrs.length; i++){
+    			Attribute attr = schema.getAttribute(sqlStatusErrorAttrs[i]);
+    			TupleType dTupleType = (TupleType) attr.getType();
+    			StreamSchema dSchema = dTupleType.getTupleSchema();
+    			// Create a tuple with desired value
+    			Map<String, Object> attrmap = new HashMap<String, Object>();
+    			attrmap.put("sqlCode", jSqlStatus.getSqlCode());
+    			TRACE.log(TraceLevel.DEBUG, "Submit error tuple, sql code: " + jSqlStatus.getSqlCode());
+    			if (jSqlStatus.getSqlState() != null){
+    				attrmap.put("sqlState", new RString(jSqlStatus.getSqlState()));
+    				TRACE.log(TraceLevel.DEBUG, "Submit error tuple, sql state: " + jSqlStatus.getSqlState());
+    			}
+    			Tuple sqlStatusT = dSchema.getTuple(attrmap);
+    			// Assign the values to the output tuple
+    			errorTuple.setObject(sqlStatusErrorAttrs[i], sqlStatusT);
+        	}
         }
 
         // Copy across all matching attributes.

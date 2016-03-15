@@ -25,7 +25,7 @@ public interface IJDBCConstants {
 	public static final double RECONN_INTERVAL_DEFAULT = 10;
 	
 	// SQL Error Code and SQLState default value
-	public static final int SQL_ERRORCODE_SUCCESS = 0;
+	public static final int SQL_CODE_SUCCESS = 0;
 	public static final String SQL_STATE_SUCCESS = "00000";
 
 }
