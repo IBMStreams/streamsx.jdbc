@@ -56,7 +56,7 @@ composite JDBCRunErrorPort {
 				statement:    "INSERT INTO JDBCRUN_ERRORPORT (ID, NAME)
 									VALUES (?, ?)";
 				statementParamAttrs: "ID, NAME";
-				sqlStatusErrorAttr: "error";
+				sqlStatusAttr: "error";
 		}
 
 		stream<selectSchema> genSelect = Functor(insert1){
