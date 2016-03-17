@@ -70,8 +70,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator {
 	// This optional parameter reconnectionPolicy specifies the reconnection policy
 	// that would be applicable during initial/intermittent connection failures.
 	// The valid values for this parameter are NoRetry, BoundedRetry and InfiniteRetry.
-	// If not specified, it is set to BoundedRetry with a reconnectionBound of 5
-	// and a period of 60 seconds
+	// If not specified, it is set to BoundedRetry.
 	private String reconnectionPolicy = IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY;
 	// This optional parameter reconnectionBound specifies the number of successive connection
 	// that will be attempted for this operator.
@@ -276,6 +275,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator {
 
 			// Reset JDBC connection if JDBC connection is not valid
 			if (!jdbcClientHelper.isConnected()){
+	    		TRACE.log(TraceLevel.DEBUG, "JDBC Connection is not valid");
 				try {
 					// Acquire write lock to reset the JDBC Connection
 					lock.writeLock().lock();
@@ -284,6 +284,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator {
 				}finally {
 					lock.writeLock().unlock();
 				}
+				TRACE.log(TraceLevel.DEBUG, "JDBC Connection reset - Completed");
 			}
 
 			// Acquire read lock to process SQL statement
