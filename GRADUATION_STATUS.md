@@ -8,10 +8,10 @@ Incubation for projects is covered here: https://github.com/IBMStreams/administr
 
 - [ ] :red_circle: Stable release(s)
   * Status: **TBD**
-- [ ] :red_circle: Project is properly documented
-  * Status: **TBD**
-- [ ] :red_circle: Project has samples and instructions to help users get started easily
-  * Status: **TBD**
+- [x] :white_check_mark: Project is properly documented
+  * Status: Yes
+- [x] :white_check_mark: Project has samples and instructions to help users get started easily
+  * Status: Yes
 - [ ] :red_circle: Sufficient testing
   * Status: **TBD**
 - [ ] :red_circle: Instructions on how to get started with development and contributing to project
@@ -20,8 +20,8 @@ Incubation for projects is covered here: https://github.com/IBMStreams/administr
   * Status: **TBD**
 - [ ] :red_circle: Clear release plan
   * Status: **TBD**
-- [ ] :red_circle: At least one active committer
-  * Status: **TBD**
+- [x] :white_check_mark: At least one active committer
+  * Status: Two active committers: Leo Yue, Samantha Chan
 
 ### Key
 * :white_check_mark: - Complete
