@@ -66,7 +66,7 @@ composite JDBCRunErrorPort {
 		
 		() as errorprint = Custom(errors) {
 			logic onTuple errors:
-				printStringLn((rstring)inTuple.ID + "," + inTuple.NAME + ", errorCode: " + (rstring)error.errorCode + ", sqlState: " + error.sqlState);
+				printStringLn((rstring)inTuple.ID + "," + inTuple.NAME + ", sqlCode: " + (rstring)error.sqlCode + ", sqlState: " + error.sqlState);
 		}
 
 		stream<rsSchema> select = JDBCRun(genSelect){
