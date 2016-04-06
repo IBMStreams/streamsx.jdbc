@@ -76,7 +76,7 @@ composite JDBCRunErrorPort {
 				jdbcUrl: "jdbc:db2://<server:port>/<database>";
 				jdbcUser: "jdbcUser";
 				jdbcPassword: "jdbcPassword";
-				statementAttr:    sql;
+				statementAttr:    "sql";
 		}
 		
 		() as printer = Custom(select) {
