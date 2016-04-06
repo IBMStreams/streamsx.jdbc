@@ -91,7 +91,7 @@ composite JDBCRunSample {
 				jdbcUrl: $jdbcUrl;
 				jdbcUser: $jdbcUser;
 				jdbcPassword: $jdbcPassword;
-				statementAttr:    sql;
+				statementAttr:    "sql";
 		}
 		
 		() as printer = Custom(select) {
