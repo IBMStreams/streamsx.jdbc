@@ -1,4 +1,4 @@
-# Copyright (C)2015, International Business Machines Corporation and  
+# Copyright (C)2015,2016 International Business Machines Corporation and  
 # others. All Rights Reserved.    
 .PHONY: all clean 
 
@@ -14,13 +14,10 @@ SPLC = $(STREAMS_INSTALL)/bin/sc
 SPL_CMD_ARGS ?= -t $(STREAMS_JDBC_TOOLKIT)
 SPL_MAIN_COMPOSITE = com.ibm.streamsx.jdbc.sample.jdbcrun::JDBCRunSample
 
-all: standalone
+all: distributed
 
 data: 
 	mkdir data
-
-standalone: data
-	$(SPLC) $(SPLC_FLAGS) -T -M $(SPL_MAIN_COMPOSITE) $(SPL_CMD_ARGS)
 
 distributed: data
 	$(SPLC) $(SPLC_FLAGS) -M $(SPL_MAIN_COMPOSITE) $(SPL_CMD_ARGS)
