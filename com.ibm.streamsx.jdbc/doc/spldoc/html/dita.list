@@ -1,4 +1,4 @@
-#Mon Dec 14 13:28:17 EST 2015
+#Sat Oct 08 00:30:35 EDT 2016
 copytosourcelist=
 hreftargetslist=dita/tk$com.ibm.streamsx.jdbc/ns$com.ibm.streamsx.jdbc.xml,dita/tk$com.ibm.streamsx.jdbc/ix$Type.xml,dita/tk$com.ibm.streamsx.jdbc/op$com.ibm.streamsx.jdbc$JDBCRun.xml,dita/toolkits/ix$Namespace.xml,dita/toolkits/ix$Operator.xml,dita/tk$com.ibm.streamsx.jdbc/spl$com.ibm.streamsx.jdbc.types$JDBCRunTypes.xml,dita/tk$com.ibm.streamsx.jdbc/tk$com.ibm.streamsx.jdbc.xml,dita/toolkits/ix$Type.xml,dita/tk$com.ibm.streamsx.jdbc/ix$Operator.xml,dita/tk$com.ibm.streamsx.jdbc/ix$Namespace.xml,dita/toolkits/toolkits.xml,dita/references/OperatorModel.xml,dita/tk$com.ibm.streamsx.jdbc/ns$com.ibm.streamsx.jdbc.types.xml
 fullditatopicfile=fullditatopic.list
@@ -37,7 +37,7 @@ codereffile=coderef.list
 keylist=
 codereflist=
 user.input.file.listfile=usr.input.file.list
-user.input.dir=/homes/hny4/yiminy/gitmaster/streamsx.jdbc/com.ibm.streamsx.jdbc/doc/spldoc
+user.input.dir=/home/streamsadmin/gitreleases/streamsx.jdbc/com.ibm.streamsx.jdbc/doc/spldoc
 uplevels=../
 tempdirToinputmapdir.relative.value=dita/
 conrefpushfile=conrefpush.list

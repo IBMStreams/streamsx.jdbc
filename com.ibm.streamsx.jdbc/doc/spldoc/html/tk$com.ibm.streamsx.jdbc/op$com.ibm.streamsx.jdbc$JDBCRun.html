@@ -22,7 +22,7 @@
 <div class="body refbody">
 <div class="section">
 <p class="p">
-<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 0.9.0</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
+<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.0.0</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
 
 </div>
 
@@ -55,7 +55,16 @@
  
   <dt class="dt dlterm">Parameters</dt>
 
-  <dd class="dd">This operator supports 18 parameters. (<tt class="ph tt">batchSize, hasResultSetAttr, isolationLevel, jdbcClassName, jdbcDriverLib, jdbcPassword, jdbcProperties, jdbcUrl, jdbcUser, reconnectionBound, reconnectionInterval, reconnectionPolicy, sqlFailureAction, sqlStatusAttr, statement, statementAttr, statementParamAttrs, transactionSize</tt>)
+  <dd class="dd">This operator supports 18 parameters.
+<p class="p"> Required: 
+<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
+
+</p>
+
+<p class="p"> Optional: 
+<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>
+
+</p>
 </dd>
 
  
@@ -251,9 +260,19 @@
 
 <div class="section">
 <p class="p splhead-1"><strong class="ph b"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters">Parameters</a></strong></p>
-This operator supports 18 parameters.<dl class="dl">
+This operator supports 18 parameters.
+<p class="p"> Required: 
+<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_batchSize"><tt class="ph tt">batchSize</tt></dt>
+</p>
+
+<p class="p"> Optional: 
+<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>
+
+</p>
+<dl class="dl">
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__batchSize"><!-- --></a><tt class="ph tt">batchSize</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the number of statement to execute as a batch. The default batch size is 1.
@@ -284,7 +303,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_hasResultSetAttr"><tt class="ph tt">hasResultSetAttr</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__hasResultSetAttr"><!-- --></a><tt class="ph tt">hasResultSetAttr</tt></dt>
 
 <dd class="dd">
 <p class="p">This parameter points to an output attribute and returns true if the statement produces result sets, otherwise, returns false
@@ -315,7 +334,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_isolationLevel"><tt class="ph tt">isolationLevel</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__isolationLevel"><!-- --></a><tt class="ph tt">isolationLevel</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level READ_UNCOMMITTED.
@@ -346,7 +365,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcClassName"><tt class="ph tt">jdbcClassName</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcClassName"><!-- --></a><tt class="ph tt">jdbcClassName</tt></dt>
 
 <dd class="dd">
 <p class="p">This required parameter specifies the class name for jdbc driver and it must have exactly one value of type rstring.
@@ -377,7 +396,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcDriverLib"><tt class="ph tt">jdbcDriverLib</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcDriverLib"><!-- --></a><tt class="ph tt">jdbcDriverLib</tt></dt>
 
 <dd class="dd">
 <p class="p">This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.
@@ -408,7 +427,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcPassword"><tt class="ph tt">jdbcPassword</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcPassword"><!-- --></a><tt class="ph tt">jdbcPassword</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring.
@@ -439,7 +458,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcProperties"><tt class="ph tt">jdbcProperties</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcProperties"><!-- --></a><tt class="ph tt">jdbcProperties</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the path name of the file that contains the jdbc connection properties.
@@ -470,7 +489,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcUrl"><tt class="ph tt">jdbcUrl</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcUrl"><!-- --></a><tt class="ph tt">jdbcUrl</tt></dt>
 
 <dd class="dd">
 <p class="p">This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://&lt;server&gt;:&lt;port&gt;/&lt;database&gt;
@@ -513,7 +532,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_jdbcUser"><tt class="ph tt">jdbcUser</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcUser"><!-- --></a><tt class="ph tt">jdbcUser</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring.
@@ -544,7 +563,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_reconnectionBound"><tt class="ph tt">reconnectionBound</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__reconnectionBound"><!-- --></a><tt class="ph tt">reconnectionBound</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the number of successive connection attempts that occur when a connection fails or a disconnect occurs.  It is used only when the <strong class="ph b">reconnectionPolicy</strong> parameter is set to <tt class="ph tt">BoundedRetry</tt>; otherwise, it is ignored. The default value is <tt class="ph tt">5</tt>.
@@ -575,7 +594,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_reconnectionInterval"><tt class="ph tt">reconnectionInterval</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__reconnectionInterval"><!-- --></a><tt class="ph tt">reconnectionInterval</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the amount of time (in seconds) that the operator waits between successive connection attempts.  It is used only when the <strong class="ph b">reconnectionPolicy</strong> parameter is set to <tt class="ph tt">BoundedRetry</tt> or <tt class="ph tt">InfiniteRetry</tt>; othewise, it is ignored.  The default value is <tt class="ph tt">10</tt>.
@@ -606,7 +625,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_reconnectionPolicy"><tt class="ph tt">reconnectionPolicy</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__reconnectionPolicy"><!-- --></a><tt class="ph tt">reconnectionPolicy</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the policy that is used by the operator to handle database connection failures.  The valid values are: <tt class="ph tt">NoRetry</tt>, <tt class="ph tt">InfiniteRetry</tt>, and <tt class="ph tt">BoundedRetry</tt>. The default value is <tt class="ph tt">BoundedRetry</tt>. If <tt class="ph tt">NoRetry</tt> is specified and a database connection failure occurs, the operator does not try to connect to the database again.  The operator shuts down at startup time if the initial connection attempt fails. If <tt class="ph tt">BoundedRetry</tt> is specified and a database connection failure occurs, the operator tries to connect to the database again up to a maximum number of times. The maximum number of connection attempts is specified in the <strong class="ph b">reconnectionBound</strong> parameter.  The sequence of connection attempts occurs at startup time. If a connection does not exist, the sequence of connection attempts also occurs before each operator is run.  If <tt class="ph tt">InfiniteRetry</tt> is specified, the operator continues to try and connect indefinitely until a connection is made.  This behavior blocks all other operator operations while a connection is not successful.  For example, if an incorrect connection password is specified in the connection configuration document, the operator remains in an infinite startup loop until a shutdown is requested.
@@ -637,7 +656,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_sqlFailureAction"><tt class="ph tt">sqlFailureAction</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__sqlFailureAction"><!-- --></a><tt class="ph tt">sqlFailureAction</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter has values of log, rollback and terminate. If not specified, log is assumed. If sqlFailureAction is log, the error is logged, and the error condition is cleared. If sqlFailureAction is rollback, the error is logged, the transaction rolls back. If sqlFailureAction is terminate, the error is logged, the transaction rolls back and the operator terminates.
@@ -668,10 +687,10 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_sqlStatusAttr"><tt class="ph tt">sqlStatusAttr</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__sqlStatusAttr"><!-- --></a><tt class="ph tt">sqlStatusAttr</tt></dt>
 
 <dd class="dd">
-<p class="p">This parameter points to an output attribute and returns the SQL status information, including SQL error code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)
+<p class="p">This parameter points to one or more output attributes and returns the SQL status information, including SQL code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)
 </p>
 <dl class="dl">
 
@@ -699,7 +718,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_statement"><tt class="ph tt">statement</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__statement"><!-- --></a><tt class="ph tt">statement</tt></dt>
 
 <dd class="dd">
 <p class="p">This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers
@@ -730,7 +749,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_statementAttr"><tt class="ph tt">statementAttr</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__statementAttr"><!-- --></a><tt class="ph tt">statementAttr</tt></dt>
 
 <dd class="dd">
 <p class="p">This parameter specifies the value of complete SQL or stored procedure statement that is from stream attribute (no parameter markers).
@@ -764,7 +783,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_statementParamAttrs"><tt class="ph tt">statementParamAttrs</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__statementParamAttrs"><!-- --></a><tt class="ph tt">statementParamAttrs</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the value of statement parameters. The statementParameter value and SQL statement parameter markers are associated in lexicographic order. For example, the first parameter marker in the SQL statement is associated with the first statementParameter value.
@@ -795,7 +814,7 @@ This operator supports 18 parameters.<dl class="dl">
 
 
 
-<dt class="dt dlterm" id="spldoc_operator__parameter_transactionSize"><tt class="ph tt">transactionSize</tt></dt>
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__transactionSize"><!-- --></a><tt class="ph tt">transactionSize</tt></dt>
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the number of executions to commit per transaction. The default transaction size is 1 and transactions are automatically committed.
