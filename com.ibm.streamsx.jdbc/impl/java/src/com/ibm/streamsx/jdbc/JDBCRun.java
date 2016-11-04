@@ -4,6 +4,7 @@
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -12,6 +13,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 import com.ibm.streams.operator.Attribute;
@@ -27,9 +32,9 @@ import com.ibm.streams.operator.TupleAttribute;
 import com.ibm.streams.operator.Type;
 import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
+import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
-import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.meta.TupleType;
 import com.ibm.streams.operator.model.InputPortSet;
 import com.ibm.streams.operator.model.InputPorts;
@@ -126,6 +131,8 @@ public class JDBCRun extends AbstractJDBCOperator{
 	private int transactionCount = 0;
 	// Execution Batch counter
 	private int batchCount = 0;
+	
+	private int commitInterval = 0;
 
 	// This parameter points to an output attribute and returns true if the statement produces result sets,
 	// otherwise, returns false.
@@ -138,6 +145,10 @@ public class JDBCRun extends AbstractJDBCOperator{
 	private String[] sqlStatusDataAttrs = null;
 	// sqlStatus attribute for error output port
 	private String[] sqlStatusErrorAttrs = null;
+
+	private ScheduledFuture<?> commitThread;
+	
+	private Lock commitLock = new ReentrantLock();
 	
 	//Parameter statement
 	@Parameter(optional = true, description="This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
@@ -186,6 +197,12 @@ public class JDBCRun extends AbstractJDBCOperator{
 	@Parameter(optional = true, description="This parameter points to one or more output attributes and returns the SQL status information, including SQL code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)")
     public void setSqlStatusAttr(String sqlStatusAttr){
     	this.sqlStatusAttr = sqlStatusAttr;
+    }
+	
+	//Parameter sqlStatusAttr
+	@Parameter(optional = true, description="This parameter sets a commit interval for the sql statements that are being processed and overrides the batchSize and transactionSize parameters. ")
+    public void setCommitInterval(int commitInterval){
+    	this.commitInterval = commitInterval;
     }
 
 	/*
@@ -379,7 +396,6 @@ public class JDBCRun extends AbstractJDBCOperator{
 		
 		// Initiate PreparedStatement
 		initPreparedStatement();
-
 	}
 
     // Process control port
@@ -396,7 +412,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit(){
-        if ((consistentRegionContext != null) || (transactionSize > 1)){
+        if ((consistentRegionContext != null) || (transactionSize > 1) || commitInterval > 0){
         	// Set automatic commit to false when transaction size is more than 1 or it is a consistent region.
         	return false;
         }
@@ -405,7 +421,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 
 	// Process input tuple
     protected void processTuple(StreamingInput<Tuple> stream, Tuple tuple) throws Exception{
-
+    	commitLock.lock();
         try{
             // Execute the statement
             ResultSet rs = null;
@@ -482,72 +498,78 @@ public class JDBCRun extends AbstractJDBCOperator{
             }
         }catch (SQLException e){
         	// SQL Code & SQL State
-        	JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
-        	jSqlStatus.setSqlCode(e.getErrorCode());
-        	jSqlStatus.setSqlState(e.getSQLState());
-
-        	TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
-        	TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
-        	if (hasErrorPort){
-        		// submit error message
-        		submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
-        	}
-
-        	// Check if JDBC connection valid
-        	if (!jdbcClientHelper.isValidConnection()){
-        		// sqlFailureAction need not process if JDBC Connection is not valid
-        		throw e;
-        	}
-
-        	if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)){
-    			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
-        		// The error is logged, and the error condition is cleared
-            	LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
-                // Commit the transactions according to transactionSize
-        		if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
-        			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-        			transactionCount = 0;
-        			jdbcClientHelper.commit();
-        		}
-        	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
-
-    			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
-            	LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
-
-            	if (consistentRegionContext != null){
-    				// The error is logged, and request a reset of the consistent region.
-    				consistentRegionContext.reset();
-    			}else{
-    				if (batchSize > 1){
-    					// Clear statement batch & roll back the transaction
-    					jdbcClientHelper.rollbackWithClearBatch();
-    					// Reset the batch counter
-    					batchCount = 0;
-    				}else{
-    					// Roll back the transaction
-    					jdbcClientHelper.rollback();
-    				}
-    				// Reset the transaction counter
-    				transactionCount = 0;
-    			}
-        	}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)){
-    			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
-        		// The error is logged and the operator terminates.
-            	LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
-            	if (batchSize > 1){
-					// Clear statement batch & Roll back the transaction
-            		jdbcClientHelper.rollbackWithClearBatch();
-            		// Reset the batch counter
-            		batchCount = 0;
-            	}else{
-					// Roll back the transaction
-            		jdbcClientHelper.rollback();
-            	}
-        		// Reset transaction counter
-        		transactionCount = 0;
-        		shutdown();
-        	}
+        	handleException(tuple, e);
+        } finally {
+        	commitLock.unlock();
         }
+	}
+
+	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
+		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
+		jSqlStatus.setSqlCode(e.getErrorCode());
+		jSqlStatus.setSqlState(e.getSQLState());
+
+		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
+		if (hasErrorPort){
+			// submit error message
+			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
+		}
+
+		// Check if JDBC connection valid
+		if (!jdbcClientHelper.isValidConnection()){
+			// sqlFailureAction need not process if JDBC Connection is not valid
+			throw e;
+		}
+
+		if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)){
+			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
+			// The error is logged, and the error condition is cleared
+			LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
+		    // Commit the transactions according to transactionSize
+			if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
+				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+				transactionCount = 0;
+				jdbcClientHelper.commit();
+			}
+		}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
+
+			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
+			LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
+
+			if (consistentRegionContext != null){
+				// The error is logged, and request a reset of the consistent region.
+				consistentRegionContext.reset();
+			}else{
+				if (batchSize > 1){
+					// Clear statement batch & roll back the transaction
+					jdbcClientHelper.rollbackWithClearBatch();
+					// Reset the batch counter
+					batchCount = 0;
+				}else{
+					// Roll back the transaction
+					jdbcClientHelper.rollback();
+				}
+				// Reset the transaction counter
+				transactionCount = 0;
+			}
+		}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)){
+			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
+			// The error is logged and the operator terminates.
+			LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
+			if (batchSize > 1){
+				// Clear statement batch & Roll back the transaction
+				jdbcClientHelper.rollbackWithClearBatch();
+				// Reset the batch counter
+				batchCount = 0;
+			}else{
+				// Roll back the transaction
+				jdbcClientHelper.rollback();
+			}
+			// Reset transaction counter
+			transactionCount = 0;
+			shutdown();
+		}
 	}
 
 	// Reset JDBC connection
@@ -784,7 +806,7 @@ public class JDBCRun extends AbstractJDBCOperator{
 
         // Copy across all matching attributes.
         Tuple embeddedInputTuple = errorTuple.getTuple(0);
-        if (embeddedInputTuple != null){
+        if (embeddedInputTuple != null && inputTuple != null){
         	StreamSchema embeddedSchema = embeddedInputTuple.getStreamSchema();
         	Tuple embeddedTuple = embeddedSchema.getTuple(inputTuple);
         	errorTuple.setTuple(0, embeddedTuple);
@@ -806,6 +828,9 @@ public class JDBCRun extends AbstractJDBCOperator{
     		}
     	}
 
+    	if(commitThread != null) {
+    		commitThread.cancel(false);
+    	}
     	// Roll back transaction & close connection
         super.shutdown();
 
@@ -864,5 +889,56 @@ public class JDBCRun extends AbstractJDBCOperator{
 			jdbcClientHelper.rollback();
 		}
 	}
+
+	@Override
+	public void allPortsReady() throws Exception {
+		if(consistentRegionContext == null && commitInterval > 0) {
+			commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                	commitLock.lock();
+                    try {
+                        synchronized(this) {
+                        	if(batchSize > 1) {
+                        		batchCount = 0;
+	                        	if (isStaticStatement){
+	                        		jdbcClientHelper.executePreparedStatementBatch();
+	                	        }else{
+	    	            			jdbcClientHelper.executeStatementBatch();
+	                	        }
+                        	}
+                        	
+                        	if ((consistentRegionContext == null)){
+                    			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+                    			transactionCount = 0;
+                    			jdbcClientHelper.commit();
+                    		}
+                        }
+                    } catch (SQLException e) {
+                        try {
+							handleException(null, e);
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						} finally {
+							commitLock.unlock();
+						}
+                    } finally {
+                    	commitLock.unlock();
+                    }
+                }
+            }, 0, commitInterval, TimeUnit.MILLISECONDS);
+		}
+		
+		super.allPortsReady();
+	}
+	
+	
 
 }
