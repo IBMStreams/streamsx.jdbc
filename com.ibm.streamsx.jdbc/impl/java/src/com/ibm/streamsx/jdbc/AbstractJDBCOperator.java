@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -94,6 +96,13 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// consistent region context
     protected ConsistentRegionContext consistentRegionContext;
+    
+ // SSL parameters
+ 	private String keyStore;
+ 	private String trustStore;
+ 	private String keyStorePassword;
+ 	private String trustStorePassword;
+ 	private boolean sslConnection;
 
 	//Parameter jdbcDriverLib
 	@Parameter(optional = false, description="This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.")
@@ -164,6 +173,56 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     public void setReconnectionInterval(double reconnectionInterval){
     	this.reconnectionInterval = reconnectionInterval;
     }
+
+	// Parameter sslConnection
+		@Parameter(optional = true)
+		public void setSslConnection(boolean sslConnection) {
+			this.sslConnection = sslConnection;
+		}
+
+		public boolean isSslConnection() {
+			return sslConnection;
+		}
+
+		// Parameter keyStore
+		@Parameter(optional = true)
+		public void setKeyStore(String keyStore) {
+			this.keyStore = keyStore;
+		}
+
+		public String getKeyStore() {
+			return keyStore;
+		}
+
+		// Parameter keyStorePassword
+		@Parameter(optional = true)
+		public void setKeyStorePassword(String keyStorePassword) {
+			this.keyStorePassword = keyStorePassword;
+		}
+
+		public String getKeyStorePassword() {
+			return keyStorePassword;
+		}
+
+		// Parameter trustStore
+		@Parameter(optional = true)
+		public void setTrustStore(String trustStore) {
+			this.trustStore = trustStore;
+		}
+
+		public String getTrustStore() {
+			return trustStore;
+		}
+
+		// Parameter trustStorePassword
+		@Parameter(optional = true)
+		public void setTrustStorePassword(String trustStorePassword) {
+			this.trustStorePassword = trustStorePassword;
+		}
+
+		public String getTrustStorePassword() {
+			return trustStorePassword;
+		}
 
 	/*
 	 * The method checkParametersRuntime
@@ -239,6 +298,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	public synchronized void initialize(OperatorContext context)
 			throws Exception {
 		super.initialize(context);
+		if (isSslConnection()) {
+			if (context.getParameterNames().contains("keyStore"))
+				System.setProperty("javax.net.ssl.keyStore", getAbsolutePath(getKeyStore()));
+			if (context.getParameterNames().contains("keyStorePassword"))
+				System.setProperty("javax.net.ssl.keyStorePassword", getKeyStorePassword());
+			if (context.getParameterNames().contains("trustStore"))
+				System.setProperty("javax.net.ssl.trustStore", getAbsolutePath(getTrustStore()));
+			if (context.getParameterNames().contains("trustStorePassword"))
+				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
+		}
+		TRACE.log(TraceLevel.DEBUG,"James propperties: "+System.getProperties().toString());
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " initializing in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());
 
 		// set up JDBC driver class path
@@ -415,7 +485,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
-			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
 
 			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
@@ -478,5 +548,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	@Override
 	public void retireCheckpoint(long id) throws Exception {
 		LOGGER.log(LogLevel.INFO, "CR_RETIRE");
+	}
+	protected String getAbsolutePath(String filePath) {
+		if (filePath == null)
+			return null;
+
+		Path p = Paths.get(filePath);
+		if (p.isAbsolute()) {
+			return filePath;
+		} else {
+			File f = new File(getOperatorContext().getPE().getApplicationDirectory(), filePath);
+			return f.getAbsolutePath();
+		}
 	}
 }
