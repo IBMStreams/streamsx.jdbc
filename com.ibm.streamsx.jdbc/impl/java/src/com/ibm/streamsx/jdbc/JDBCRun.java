@@ -4,6 +4,7 @@
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -12,16 +13,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
-import java.io.File;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.io.IOException;
+import java.util.logging.Logger;
 
 import com.ibm.streams.operator.Attribute;
 import com.ibm.streams.operator.OperatorContext;
@@ -36,9 +32,9 @@ import com.ibm.streams.operator.TupleAttribute;
 import com.ibm.streams.operator.Type;
 import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
+import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
-import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.meta.TupleType;
 import com.ibm.streams.operator.model.InputPortSet;
 import com.ibm.streams.operator.model.InputPorts;
@@ -78,6 +74,8 @@ import com.ibm.streams.operator.types.XML;
 public class JDBCRun extends AbstractJDBCOperator {
 
 	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.jdbcrun.JDBCRun";
+
+	private static final CommitPolicy DEFAULT_COMMIT_POLICY = CommitPolicy.OnCheckpoint;
 
 	/**
 	 * Create a logger specific to this class
@@ -159,7 +157,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// sqlStatus attribute for error output port
 	private String[] sqlStatusErrorAttrs = null;
 
-	
+	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
+
+	@Parameter(optional = true, description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransaction*, commits will occur whenever the **transactionCount** or **commitInterval** are reached. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransaction* and *OnTransactionAndCheckpoint* values be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
+	public void setCommitPolicy(CommitPolicy commitPolicy) {
+		this.commitPolicy = commitPolicy;
+	}
 
 	// Parameter statement
 	@Parameter(optional = true, description = "This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
@@ -216,7 +219,6 @@ public class JDBCRun extends AbstractJDBCOperator {
 		this.commitInterval = commitInterval;
 	}
 
-	
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
@@ -437,7 +439,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit() {
-		if ((consistentRegionContext != null) || (transactionSize > 1) || (commitInterval > 0)) {
+		if ((consistentRegionContext != null && commitPolicy == CommitPolicy.OnCheckpoint) || (transactionSize > 1)
+				|| (commitInterval > 0)) {
 			// Set automatic commit to false when transaction size is more than
 			// 1 or it is a consistent region.
 			return false;
@@ -491,7 +494,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 			}
 
 			// Commit the transactions according to transactionSize
-			if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)) {
+			if ((consistentRegionContext == null
+					|| (consistentRegionContext != null && (commitPolicy == CommitPolicy.OnTransaction
+							|| commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)))
+					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
 				jdbcClientHelper.commit();
@@ -556,7 +562,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 			// The error is logged, and the error condition is cleared
 			LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
 			// Commit the transactions according to transactionSize
-			if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)) {
+			if ((consistentRegionContext == null
+					|| (consistentRegionContext != null && (commitPolicy == CommitPolicy.OnTransaction
+					|| commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)))
+					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
 				jdbcClientHelper.commit();
@@ -913,8 +922,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
 
 		// Commit the transaction
-		jdbcClientHelper.commit();
-
+		if (commitPolicy == CommitPolicy.OnCheckpoint || commitPolicy == CommitPolicy.OnTransactionAndCheckpoint) {
+			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+			jdbcClientHelper.commit();
+			transactionCount = 0;
+		}
+		
 		// Save current batch information
 		if (batchSize > 1) {
 			TRACE.log(TraceLevel.DEBUG, "Checkpoint batchCount: " + batchCount);
@@ -926,7 +939,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 				TRACE.log(TraceLevel.DEBUG, "Checkpoint statement");
 				checkpoint.getOutputStream().writeObject(jdbcClientHelper.getStatement());
 			}
-		}
+		}	
 	}
 
 	@Override
@@ -961,8 +974,6 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 	}
 
-	
-
 	@Override
 	public void allPortsReady() throws Exception {
 		if (consistentRegionContext == null && commitInterval > 0) {
@@ -981,7 +992,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 								}
 							}
 
-							if ((consistentRegionContext == null)) {
+							if ((consistentRegionContext == null || (consistentRegionContext != null
+									&& commitPolicy != CommitPolicy.OnCheckpoint))) {
 								TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 								transactionCount = 0;
 								jdbcClientHelper.commit();
