@@ -974,7 +974,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	@Override
 	public void allPortsReady() throws Exception {
-		if (consistentRegionContext == null && commitInterval > 0) {
+		if ((consistentRegionContext == null 
+				|| (consistentRegionContext != null 
+				&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)) 
+			&& commitInterval > 0) {
 			commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
 				@Override
 				public void run() {
@@ -990,12 +993,9 @@ public class JDBCRun extends AbstractJDBCOperator {
 								}
 							}
 
-							if ((consistentRegionContext == null || (consistentRegionContext != null
-									&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))) {
-								TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-								transactionCount = 0;
-								jdbcClientHelper.commit();
-							}
+							TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+							transactionCount = 0;
+							jdbcClientHelper.commit();
 						}
 					} catch (SQLException e) {
 						try {
