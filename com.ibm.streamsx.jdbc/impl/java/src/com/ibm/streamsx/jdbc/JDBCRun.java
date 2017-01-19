@@ -159,7 +159,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
 
-	@Parameter(optional = true, description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransaction*, commits will occur whenever the **transactionCount** or **commitInterval** are reached. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransaction* and *OnTransactionAndCheckpoint* values be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
+	@Parameter(optional = true, description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
 	public void setCommitPolicy(CommitPolicy commitPolicy) {
 		this.commitPolicy = commitPolicy;
 	}
@@ -495,8 +495,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 			// Commit the transactions according to transactionSize
 			if ((consistentRegionContext == null
-					|| (consistentRegionContext != null && (commitPolicy == CommitPolicy.OnTransaction
-							|| commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)))
+					|| (consistentRegionContext != null 
+					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
 					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
@@ -563,8 +563,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 			LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
 			// Commit the transactions according to transactionSize
 			if ((consistentRegionContext == null
-					|| (consistentRegionContext != null && (commitPolicy == CommitPolicy.OnTransaction
-					|| commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)))
+					|| (consistentRegionContext != null 
+					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
 					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
@@ -922,11 +922,9 @@ public class JDBCRun extends AbstractJDBCOperator {
 		LOGGER.log(LogLevel.INFO, "CR_CHECKPOINT", checkpoint.getSequenceId());
 
 		// Commit the transaction
-		if (commitPolicy == CommitPolicy.OnCheckpoint || commitPolicy == CommitPolicy.OnTransactionAndCheckpoint) {
-			TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-			jdbcClientHelper.commit();
-			transactionCount = 0;
-		}
+		TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+		jdbcClientHelper.commit();
+		transactionCount = 0;
 		
 		// Save current batch information
 		if (batchSize > 1) {
@@ -993,7 +991,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 							}
 
 							if ((consistentRegionContext == null || (consistentRegionContext != null
-									&& commitPolicy != CommitPolicy.OnCheckpoint))) {
+									&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))) {
 								TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 								transactionCount = 0;
 								jdbcClientHelper.commit();
