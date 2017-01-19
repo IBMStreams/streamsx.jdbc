@@ -308,7 +308,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (context.getParameterNames().contains("trustStorePassword"))
 				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
 		}
-		TRACE.log(TraceLevel.DEBUG,"201601190730 propperties: "+System.getProperties().toString());
+		TRACE.log(TraceLevel.DEBUG,"201701190730 propperties: "+System.getProperties().toString());
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " initializing in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());
 
 		// set up JDBC driver class path
