@@ -538,9 +538,8 @@ public class JDBCRun extends AbstractJDBCOperator{
 		if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)){
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
 			// The error is logged, and the error condition is cleared
- //          	LOGGER.log(LogLevel.WARNING, Messages.getString("JDBC_SQL_EXCEPTION_WARNING"), new Object[] { e.toString() }); 
- 			LOGGER.log(LogLevel.WARNING, "SQL_EXCEPTION_WARNING", new Object[] { e.toString() });
-		    // Commit the transactions according to transactionSize
+           	LOGGER.log(LogLevel.WARNING, Messages.getString("JDBC_SQL_EXCEPTION_WARNING"), new Object[] { e.toString() }); 
+ 		    // Commit the transactions according to transactionSize
 			if ((consistentRegionContext == null) && (transactionSize > 1) && (transactionCount >= transactionSize)){
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
@@ -549,8 +548,8 @@ public class JDBCRun extends AbstractJDBCOperator{
 		}else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)){
 
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
-//           	LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SQL_EXCEPTION_ERROR"), new Object[] { e.toString() }); 
- 		LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
+           	LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SQL_EXCEPTION_ERROR"), new Object[] { e.toString() }); 
+
 			if (consistentRegionContext != null){
 				// The error is logged, and request a reset of the consistent region.
 				consistentRegionContext.reset();
