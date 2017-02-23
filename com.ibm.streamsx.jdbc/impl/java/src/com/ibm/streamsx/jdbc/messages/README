@@ -1,0 +1,46 @@
+Information File for Translation of IBM Streams
+===============================================
+Project Number:					t.b.d.
+Toolkit Name:					jdbc
+Toolkit Namespace:				com.ibm.streamsx.jdbc
+
+
+List of files to be translated
+------------------------------
+..../com.ibm.streamsx.jdbc/impl/java/src/com/ibm/streamsx/jdbc/messages/messages_en_US.properties
+
+
+File type and Markup Information
+--------------------------------
+
+	File Type				Markup Type				Markup
+	---------				-----------				------     
+	.property				PROPERTIES				IBMNJDK2
+
+
+Further instructions
+--------------------
+
+	Do not translate the following words:
+		JDBC, SQL, SPL, rstring, tuple, consistent region	
+
+Translating to all 10 Baseline languages:
+
+    Language                                    messages property file 
+    
+    German                                      messages_de_DE.properties 									
+    French (Installer translated)               messages_fr_FR.properties
+    Italian                                     messages_it_IT.properties
+    Spanish                                     messages_es_ES.properties
+    Brazilian Portuguese (Installer translated) messages_pt_BR.properties 
+    Japanese (Installer translated )            messages_ja_JP.properties    
+    Simplified Chinese (Installer translated )  messages_zh_CN.properties
+    Russian (Installer translated )             messages_ru_RU.properties
+    Traditional Chinese                         messages_zh_TW.properties
+    Korean                                      messages_ko_KR.properties
+
+
+The translated files should be copied in the messages folder:
+./com.ibm.streamsx.jdbc/impl/java/src/com/ibm/streamsx/jdbc/messages/
+
+ 
