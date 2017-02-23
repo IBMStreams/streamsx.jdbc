@@ -8,7 +8,7 @@ Behavior in a consistent region:
   On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port.
   On checkpoint: A database commit is performed.
   On reset: Any pending statements are discarded. A rollback is performed.</info:description>
-    <info:version>1.1.0</info:version>
+    <info:version>1.2.0</info:version>
     <info:requiredProductVersion>4.0.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>
