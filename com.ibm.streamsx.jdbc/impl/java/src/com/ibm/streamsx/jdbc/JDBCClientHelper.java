@@ -12,7 +12,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.Stack;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import com.ibm.streams.operator.logging.LogLevel;
+import com.ibm.streams.operator.logging.LoggerNames;
+import com.ibm.streams.operator.logging.TraceLevel;
 
 /* This class contains all the JDBC connection related information,
  * creating maintaining and closing a connection to the JDBC driver
@@ -23,7 +29,17 @@ public class JDBCClientHelper {
 	private Connection connection = null;
     // JDBC connection status
     private boolean connected = false;
+    
+    private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.JDBCClientHelper";
 
+	/**
+	 * Create a logger specific to this class
+	 */
+	private static Logger LOGGER = Logger.getLogger(LoggerNames.LOG_FACILITY
+			+ "." + CLASS_NAME);
+    
+	// logger for trace/debug information
+		protected static Logger TRACE = Logger.getLogger("com.ibm.streamsx.jdbc");
 
 	// the class name for jdbc driver.
 	private String jdbcClassName;
@@ -33,6 +49,7 @@ public class JDBCClientHelper {
 	private String jdbcUser = null;
 	// the user's password.
 	private String jdbcPassword = null;
+	private boolean sslConnection = false;
 	// the jdbc properties file.
 	private String jdbcProperties = null;
 	// the transaction isolation level at which statement runs.
@@ -57,12 +74,13 @@ public class JDBCClientHelper {
 
 	// This constructor sets the jdbc connection information with reconnection policy
 	public JDBCClientHelper(String jdbcClassName, String jdbcUrl,
-			String jdbcUser, String jdbcPassword, String jdbcProperties, boolean autoCommit, String isolationLevel,
+			String jdbcUser, String jdbcPassword, boolean sslConnection, String jdbcProperties, boolean autoCommit, String isolationLevel,
 			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval) {
 		this.jdbcClassName = jdbcClassName;
 		this.jdbcUrl = jdbcUrl;
 		this.jdbcUser = jdbcUser;
 		this.jdbcPassword = jdbcPassword;
+		this.sslConnection = sslConnection;
 		this.jdbcProperties = jdbcProperties;
 		this.autoCommit = autoCommit;
 		this.isolationLevel = isolationLevel;
@@ -85,13 +103,24 @@ public class JDBCClientHelper {
 	        Class.forName(jdbcClassName);
 
 	        // Load jdbc properties
-	        Properties jdbcConnectionProps = null;
+	        Properties jdbcConnectionProps = new Properties();
 	        if (jdbcProperties != null){
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
-				jdbcConnectionProps = new Properties();
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
+	        } else {
+	        	// pick up user and passwrod if they are parameters
+	        	if (jdbcUser != null && jdbcPassword != null) {
+	        	jdbcConnectionProps.put("user", jdbcUser);
+	        	jdbcConnectionProps.put("password", jdbcPassword);
+	        	}
+	        	
 	        }
+	        
+	        // add sslConnection to properties
+	        if (sslConnection)
+	        	jdbcConnectionProps.put("sslConnection","true");
+	       
 
 	        //Establish connection
 			int nConnectionAttempts = 0;
@@ -104,16 +133,24 @@ public class JDBCClientHelper {
 				// nConnectionAttempts
 				try {
 					nConnectionAttempts ++;
-
-					if (jdbcConnectionProps != null){
-			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
+					TRACE.log(TraceLevel.DEBUG,"JDBC connection attempt "+nConnectionAttempts);
+	    			if (jdbcConnectionProps != null){
+	    				TRACE.log(TraceLevel.DEBUG,"JDBC connection -- props not null ");
+	    				TRACE.log(TraceLevel.DEBUG,jdbcConnectionProps.toString());
+		 	        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else if (jdbcUser != null && jdbcPassword != null){
-			        	connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
+			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- userid password exist "+jdbcUrl);
+			        	;
+			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else{
-			        	connection = DriverManager.getConnection(jdbcUrl);
+			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- using url only "+jdbcUrl);
+			        	connection = DriverManager.getConnection(jdbcUrl,jdbcConnectionProps);
 			        }
 					break;
 				} catch (SQLException e) {
+					// output excpetion info into trace file if in debug mode
+					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);
+					
 	    			// If Reconnection Policy is NoRetry, throw SQLException
 					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
 						throw e;
@@ -137,6 +174,7 @@ public class JDBCClientHelper {
 
 				}
 			}
+			LOGGER.log(LogLevel.INFO,"JDBC connectioned ");
 
 	        connection.setAutoCommit(autoCommit);
 
@@ -161,10 +199,13 @@ public class JDBCClientHelper {
 
 	// Check if JDBC connection is valid
 	public synchronized boolean isValidConnection() throws SQLException{
+		LOGGER.log(LogLevel.INFO,"JDBC connection validation");
 		if (connection == null || !connection.isValid(0)){
 			connected = false;
+			LOGGER.log(LogLevel.INFO,"JDBC connection invalid ");
 			return false;
 		}
+		LOGGER.log(LogLevel.INFO,"JDBC connection valid ");
 		return true;
 	}
 
@@ -175,6 +216,7 @@ public class JDBCClientHelper {
 
 	// Reset the JDBC connection with the same configuration information
 	public synchronized void resetConnection() throws Exception{
+		LOGGER.log(LogLevel.INFO,"JDBC connection resetting");
 		if (!isConnected()){
 			// Close existing JDBC connection
 			closeConnection();

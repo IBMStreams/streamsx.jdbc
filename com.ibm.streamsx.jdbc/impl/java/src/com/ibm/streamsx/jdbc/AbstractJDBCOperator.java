@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -33,13 +35,13 @@ import com.ibm.streams.operator.state.Checkpoint;
 import com.ibm.streams.operator.state.ConsistentRegionContext;
 import com.ibm.streams.operator.state.StateHandler;
 
-/** 
+/**
  * AbstractJDBCOperator provides the base class for all JDBC operators.
  */
 public abstract class AbstractJDBCOperator extends AbstractOperator implements StateHandler{
 
-	private static final String PACKAGE_NAME = "com.ibm.streamsx.jdbc"; 
-	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.AbstractJDBCOperator";  
+	private static final String PACKAGE_NAME = "com.ibm.streamsx.jdbc";
+	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.AbstractJDBCOperator";
 
 	/**
 	 * Create a logger specific to this class
@@ -64,7 +66,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// This parameter specifies the user's password.
 	private String jdbcPassword;
 	// This parameter specifies the path name of the file that contains the jdbc connection properties.
-	private String jdbcProperties; 
+	private String jdbcProperties;
 	// This parameter specifies the transaction isolation level at which statement runs.
 	// If omitted, the statement runs at level READ_UNCOMMITTED
 	private String isolationLevel = IJDBCConstants.TRANSACTION_READ_UNCOMMITTED;
@@ -94,6 +96,13 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// consistent region context
     protected ConsistentRegionContext consistentRegionContext;
+    
+ // SSL parameters
+ 	private String keyStore;
+ 	private String trustStore;
+ 	private String keyStorePassword;
+ 	private String trustStorePassword;
+ 	private boolean sslConnection;
 
 	//Parameter jdbcDriverLib
 	@Parameter(optional = false, description="This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.")
@@ -165,6 +174,56 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	this.reconnectionInterval = reconnectionInterval;
     }
 
+	// Parameter sslConnection
+		@Parameter(optional = true)
+		public void setSslConnection(boolean sslConnection) {
+			this.sslConnection = sslConnection;
+		}
+
+		public boolean isSslConnection() {
+			return sslConnection;
+		}
+
+		// Parameter keyStore
+		@Parameter(optional = true)
+		public void setKeyStore(String keyStore) {
+			this.keyStore = keyStore;
+		}
+
+		public String getKeyStore() {
+			return keyStore;
+		}
+
+		// Parameter keyStorePassword
+		@Parameter(optional = true)
+		public void setKeyStorePassword(String keyStorePassword) {
+			this.keyStorePassword = keyStorePassword;
+		}
+
+		public String getKeyStorePassword() {
+			return keyStorePassword;
+		}
+
+		// Parameter trustStore
+		@Parameter(optional = true)
+		public void setTrustStore(String trustStore) {
+			this.trustStore = trustStore;
+		}
+
+		public String getTrustStore() {
+			return trustStore;
+		}
+
+		// Parameter trustStorePassword
+		@Parameter(optional = true)
+		public void setTrustStorePassword(String trustStorePassword) {
+			this.trustStorePassword = trustStorePassword;
+		}
+
+		public String getTrustStorePassword() {
+			return trustStorePassword;
+		}
+
 	/*
 	 * The method checkParametersRuntime
 	 */
@@ -174,25 +233,25 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		OperatorContext context = checker.getOperatorContext();
 
 		// Check reconnection related parameters at runtime
-		if ((context.getParameterNames().contains("reconnectionBound"))) { 
+		if ((context.getParameterNames().contains("reconnectionBound"))) {
 			// reconnectionBound value should be non negative.
-			if (Integer.parseInt(context.getParameterValues("reconnectionBound").get(0)) < 0) { 
+			if (Integer.parseInt(context.getParameterValues("reconnectionBound").get(0)) < 0) {
     			LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_REC_BOUND_NEG")); 
 				checker.setInvalidContext(Messages.getString("JDBC_REC_BOUND_NOT_ZERO"), 
 						new String[] { context.getParameterValues(
-								"reconnectionBound").get(0) }); 
+								"reconnectionBound").get(0) });
 			}
-			if (context.getParameterNames().contains("reconnectionPolicy")) { 
+			if (context.getParameterNames().contains("reconnectionPolicy")) {
 				// reconnectionPolicy can be either InfiniteRetry, NoRetry,
 				// BoundedRetry
-				String strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim(); 
+				String strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
 				// reconnectionBound can appear only when the reconnectionPolicy
 				// parameter is set to BoundedRetry and cannot appear otherwise
 				if (! strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)) {
 	    			LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_REC_BOUND_NOT_ALLOWED")); 
 					checker.setInvalidContext(Messages.getString("JDBC_REC_BOUND_NOT_SET_RETRY"), 
 							new String[] { context.getParameterValues(
-									"reconnectionBound").get(0) }); 
+									"reconnectionBound").get(0) });
 				}
 			}
 		}
@@ -205,11 +264,11 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	@ContextCheck(compile = true)
 	public static void checkParameters(OperatorContextChecker checker) {
 		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
-		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");  
-		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");  
+		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
+		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
 		// check reconnection related parameters
-		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");  
-		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");  
+		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
+		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
 	}
 
 	@ContextCheck
@@ -239,19 +298,30 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	public synchronized void initialize(OperatorContext context)
 			throws Exception {
 		super.initialize(context);
+		if (isSslConnection()) {
+			if (context.getParameterNames().contains("keyStore"))
+				System.setProperty("javax.net.ssl.keyStore", getAbsolutePath(getKeyStore()));
+			if (context.getParameterNames().contains("keyStorePassword"))
+				System.setProperty("javax.net.ssl.keyStorePassword", getKeyStorePassword());
+			if (context.getParameterNames().contains("trustStore"))
+				System.setProperty("javax.net.ssl.trustStore", getAbsolutePath(getTrustStore()));
+			if (context.getParameterNames().contains("trustStorePassword"))
+				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
+		}
+		TRACE.log(TraceLevel.DEBUG,"201701191030 propperties: "+System.getProperties().toString());
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " initializing in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());   //$NON-NLS-3$
 
 		// set up JDBC driver class path
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path...");  
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path...");
 		setupClassPath(context);
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed");  
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed");
 
 		consistentRegionContext = context.getOptionalContext(ConsistentRegionContext.class);
 
 		// Create the JDBC connection
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");  
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");
 		setupJDBCConnection();
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " Setting up JDBC connection - Completed");  
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " Setting up JDBC connection - Completed");
 	}
 
     /**
@@ -268,7 +338,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
             throws Exception {
 
     	if(inputStream.isControl()) {
-    		TRACE.log(TraceLevel.DEBUG, "Process control port..."); 
+    		TRACE.log(TraceLevel.DEBUG, "Process control port...");
 			// Acquire write lock to reset the JDBC Connection
     		lock.writeLock().lock();
     		try{
@@ -276,13 +346,13 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     		}finally{
     			lock.writeLock().unlock();
     		}
-			TRACE.log(TraceLevel.DEBUG, "Process control port - Completed"); 
+			TRACE.log(TraceLevel.DEBUG, "Process control port - Completed");
 		}else{
-			TRACE.log(TraceLevel.DEBUG, "Process input tuple..."); 
+			TRACE.log(TraceLevel.DEBUG, "Process input tuple...");
 
 			// Reset JDBC connection if JDBC connection is not valid
 			if (!jdbcClientHelper.isConnected()){
-	    		TRACE.log(TraceLevel.DEBUG, "JDBC Connection is not valid"); 
+	    		TRACE.log(TraceLevel.DEBUG, "JDBC Connection is not valid");
 				try {
 					// Acquire write lock to reset the JDBC Connection
 					lock.writeLock().lock();
@@ -291,7 +361,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				}finally {
 					lock.writeLock().unlock();
 				}
-				TRACE.log(TraceLevel.DEBUG, "JDBC Connection reset - Completed"); 
+				TRACE.log(TraceLevel.DEBUG, "JDBC Connection reset - Completed");
 			}
 
 			// Acquire read lock to process SQL statement
@@ -308,7 +378,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			}finally{
 				lock.readLock().unlock();
 			}
-			TRACE.log(TraceLevel.DEBUG, "Process input tuple - Completed"); 
+			TRACE.log(TraceLevel.DEBUG, "Process input tuple - Completed");
 		}
 
     }
@@ -325,11 +395,11 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 		try{
 			JSONObject jdbcConnections = JSONObject.parse(jsonString);
-			String jdbcClassName = (String)jdbcConnections.get("jdbcClassName"); 
-			String jdbcUrl = (String)jdbcConnections.get("jdbcUrl"); 
-			String jdbcUser = (String)jdbcConnections.get("jdbcUser"); 
-			String jdbcPassword = (String)jdbcConnections.get("jdbcPassword"); 
-			String jdbcProperties = (String)jdbcConnections.get("jdbcProperties"); 
+			String jdbcClassName = (String)jdbcConnections.get("jdbcClassName");
+			String jdbcUrl = (String)jdbcConnections.get("jdbcUrl");
+			String jdbcUser = (String)jdbcConnections.get("jdbcUser");
+			String jdbcPassword = (String)jdbcConnections.get("jdbcPassword");
+			String jdbcProperties = (String)jdbcConnections.get("jdbcProperties");
 
 			// jdbcClassName is required
 			if (jdbcClassName == null || jdbcClassName.trim().isEmpty()){
@@ -399,7 +469,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 		// JDBC driver path
 		context.addClassLibraries(new String[] {jdbcDriverLib});
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);  
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
 	}
 
 
@@ -407,15 +477,15 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private synchronized void setupJDBCConnection() throws Exception{
 
 		// Initiate JDBCConnectionHelper instance
-        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName); 
-        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl); 
+        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName);
+        TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
 		try{
 			// if jdbcProperties is relative path, convert to absolute path
 			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
-			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
 
 			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
@@ -425,7 +495,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     		LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CONNECTION_FAILED_ERROR"), new Object[]{e.toString()}); 
     		throw e;
     	}
-	} 
+	}
 
 	// Reset JDBC connection
 	protected void resetJDBCConnection() throws Exception{
@@ -478,5 +548,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	@Override
 	public void retireCheckpoint(long id) throws Exception {
 		LOGGER.log(LogLevel.INFO, Messages.getString("JDBC_CR_RETIRE")); 
+	}
+	protected String getAbsolutePath(String filePath) {
+		if (filePath == null)
+			return null;
+
+		Path p = Paths.get(filePath);
+		if (p.isAbsolute()) {
+			return filePath;
+		} else {
+			File f = new File(getOperatorContext().getPE().getApplicationDirectory(), filePath);
+			return f.getAbsolutePath();
+		}
 	}
 }
