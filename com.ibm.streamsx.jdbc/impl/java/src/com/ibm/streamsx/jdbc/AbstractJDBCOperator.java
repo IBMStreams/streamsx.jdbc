@@ -175,7 +175,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     }
 
 	// Parameter sslConnection
-		@Parameter(optional = true)
+		@Parameter(optional = true, description="This optional parameter specifies whether an SSL connection should be made to the database. When set to `true`, the **keyStore**, **keyStorePassword**, **trustStore** and **trustStorePassword** parameters can be used to specify the locations and passwords of the keyStore and trustStore. The default value is `false`.")
 		public void setSslConnection(boolean sslConnection) {
 			this.sslConnection = sslConnection;
 		}
@@ -185,7 +185,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 
 		// Parameter keyStore
-		@Parameter(optional = true)
+		@Parameter(optional = true, description="This optional parameter specifies the path to the keyStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
 		public void setKeyStore(String keyStore) {
 			this.keyStore = keyStore;
 		}
@@ -195,7 +195,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 
 		// Parameter keyStorePassword
-		@Parameter(optional = true)
+		@Parameter(optional = true, description="This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
 		public void setKeyStorePassword(String keyStorePassword) {
 			this.keyStorePassword = keyStorePassword;
 		}
@@ -205,7 +205,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 
 		// Parameter trustStore
-		@Parameter(optional = true)
+		@Parameter(optional = true, description="This optional parameter specifies the path to the trustStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
 		public void setTrustStore(String trustStore) {
 			this.trustStore = trustStore;
 		}
@@ -215,7 +215,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 
 		// Parameter trustStorePassword
-		@Parameter(optional = true)
+		@Parameter(optional = true, description="This parameter specifies the password for the trustStore given by the **trustStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
 		public void setTrustStorePassword(String trustStorePassword) {
 			this.trustStorePassword = trustStorePassword;
 		}
