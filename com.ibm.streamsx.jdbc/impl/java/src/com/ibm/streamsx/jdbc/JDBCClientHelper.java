@@ -108,14 +108,16 @@ public class JDBCClientHelper {
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
-	        } else {
-	        	// pick up user and passwrod if they are parameters
-	        	if (jdbcUser != null && jdbcPassword != null) {
-	        	jdbcConnectionProps.put("user", jdbcUser);
-	        	jdbcConnectionProps.put("password", jdbcPassword);
-	        	}
-	        	
-	        }
+	        } 
+			
+		if( jdbcConnectionProps.isEmpty() || jdbcConnectionProps.get( "user" ) == null || jdbcConnectionProps.get( "password" ) == null ) {
+			        // even if jdbcProperites file is mentioned, but if it is empty or any of properties "user" or "password" are not there.
+			        // it will used whatever passed as parameter.
+				if( jdbcUser != null && jdbcPassword != null ) {
+					jdbcConnectionProps.put( "user", jdbcUser );
+					jdbcConnectionProps.put( "password", jdbcPassword );
+				}
+		}	
 	        
 	        // add sslConnection to properties
 	        if (sslConnection)
@@ -149,7 +151,7 @@ public class JDBCClientHelper {
 					break;
 				} catch (SQLException e) {
 					// output excpetion info into trace file if in debug mode
-					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);
+					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception , tried with jdbcUrl "+ jdbcUrl + " and properties " + jdbcConnectionProps ,e);
 					
 	    			// If Reconnection Policy is NoRetry, throw SQLException
 					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
