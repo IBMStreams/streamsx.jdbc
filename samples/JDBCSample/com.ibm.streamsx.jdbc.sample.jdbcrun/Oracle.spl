@@ -1,0 +1,47 @@
+namespace com.ibm.streamsx.jdbc.sample.jdbcrun ;
+use com.ibm.streamsx.jdbc::*;
+composite Oracle
+{
+param
+		expression<rstring> $jdbcDriverLib : getSubmissionTimeValue("jdbcDriverLib", "/u01/app/oracle/product/11.2.0/xe/jdbc/lib/ojdbc6.jar");
+		expression<rstring> $jdbcClassName : getSubmissionTimeValue("jdbcClassName", "oracle.jdbc.OracleDriver");
+		expression<rstring> $jdbcUrl : getSubmissionTimeValue("jdbcUrl","jdbc:oracle:thin:@//localhost:1521/xe");
+		expression<rstring> $jdbcUser : getSubmissionTimeValue("jdbcUser","username");
+		expression<rstring> $jdbcPassword : getSubmissionTimeValue("jdbcPassword","password");
+type
+        insertSchema = 	rstring 	HOME_TEAM,
+						rstring 	AWAY_TEAM,
+						int32	 	HOME_GOAL,
+						int32 		AWAY_GOAL;
+		rsSchema = 		rstring 	HOME_TEAM,
+						rstring 	AWAY_TEAM,
+						int32	 	HOME_GOAL,
+						int32 		AWAY_GOAL;
+	   selectSchema = 	rstring		sql; 
+		
+graph
+    stream<selectSchema> pulse = Beacon() {
+			param
+				iterations : 1u ;
+			output
+				pulse : sql = "select * from epl";
+		}
+	
+	stream<rsSchema> select = JDBCRun(pulse){
+			param
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
+				statementAttr:    sql;
+		}
+		
+		() as printer = Custom(select) {
+			logic onTuple select:
+				printStringLn((rstring)HOME_TEAM + "," + AWAY_TEAM + "," + (rstring)HOME_GOAL + "," +(rstring)AWAY_GOAL );
+		}
+}
+
+
+
