@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.StringTokenizer;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
@@ -55,7 +56,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	/**
 	 * Define operator parameters
 	 */
-	// This parameter specifies the jdbc driver lib.
+	// This parameter specifies the path and the filename of jdbc driver libraries in one comma separated string).
 	private String jdbcDriverLib;
 	// This parameter specifies the class name for jdbc driver.
 	private String jdbcClassName;
@@ -105,7 +106,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	private boolean sslConnection;
 
 	//Parameter jdbcDriverLib
-	@Parameter(optional = false, description="This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.")
+	@Parameter(optional = false, description="This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string.")
     public void setJdbcDriverLib(String jdbcDriverLib){
     	this.jdbcDriverLib = jdbcDriverLib;
     }
@@ -459,19 +460,27 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         super.shutdown();
 
     }
-
+  
     // Set up JDBC driver class path
-	private void setupClassPath(OperatorContext context) throws MalformedURLException{
-		// if relative path, convert to absolute path
-		if (!jdbcDriverLib.startsWith(File.separator))
-		{
-			jdbcDriverLib = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcDriverLib;
+	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
+        // Split the jdbcDriverLib by comma	
+		StringTokenizer st = new StringTokenizer(jdbcDriverLib , ",");
+		while (st.hasMoreElements()) {
+			String jarFile = st.nextElement().toString();
+			// removes all whitespaces and non-visible characters
+			jarFile = jarFile.replaceAll("\\s+","");
+			
+			//  // if relative path, convert to absolute path
+			if (!jarFile.startsWith(File.separator))
+			{
+				jarFile = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jarFile;
+			}
+			// System.out.println("jarFile " + jarFile);
+			// add jar file to the class path
+			context.addClassLibraries(new String[] {jarFile});
 		}
-		// JDBC driver path
-		context.addClassLibraries(new String[] {jdbcDriverLib});
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
 	}
-
 
 	// Set up JDBC connection
 	private synchronized void setupJDBCConnection() throws Exception{
