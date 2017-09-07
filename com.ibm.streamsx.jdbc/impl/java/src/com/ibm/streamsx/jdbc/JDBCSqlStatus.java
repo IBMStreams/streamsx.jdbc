@@ -13,7 +13,10 @@ public class JDBCSqlStatus {
 	
 	// SQL State
 	String sqlState = null;
-
+	
+	// SQL State
+	String sqlMessage = null;
+	
 	public int getSqlCode() {
 		return sqlCode;
 	}
@@ -29,5 +32,14 @@ public class JDBCSqlStatus {
 	public void setSqlState(String sqlState) {
 		this.sqlState = sqlState;
 	}
+	
+	public String getSqlMessage() {
+		return sqlMessage;
+	}
+
+	public void setSqlMessage(String sqlMessage) {
+		this.sqlMessage = sqlMessage;
+	}
+	
 	
 }

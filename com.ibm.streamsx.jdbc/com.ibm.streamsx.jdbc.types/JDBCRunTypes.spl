@@ -12,4 +12,5 @@ namespace com.ibm.streamsx.jdbc.types;
  */
 type
 	JdbcSqlStatus_T = 	int32 sqlCode,
-						rstring sqlState;
+				rstring sqlState,
+				rstring sqlMessage;
