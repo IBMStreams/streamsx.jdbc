@@ -49,7 +49,7 @@ import com.ibm.streams.operator.types.RString;
 import com.ibm.streams.operator.types.Timestamp;
 import com.ibm.streams.operator.types.XML;
 
-/**
+/** 
  * The JDBCRun operator runs a user-defined SQL statement that is based on an
  * input tuple. The statement is run once for each input tuple received. Result
  * sets that are produced by the statement are emitted as output stream tuples.
@@ -309,6 +309,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 				}
 
 				String sqlStatus[] = strSqlStatusAttr.split(",");
+
 				for (int i = 0; i < sqlStatus.length; i++) {
 					String strSqlStatus = sqlStatus[i].trim();
 					if (strSqlStatus.isEmpty()) {
@@ -547,12 +548,33 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 	}
 
+	
+	public static void printSQLException(SQLException e) {
+
+//	    e.printStackTrace(System.out);
+        System.out.println("SQLState: " + ((SQLException)e).getSQLState());
+        System.out.println("Error Code: " + ((SQLException)e).getErrorCode());
+        System.out.println("Message: " + e.getMessage());
+
+        Throwable t = e.getCause();
+        while(t != null) {
+            System.out.println("Cause: " + t);
+            t = t.getCause();
+        }
+	}
+	
 	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
 		jSqlStatus.setSqlCode(e.getErrorCode());
 		jSqlStatus.setSqlState(e.getSQLState());
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		jSqlStatus.setSqlMessage(e.getMessage());
+		         		
+ 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
+		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
+//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
+//		printSQLException( e);
+		
 		if (hasErrorPort) {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
@@ -793,6 +815,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 				attrmap.put("sqlCode", jSqlStatus.getSqlCode());
 				if (jSqlStatus.getSqlState() != null)
 					attrmap.put("sqlState", new RString(jSqlStatus.getSqlState()));
+				if (jSqlStatus.getSqlMessage() != null) 
+					attrmap.put("sqlMessage", new RString(jSqlStatus.getSqlMessage()));
 				Tuple sqlStatusT = dSchema.getTuple(attrmap);
 				// Assign the values to the output tuple
 				outputTuple.setObject(sqlStatusErrorAttrs[i], sqlStatusT);
@@ -862,6 +886,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 				if (jSqlStatus.getSqlState() != null) {
 					attrmap.put("sqlState", new RString(jSqlStatus.getSqlState()));
 					TRACE.log(TraceLevel.DEBUG, "Submit error tuple, sql state: " + jSqlStatus.getSqlState());
+				}
+				if (jSqlStatus.getSqlMessage() != null) {
+					attrmap.put("sqlMessage", new RString(jSqlStatus.getSqlMessage()));
+					TRACE.log(TraceLevel.DEBUG, "Submit error tuple, sql message: " + jSqlStatus.getSqlMessage());
 				}
 				Tuple sqlStatusT = dSchema.getTuple(attrmap);
 				// Assign the values to the output tuple
