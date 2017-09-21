@@ -8,7 +8,10 @@ namespace com.ibm.streamsx.jdbc.types;
 /**
  * SQL Status
  * sqlCode: The error number associated with the SQLException, 0: successful
+ *
  * sqlState: The five-digit XOPEN SQLState code for a database error, 00000: Successful
+ *
+ * sqlMessage: The SQL Message in case of any error
  */
 type
 	JdbcSqlStatus_T = 	int32 sqlCode,
