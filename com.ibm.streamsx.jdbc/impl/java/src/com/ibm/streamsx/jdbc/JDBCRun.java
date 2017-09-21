@@ -549,31 +549,28 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	
-	public static void printSQLException(SQLException e) {
-
-//	    e.printStackTrace(System.out);
-        System.out.println("SQLState: " + ((SQLException)e).getSQLState());
-        System.out.println("Error Code: " + ((SQLException)e).getErrorCode());
-        System.out.println("Message: " + e.getMessage());
-
-        Throwable t = e.getCause();
-        while(t != null) {
-            System.out.println("Cause: " + t);
-            t = t.getCause();
-        }
-	}
-	
+		
 	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
+//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
+		
+        	String sqlMessage = e.getMessage();
+	       // add cause text to the error message 
+	        Throwable t = e.getCause();
+	        while(t != null) {
+	        //    System.out.println("Cause: " + t);
+	            sqlMessage = sqlMessage + t;
+ 	           t = t.getCause();
+	        }
+
 		jSqlStatus.setSqlCode(e.getErrorCode());
 		jSqlStatus.setSqlState(e.getSQLState());
-		jSqlStatus.setSqlMessage(e.getMessage());
-		         		
- 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		jSqlStatus.setSqlMessage(sqlMessage);
+
+		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
-//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
-//		printSQLException( e);
+		
 		
 		if (hasErrorPort) {
 			// submit error message
