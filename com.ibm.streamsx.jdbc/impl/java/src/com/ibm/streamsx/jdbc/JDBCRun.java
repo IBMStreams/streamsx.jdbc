@@ -70,7 +70,7 @@ import com.ibm.streams.operator.types.XML;
 		@InputPortSet(cardinality = 1, optional = true, controlPort = true, description = "The `JDBCRun` operator has one optional input port. This port allows operator to change jdbc connection information at run time.") })
 @OutputPorts({
 		@OutputPortSet(cardinality = 1, description = "The `JDBCRun` operator has one required output port. The output port submits a tuple for each row in the result set of the SQL statement if the statement produces a result set. The output tuple values are assigned in the following order: 1. Columns that are returned in the result set that have same name from the output tuple 2. Auto-assigned attributes of the same name from the input tuple"),
-		@OutputPortSet(cardinality = 1, optional = true, description = "The `JDBCRun` operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement.") })
+		@OutputPortSet(cardinality = 1, optional = true, description = "The `JDBCRun` operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement. The tuples deliver sqlCode, sqlStatus and sqlMessage. ") })
 public class JDBCRun extends AbstractJDBCOperator {
 
 	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.jdbcrun.JDBCRun";
