@@ -70,7 +70,7 @@ import com.ibm.streams.operator.types.XML;
 		@InputPortSet(cardinality = 1, optional = true, controlPort = true, description = "The `JDBCRun` operator has one optional input port. This port allows operator to change jdbc connection information at run time.") })
 @OutputPorts({
 		@OutputPortSet(cardinality = 1, description = "The `JDBCRun` operator has one required output port. The output port submits a tuple for each row in the result set of the SQL statement if the statement produces a result set. The output tuple values are assigned in the following order: 1. Columns that are returned in the result set that have same name from the output tuple 2. Auto-assigned attributes of the same name from the input tuple"),
-		@OutputPortSet(cardinality = 1, optional = true, description = "The `JDBCRun` operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement.") })
+		@OutputPortSet(cardinality = 1, optional = true, description = "The `JDBCRun` operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement. The tuples deliver sqlCode, sqlStatus and sqlMessage. ") })
 public class JDBCRun extends AbstractJDBCOperator {
 
 	private static final String CLASS_NAME = "com.ibm.streamsx.jdbc.jdbcrun.JDBCRun";
@@ -549,31 +549,28 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	
-	public static void printSQLException(SQLException e) {
-
-//	    e.printStackTrace(System.out);
-        System.out.println("SQLState: " + ((SQLException)e).getSQLState());
-        System.out.println("Error Code: " + ((SQLException)e).getErrorCode());
-        System.out.println("Message: " + e.getMessage());
-
-        Throwable t = e.getCause();
-        while(t != null) {
-            System.out.println("Cause: " + t);
-            t = t.getCause();
-        }
-	}
-	
+		
 	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
+//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
+		
+        	String sqlMessage = e.getMessage();
+	       // add cause text to the error message 
+	        Throwable t = e.getCause();
+	        while(t != null) {
+	        //    System.out.println("Cause: " + t);
+	            sqlMessage = sqlMessage + t;
+ 	           t = t.getCause();
+	        }
+
 		jSqlStatus.setSqlCode(e.getErrorCode());
 		jSqlStatus.setSqlState(e.getSQLState());
-		jSqlStatus.setSqlMessage(e.getMessage());
-		         		
- 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		jSqlStatus.setSqlMessage(sqlMessage);
+
+		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
-//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
-//		printSQLException( e);
+		
 		
 		if (hasErrorPort) {
 			// submit error message
