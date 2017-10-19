@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
+<reference id="spldoc_index">
+<title>Namespaces: IBMStreams com.ibm.streamsx.jdbc Toolkit</title>
+<refbody>
+<section>
+<p>
+<xref href="toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; Namespaces</p>
+</section>
+<section>
+  <title outputclass="splhead-1">Namespaces</title>
+<dl>
+<dlentry>
+  <dt><xref href="../tk$com.ibm.streamsx.jdbc/ns$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc</xref></dt>
+  <dd></dd>
+</dlentry>
+<dlentry>
+  <dt><xref href="../tk$com.ibm.streamsx.jdbc/ns$com.ibm.streamsx.jdbc.types.xml">com.ibm.streamsx.jdbc.types</xref></dt>
+  <dd></dd>
+</dlentry>
+</dl>
+</section>
+</refbody>
+</reference>
+

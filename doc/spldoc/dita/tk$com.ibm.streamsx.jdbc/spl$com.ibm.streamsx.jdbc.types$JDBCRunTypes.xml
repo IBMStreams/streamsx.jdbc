@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
+<reference id="spldoc_compilationunit">
+<title>SPL File <tt>JDBCRunTypes.spl</tt></title>
+<refbody>
+<section>
+<p>
+<xref href="../toolkits/toolkits.xml">IBMStreams com.ibm.streamsx.jdbc Toolkit</xref> &gt; <xref href="tk$com.ibm.streamsx.jdbc.xml">com.ibm.streamsx.jdbc 0.9.0</xref> &gt; <xref href="ns$com.ibm.streamsx.jdbc.types.xml">com.ibm.streamsx.jdbc.types</xref> &gt; JDBCRunTypes.spl</p>
+</section>
+<section>
+  <title outputclass="splhead-1">Content</title>
+  <dl>
+    <dlentry><dt></dt><dd></dd></dlentry>
+    <dlentry>
+      <dt outputclass="splhead-2">Types</dt>
+      <dd>
+<sl>
+<sli><b><xref href="spl$com.ibm.streamsx.jdbc.types$JDBCRunTypes.xml#spldoc_compilationunit/type__sqlStatusType">sqlStatusType</xref></b>
+</sli>
+</sl>
+      </dd>
+    </dlentry>
+  </dl>
+</section>
+<section>
+  <title outputclass="splhead-1">Types</title>
+</section>
+<section id="type__sqlStatusType">
+  <title outputclass="splpart">sqlStatusType</title>
+</section><section>
+   <p>
+<tt>sqlStatusType = int32 errorCode, rstring sqlState;</tt>
+   </p>
+</section>
+</refbody>
+</reference>
+

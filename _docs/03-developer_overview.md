@@ -11,29 +11,10 @@ sidebar:
 {% include toc %}
 {% include editme %}
 
- Describe in this page the general development process. Refer for build setup and test setup to the appropriate pages
+# Build the toolkit
 
+Run the following command in the `streamsx.jdbc` directory:
 
-## Development Heading level 2
-
-Your text
-
-**ProTip:** This is a Pro-Tip
-{: .notice--info}
-
-### Development Heading level 3
-
-Some text
-
-Some shell command description
-
-```bash
-bundle install
-```
-
-### Development Another level 3 Heading
-
-**Note:** This is a Notize.
-{: .notice--warning}
+    ant all
 
 
