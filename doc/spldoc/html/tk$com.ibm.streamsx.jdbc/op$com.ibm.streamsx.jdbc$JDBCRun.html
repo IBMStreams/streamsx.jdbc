@@ -22,12 +22,12 @@
 <div class="body refbody">
 <div class="section">
 <p class="p">
-<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.0.0</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
+<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.2.2</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
 
 </div>
 
 <div class="section splprimop">
-  <embed class="image" src="../../image/tk$com.ibm.streamsx.jdbc/op$com.ibm.streamsx.jdbc$JDBCRun.svg" width="672" height="112"/>
+  <embed class="image" src="../../image/tk$com.ibm.streamsx.jdbc/op$com.ibm.streamsx.jdbc$JDBCRun.svg" width="872" height="112"/>
 </div>
 
 <div class="section">
@@ -55,14 +55,14 @@
  
   <dt class="dt dlterm">Parameters</dt>
 
-  <dd class="dd">This operator supports 18 parameters.
+  <dd class="dd">This operator supports 25 parameters.
 <p class="p"> Required: 
 <a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
 
 </p>
 
 <p class="p"> Optional: 
-<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>
+<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
 
 </p>
 </dd>
@@ -222,7 +222,7 @@
 
    <dd class="dd">
 
-<p class="p">The <tt class="ph tt">JDBCRun</tt> operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement.
+<p class="p">The <tt class="ph tt">JDBCRun</tt> operator has one optional output port. This port submits tuples when an error occurs while the operator is running the SQL statement. The tuples deliver sqlCode, sqlStatus and sqlMessage. 
 </p>
 
 <p class="p"/>
@@ -260,14 +260,14 @@
 
 <div class="section">
 <p class="p splhead-1"><strong class="ph b"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters">Parameters</a></strong></p>
-This operator supports 18 parameters.
+This operator supports 25 parameters.
 <p class="p"> Required: 
 <a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
 
 </p>
 
 <p class="p"> Optional: 
-<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>
+<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
 
 </p>
 <dl class="dl">
@@ -290,6 +290,71 @@ This operator supports 18 parameters.
      </li>
 
      <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__commitInterval"><!-- --></a><tt class="ph tt">commitInterval</tt></dt>
+
+<dd class="dd">
+<p class="p">This parameter sets a commit interval for the sql statements that are being processed and overrides the batchSize and transactionSize parameters. 
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: int32
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__commitPolicy"><!-- --></a><tt class="ph tt">commitPolicy</tt></dt>
+
+<dd class="dd">
+<p class="p">This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to <em class="ph i">OnCheckpoint</em>, then commits will only occur during checkpointing. If set to <em class="ph i">OnTransactionAndCheckpoint</em>, commits will occur during checkpointing as well as whenever the <strong class="ph b">transactionCount</strong> or <strong class="ph b">commitInterval</strong> are reached. The default value is <em class="ph i">OnCheckpoint</em>. It is recommended that the <em class="ph i">OnTransactionAndCheckpoint</em> value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the <strong class="ph b">transactionCount</strong> parameter not be set to a value greater than 1 when the policy is <em class="ph i">onTransactionAndCheckpoint</em>, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is <em class="ph i">OnCheckpoint</em>.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: com.ibm.streamsx.jdbc.CommitPolicy
+ (<tt class="ph tt">OnCheckpoint, OnTransactionAndCheckpoint</tt>)  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__expressionmode">ExpressionMode</a>: CustomLiteral
      </li>
 
   </ul>
@@ -399,7 +464,7 @@ This operator supports 18 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcDriverLib"><!-- --></a><tt class="ph tt">jdbcDriverLib</tt></dt>
 
 <dd class="dd">
-<p class="p">This required parameter specifies the jdbc driver lib and it must have exactly one value of type rstring.
+<p class="p">This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string.
 </p>
 <dl class="dl">
 
@@ -536,6 +601,68 @@ This operator supports 18 parameters.
 
 <dd class="dd">
 <p class="p">This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__keyStore"><!-- --></a><tt class="ph tt">keyStore</tt></dt>
+
+<dd class="dd">
+<p class="p">This optional parameter specifies the path to the keyStore. If a relative path is specified, the path is relative to the application directory. The <strong class="ph b">sslConnection</strong> parameter must be set to <tt class="ph tt">true</tt> for this parameter to have any effect.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__keyStorePassword"><!-- --></a><tt class="ph tt">keyStorePassword</tt></dt>
+
+<dd class="dd">
+<p class="p">This parameter specifies the password for the keyStore given by the <strong class="ph b">keyStore</strong> parameter. The <strong class="ph b">sslConnection</strong> parameter must be set to <tt class="ph tt">true</tt> for this parameter to have any effect.
 </p>
 <dl class="dl">
 
@@ -718,6 +845,37 @@ This operator supports 18 parameters.
 
 
 
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__sslConnection"><!-- --></a><tt class="ph tt">sslConnection</tt></dt>
+
+<dd class="dd">
+<p class="p">This optional parameter specifies whether an SSL connection should be made to the database. When set to <tt class="ph tt">true</tt>, the <strong class="ph b">keyStore</strong>, <strong class="ph b">keyStorePassword</strong>, <strong class="ph b">trustStore</strong> and <strong class="ph b">trustStorePassword</strong> parameters can be used to specify the locations and passwords of the keyStore and trustStore. The default value is <tt class="ph tt">false</tt>.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: boolean
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__statement"><!-- --></a><tt class="ph tt">statement</tt></dt>
 
 <dd class="dd">
@@ -826,6 +984,68 @@ This operator supports 18 parameters.
  <dd class="dd">
   <ul class="sl simple">
   <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: int32
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__trustStore"><!-- --></a><tt class="ph tt">trustStore</tt></dt>
+
+<dd class="dd">
+<p class="p">This optional parameter specifies the path to the trustStore. If a relative path is specified, the path is relative to the application directory. The <strong class="ph b">sslConnection</strong> parameter must be set to <tt class="ph tt">true</tt> for this parameter to have any effect.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__trustStorePassword"><!-- --></a><tt class="ph tt">trustStorePassword</tt></dt>
+
+<dd class="dd">
+<p class="p">This parameter specifies the password for the trustStore given by the <strong class="ph b">trustStore</strong> parameter. The <strong class="ph b">sslConnection</strong> parameter must be set to <tt class="ph tt">true</tt> for this parameter to have any effect.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
   </li>
 
      <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
