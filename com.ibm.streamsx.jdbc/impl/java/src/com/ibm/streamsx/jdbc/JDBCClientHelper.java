@@ -96,7 +96,8 @@ public class JDBCClientHelper {
 
 	// Create the JDBC connection
 	public synchronized void createConnection() throws Exception{
-
+		System.out.println("createConnection jdbcProperties: \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
+		
 		// Attempt to create connection only when existing connection is invalid.
 		if (!isConnected()){
 	        //Load class into memory
@@ -111,8 +112,10 @@ public class JDBCClientHelper {
 	        } else {
 	        	// pick up user and passwrod if they are parameters
 	        	if (jdbcUser != null && jdbcPassword != null) {
-	        	jdbcConnectionProps.put("user", jdbcUser);
-	        	jdbcConnectionProps.put("password", jdbcPassword);
+				jdbcConnectionProps.put("user", jdbcUser);
+				jdbcConnectionProps.put("password", jdbcPassword);
+				jdbcConnectionProps.put("avatica_user", jdbcUser);
+				jdbcConnectionProps.put("avatica_password", jdbcPassword);
 	        	}
 	        	
 	        }
@@ -194,7 +197,8 @@ public class JDBCClientHelper {
 
 	        // Set JDBC connection status as true
 	        connected = true;
-		}
+		System.out.println("createConnection connected =" + connected);
+	   }
 	}
 
 	// Check if JDBC connection is valid

@@ -64,7 +64,11 @@ import com.ibm.streams.operator.types.XML;
 		+ " In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets."
 		+ " On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port."
 		+ " On checkpoint: A database commit is performed."
-		+ " On reset: Any pending statements are discarded. A rollback is performed.")
+		+ " On reset: Any pending statements are discarded. A rollback is performed."
+		+ " The new version of toolkit 1.3.x. supports also `optional type`."  
+		+ " The SPL applications based on new JDBC toolkit and created with a new Streams that supports `optional type`"
+		+ " are able to write/read 'null' to/from a `nullable` column in a table. ")
+
 @InputPorts({
 		@InputPortSet(cardinality = 1, description = "The `JDBCRun` operator has one required input port. When a tuple is received on the required input port, the operator runs an SQL statement."),
 		@InputPortSet(cardinality = 1, optional = true, controlPort = true, description = "The `JDBCRun` operator has one optional input port. This port allows operator to change jdbc connection information at run time.") })
@@ -707,7 +711,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 		Type splType = attribute.getType();
 		int index = attribute.getIndex();
-
+		
 		if (splType.getMetaType() == MetaType.INT8)
 			return tuple.getByte(index);
 		if (splType.getMetaType() == MetaType.INT16)
@@ -755,6 +759,23 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (splType.getMetaType() == MetaType.XML)
 			return tuple.getXML(index);
 
+		// Task 39870 Update JDBC toolkit with respect to optional data type support
+		// it compares the contain of SPL type delivers by SPL application with data types 
+		// The "MetaType.OPTIONAL)" and "tuple.getOptional" was not used due of 
+		// compatibility with older Streams Version without optional type
+		if(splType.getLanguageType().toUpperCase().contains("OPTIONAL"))
+			return tuple.getObject(index);
+/*
+		if (splType.getMetaType() == MetaType.OPTIONAL)
+		{
+			if ((tuple.getOptional(index, attribute.getType().getAsCompositeElementType()).isPresent()))
+		    {
+		    	return tuple.getOptional(index, attribute.getType().getAsCompositeElementType()).get();
+		    }
+		    else
+		    	return null;
+		}
+*/					
 		LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SPL_TYPE_NOT_SUPPORT"), splType.getMetaType()); 
 		return null;
 
@@ -830,28 +851,30 @@ public class JDBCRun extends AbstractJDBCOperator {
 					rs.getObject(i);
 					if (!rs.wasNull()) {
 						String splAttrName = attr.getName();
-						MetaType splType = attr.getType().getMetaType();
-
-						// Assign value from result set
-						if (splType == MetaType.RSTRING) outputTuple.setString(splAttrName, rs.getString(i));
-						else if (splType == MetaType.USTRING) outputTuple.setString(splAttrName, rs.getString(i));
-						else if (splType == MetaType.INT8) outputTuple.setByte(splAttrName, rs.getByte(i));
-						else if (splType == MetaType.INT16) outputTuple.setShort(splAttrName, rs.getShort(i));
-						else if (splType == MetaType.INT32) outputTuple.setInt(splAttrName, rs.getInt(i));
-						else if (splType == MetaType.INT64) outputTuple.setLong(splAttrName, rs.getLong(i));
-						else if (splType == MetaType.UINT8) outputTuple.setByte(splAttrName, rs.getByte(i));
-						else if (splType == MetaType.UINT16) outputTuple.setShort(splAttrName, rs.getShort(i));
-						else if (splType == MetaType.UINT32) outputTuple.setInt(splAttrName, rs.getInt(i));
-						else if (splType == MetaType.UINT64) outputTuple.setLong(splAttrName, rs.getLong(i));
-						else if (splType == MetaType.FLOAT32) outputTuple.setFloat(splAttrName, rs.getFloat(i));
-						else if (splType == MetaType.FLOAT64) outputTuple.setDouble(splAttrName, rs.getDouble(i));
-						else if (splType == MetaType.DECIMAL32) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-						else if (splType == MetaType.DECIMAL64) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-						else if (splType == MetaType.DECIMAL128) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-						else if (splType == MetaType.BLOB) outputTuple.setBlob(splAttrName, (Blob)rs.getBlob(i));
-						else if (splType == MetaType.TIMESTAMP) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
-						else if (splType == MetaType.XML) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
-						else if (splType == MetaType.BOOLEAN) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
+						String splType = (attr.getType().getLanguageType()).toUpperCase();
+						// Task 39870 Update JDBC toolkit with respect to optional data type support
+						// it compares the contain of SPL type delivers by SPL application with data types 
+						// and assign value from result set
+						// in this case it assign the int32 values for SPL type int32 or optional<int32>
+						if (splType.contains("RSTRING")) outputTuple.setString(splAttrName, rs.getString(i));
+						else if (splType.contains("USTRING")) outputTuple.setString(splAttrName, rs.getString(i));
+						else if (splType.contains("INT8")) outputTuple.setByte(splAttrName, rs.getByte(i));
+						else if (splType.contains("INT16")) outputTuple.setShort(splAttrName, rs.getShort(i));
+						else if (splType.contains("INT32")) outputTuple.setInt(splAttrName, rs.getInt(i));
+						else if (splType.contains("INT64")) outputTuple.setLong(splAttrName, rs.getLong(i));
+						else if (splType.contains("UINT8")) outputTuple.setByte(splAttrName, rs.getByte(i));
+						else if (splType.contains("UINT16")) outputTuple.setShort(splAttrName, rs.getShort(i));
+						else if (splType.contains("UINT32")) outputTuple.setInt(splAttrName, rs.getInt(i));
+						else if (splType.contains("UINT64")) outputTuple.setLong(splAttrName, rs.getLong(i));
+						else if (splType.contains("FLOAT32")) outputTuple.setFloat(splAttrName, rs.getFloat(i));
+						else if (splType.contains("FLOAT64")) outputTuple.setDouble(splAttrName, rs.getDouble(i));
+						else if (splType.contains("DECIMAL32")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType.contains("DECIMAL64")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType.contains("DECIMAL128")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
+						else if (splType.contains("BLOB")) outputTuple.setBlob(splAttrName, (Blob)rs.getBlob(i));
+						else if (splType.contains("TIMESTAMP")) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
+						else if (splType.contains("XML")) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
+						else if (splType.contains("BOOLEAN")) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
 						else LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SPL_TYPE_NOT_SUPPORT"), splType); 
 					}
 				}
