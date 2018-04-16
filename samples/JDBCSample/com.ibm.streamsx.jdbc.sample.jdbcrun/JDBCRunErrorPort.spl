@@ -1,46 +1,56 @@
 // *******************************************************************************
-// * Copyright (C) 2015 International Business Machines Corporation
+// * Copyright (C) 2015-2018 International Business Machines Corporation
 // * All Rights Reserved
 // *******************************************************************************
 namespace com.ibm.streamsx.jdbc.sample.jdbcrun;
 use com.ibm.streamsx.jdbc::*;
 use com.ibm.streamsx.jdbc.types::* ;
 /*******************************************************************************
- * JDBCRunErrorPort demonstrates how to Error Port with JDBCRun operator.
+ * JDBCRunErrorPort demonstrates how to use the Error Port with JDBCRun operator.
+ * Please replace the value of jdbcUrl, jdbcUser und jdbcPassword with your
+ * Database credentials 
  *******************************************************************************/
 
 composite JDBCRunErrorPort {
 
+	param
+		expression<rstring> $jdbcDriverLib	: getSubmissionTimeValue("jdbcDriverLib", "opt/db2jcc4.jar");
+		expression<rstring> $jdbcClassName	: getSubmissionTimeValue("jdbcClassName", "com.ibm.db2.jcc.DB2Driver");
+		expression<rstring> $jdbcUrl 		: getSubmissionTimeValue("jdbcUrl", "jdbc:db2://<your-db2-server>/<your-db2-db-name>:retrieveMessagesFromServerOnGetMessage=true;");
+		expression<rstring> $jdbcUser 		: getSubmissionTimeValue("jdbcUser", "<your-db2-user>");
+		expression<rstring> $jdbcPassword 	: getSubmissionTimeValue("jdbcPassword", "your-db2-password");
+
+	
 	type
-		insertSchema = 	int32 		ID, 
-						rstring 	NAME;
-		rsSchema = 		int32 		ID, 
-						rstring 	NAME;
-		selectSchema = 	rstring		sql; 
+		insertSchema  = int32 ID, rstring 	NAME;
+		rsSchema      = int32 ID, rstring 	NAME;
+		selectSchema  = rstring	sql; 
+
 	graph
 		stream<insertSchema> pulse = Beacon() {
 			param
 				iterations : 1u ;
 			output
-				pulse : ID 				= 1,
-						NAME			= "Mike Ward";
+				pulse : ID = 1, NAME = "Mike Ward";
 		}
+
 		stream<insertSchema> create = JDBCRun(pulse){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "CREATE TABLE JDBCRUN_ERRORPORT (ID INTEGER NOT NULL, NAME CHAR(20), PRIMARY KEY(ID))";
 		}
+
 		stream<insertSchema> insert1 = JDBCRun(create){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "INSERT INTO JDBCRUN_ERRORPORT (ID, NAME)
 									VALUES (?, ?)";
 				statementParamAttrs: "ID, NAME";
@@ -48,11 +58,11 @@ composite JDBCRunErrorPort {
 		
 		(stream<insertSchema> insert2; stream <tuple<insertSchema> inTuple, JdbcSqlStatus_T error> errors)= JDBCRun(insert1){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "INSERT INTO JDBCRUN_ERRORPORT (ID, NAME)
 									VALUES (?, ?)";
 				statementParamAttrs: "ID, NAME";
@@ -71,11 +81,11 @@ composite JDBCRunErrorPort {
 
 		stream<rsSchema> select = JDBCRun(genSelect){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statementAttr:    sql;
 		}
 		
@@ -83,13 +93,14 @@ composite JDBCRunErrorPort {
 			logic onTuple select:
 				printStringLn((rstring)ID + "," + NAME);
 		}
+
 		stream<rsSchema> drop = JDBCRun(select){
 			param
-				jdbcDriverLib: "jdbcDriverLib";
-				jdbcClassName: "jdbcClassName";
-				jdbcUrl: "jdbc:db2://<server:port>/<database>";
-				jdbcUser: "jdbcUser";
-				jdbcPassword: "jdbcPassword";
+				jdbcDriverLib: $jdbcDriverLib;
+				jdbcClassName: $jdbcClassName;
+				jdbcUrl: $jdbcUrl;
+				jdbcUser: $jdbcUser;
+				jdbcPassword: $jdbcPassword;
 				statement:    "DROP TABLE JDBCRUN_ERRORPORT";
 		}
 }

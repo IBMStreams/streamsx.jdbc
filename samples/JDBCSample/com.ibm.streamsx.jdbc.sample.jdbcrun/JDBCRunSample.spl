@@ -26,9 +26,11 @@ composite JDBCRunSample {
 	param
 		expression<rstring> $jdbcDriverLib : getSubmissionTimeValue("jdbcDriverLib", "opt/db2jcc4.jar");
 		expression<rstring> $jdbcClassName : getSubmissionTimeValue("jdbcClassName", "com.ibm.db2.jcc.DB2Driver");
-		expression<rstring> $jdbcUrl : getSubmissionTimeValue("jdbcUrl");
-		expression<rstring> $jdbcUser : getSubmissionTimeValue("jdbcUser");
-		expression<rstring> $jdbcPassword : getSubmissionTimeValue("jdbcPassword");
+		expression<rstring> $jdbcUrl 		: getSubmissionTimeValue("jdbcUrl", "jdbc:db2://<your-db2-server>/<your-db2-db-name>");
+		expression<rstring> $jdbcUser 		: getSubmissionTimeValue("jdbcUser", "<your-db2-user>");
+		expression<rstring> $jdbcPassword 	: getSubmissionTimeValue("jdbcPassword", "your-db2-password");
+
+
 	type
 		insertSchema = 	int32 		ID, 
 						rstring 	FNAME,
