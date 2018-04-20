@@ -96,8 +96,7 @@ public class JDBCClientHelper {
 
 	// Create the JDBC connection
 	public synchronized void createConnection() throws Exception{
-		System.out.println("createConnection jdbcProperties: \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
-		
+		LOGGER.log(LogLevel.INFO, "createConnection \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
 		// Attempt to create connection only when existing connection is invalid.
 		if (!isConnected()){
 	        //Load class into memory
@@ -197,7 +196,7 @@ public class JDBCClientHelper {
 
 	        // Set JDBC connection status as true
 	        connected = true;
-		System.out.println("createConnection connected =" + connected);
+		LOGGER.log(LogLevel.INFO, "createConnection connected =" + connected);
 	   }
 	}
 

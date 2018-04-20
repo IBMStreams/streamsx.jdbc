@@ -469,20 +469,20 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         	// Split the jdbcDriverLib by "/"	
 		StringTokenizer st = new StringTokenizer(jdbcDriverLib , File.separator);
 		String libDir = st.nextToken();
-		System.out.println("setupClassPath " + jdbcDriverLib + " " + libDir);
+		TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jdbcDriverLib + " " + libDir);
 		 	
 		List<String> results = new ArrayList<String>();
 		 
 		String jarDir = getOperatorContext().getPE().getApplicationDirectory() + File.separator + libDir; 
  		File[] files = new File(jarDir).listFiles();
  		// If this pathname does not denote a directory, then listFiles() returns null. 
- 		// Search in opt directory and add all jar files to the class path. 
+ 		// Search in the "opt" directory and add all jar files to the class path. 
  		for (File file : files) {
  		    if (file.isFile()) {
  			results.add(file.getName());
  			String jarFile = jarDir + File.separator + file.getName();
- 			System.out.println("setupClassPath " + jarFile);
- 			context.addClassLibraries(new String[] {jarFile});
+ 		 	TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
+			context.addClassLibraries(new String[] {jarFile});
  		    }
  		}
  
