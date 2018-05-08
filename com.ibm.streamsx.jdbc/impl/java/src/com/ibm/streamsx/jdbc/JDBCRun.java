@@ -547,6 +547,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		} catch (SQLException e) {
 			// SQL Code & SQL State
 			handleException(tuple, e);
+
 		} finally {
 			commitLock.unlock();
 		}
@@ -556,13 +557,14 @@ public class JDBCRun extends AbstractJDBCOperator {
 		
 	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
-//		System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
-		
+		// System.out.println(" sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
+      		
         	String sqlMessage = e.getMessage();
+
 	       // add cause text to the error message 
 	        Throwable t = e.getCause();
 	        while(t != null) {
-	        //    System.out.println("Cause: " + t);
+	            // System.out.println("Cause: " + t);
 	            sqlMessage = sqlMessage + t;
  	           t = t.getCause();
 	        }
@@ -579,10 +581,22 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (hasErrorPort) {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
+		       // get next Exception message and sqlCode and submit it to the error output.
+			SQLException eNext = e.getNextException();
+			while(eNext != null) {
+				jSqlStatus.setSqlCode(eNext.getErrorCode());
+				jSqlStatus.setSqlState(eNext.getSQLState());
+	  			jSqlStatus.setSqlMessage(eNext.getMessage());
+				System.out.println("NextException    sqlCode: " + eNext.getErrorCode() + " sqlState: " + eNext.getSQLState() + " sqlMessage: " + eNext.getMessage());
+				submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
+			}
+
 		}
+
 		// Check if JDBC connection valid
 		if (!jdbcClientHelper.isValidConnection()) {
 			// sqlFailureAction need not process if JDBC Connection is not valid
+                         
 			throw e;
 		}
 		if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)) {
@@ -619,6 +633,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 			}
 		} else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_TERMINATE)) {
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Shut down...");
+			shutdown();
 			// The error is logged and the operator terminates.
 			LOGGER.log(LogLevel.ERROR, "SQL_EXCEPTION_ERROR", new Object[] { e.toString() });
 			if (batchSize > 1) {

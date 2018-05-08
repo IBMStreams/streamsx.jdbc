@@ -152,7 +152,7 @@ public class JDBCClientHelper {
 				} catch (SQLException e) {
 					// output excpetion info into trace file if in debug mode
 					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);
-					
+					System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
 	    			// If Reconnection Policy is NoRetry, throw SQLException
 					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
 						throw e;
@@ -160,6 +160,7 @@ public class JDBCClientHelper {
 
 					// If Reconnection Policy is BoundedRetry, reconnect until maximum reconnectionBound value
 					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY) {
+						
 						if (nConnectionAttempts == reconnectionBound){
 							//Throw SQLException if the connection attempts reach to maximum reconnectionBound value
 							throw e;
