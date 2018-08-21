@@ -57,7 +57,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	protected static Logger TRACE = Logger.getLogger(PACKAGE_NAME);
 
 	/**
-	 * Define operator parameters
+	 * Define operator parameters 
 	 */
 	// This parameter specifies the path and the filename of jdbc driver libraries in one comma separated string).
 	private String jdbcDriverLib;
@@ -228,6 +228,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			return trustStorePassword;
 		}
 
+		
+		
 	/*
 	 * The method checkParametersRuntime
 	 */
@@ -236,6 +238,21 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 		OperatorContext context = checker.getOperatorContext();
 
+		String strReconnectionPolicy = "";
+		if (context.getParameterNames().contains("reconnectionPolicy")) {
+			// reconnectionPolicy can be either InfiniteRetry, NoRetry,
+			// BoundedRetry
+			strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
+			if (!(strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_NORETRY)
+					|| strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)
+				    || strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_INFINITERETRY))) {
+				LOGGER.log(LogLevel.ERROR, "reconnectionPolicy has to be set to InfiniteRetry or NoRetry or BoundedRetry");
+				checker.setInvalidContext("reconnectionPolicy has to be set to InfiniteRetry or NoRetry or BoundedRetry", new String[] { context.getParameterValues(
+						"reconnectionPolicy").get(0) });
+		
+			}
+		}
+		
 		// Check reconnection related parameters at runtime
 		if ((context.getParameterNames().contains("reconnectionBound"))) {
 			// reconnectionBound value should be non negative.
@@ -248,7 +265,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (context.getParameterNames().contains("reconnectionPolicy")) {
 				// reconnectionPolicy can be either InfiniteRetry, NoRetry,
 				// BoundedRetry
-				String strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
+				 strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
 				// reconnectionBound can appear only when the reconnectionPolicy
 				// parameter is set to BoundedRetry and cannot appear otherwise
 				if (! strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)) {
@@ -259,6 +276,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				}
 			}
 		}
+		
 
 	}
 

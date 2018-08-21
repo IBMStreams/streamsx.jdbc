@@ -12,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
-import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -151,16 +150,20 @@ public class JDBCClientHelper {
 					break;
 				} catch (SQLException e) {
 					// output excpetion info into trace file if in debug mode
-					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);
-					System.out.println("sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
-	    			// If Reconnection Policy is NoRetry, throw SQLException
-					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_NORETRY) {
+					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);				
+					System.out.println("createConnection  SQLException  sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
+					System.out.println("createConnection  reconnectionPolicy: " + reconnectionPolicy);
+					System.out.println("createConnection  reconnectionBound: " + reconnectionBound);
+					System.out.println("createConnection  reconnectionInterval: " + reconnectionInterval);
+					System.out.println("createConnection  Connection Attempts: " + nConnectionAttempts);
+
+					// If Reconnection Policy is NoRetry, throw SQLException
+					if (reconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_NORETRY)) {
 						throw e;
 					}
 
 					// If Reconnection Policy is BoundedRetry, reconnect until maximum reconnectionBound value
-					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY) {
-						
+					if (reconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)) {
 						if (nConnectionAttempts == reconnectionBound){
 							//Throw SQLException if the connection attempts reach to maximum reconnectionBound value
 							throw e;
@@ -170,7 +173,7 @@ public class JDBCClientHelper {
 						}
 					}
 					// If Reconnection Policy is InfiniteRetry, reconnect
-					if (reconnectionPolicy == IJDBCConstants.RECONNPOLICY_INFINITERETRY) {
+					if (reconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_INFINITERETRY)) {
 						// Sleep for specified wait period
 						Thread.sleep(interval);
 					}
@@ -215,7 +218,7 @@ public class JDBCClientHelper {
 
 	// Return JDBC connection status
 	public boolean isConnected(){
-		return connected;
+ 		return connected;
 	}
 
 	// Reset the JDBC connection with the same configuration information
