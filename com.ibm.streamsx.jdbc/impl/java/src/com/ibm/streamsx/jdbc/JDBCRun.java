@@ -229,7 +229,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	// Parameter checkConnection
-	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The default value is `ture`.")
+	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The default value is `true`.")
 	public void setcheckConnection(boolean checkConnection) {
 		this.checkConnection = checkConnection;
 	}
