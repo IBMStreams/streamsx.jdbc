@@ -5,6 +5,7 @@
 package com.ibm.streamsx.jdbc;
 
 import java.io.IOException;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -165,6 +166,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	
 	private Thread checkConnectionThread;
+	
 	
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
 
@@ -513,6 +515,14 @@ public class JDBCRun extends AbstractJDBCOperator {
 					}
 					
 					}
+				else
+				{
+					
+			        DatabaseMetaData metadata = jdbcClientHelper.getConnection().getMetaData();
+			        // Get database major  version for test
+			        int version = metadata.getDatabaseMajorVersion();
+			        System.out.println("Database Version:  " + version);
+				}
 				} catch (SQLException e3) {
 				}	
 			} // end while
