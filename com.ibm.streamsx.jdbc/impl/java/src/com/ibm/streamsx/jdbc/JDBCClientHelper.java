@@ -65,6 +65,10 @@ public class JDBCClientHelper {
 	// The time period in seconds which it will be wait before trying to reconnect.
 	// If not specified, the default value is 10.0.
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
+	
+	//The time in seconds to wait for the database operation used to validate the connection to complete. 
+	private int checkConnectionTimeOut = 2;
+
 
 	// The statement
 	Statement stmt = null;
@@ -133,6 +137,7 @@ public class JDBCClientHelper {
 				// for each unsuccessful attempt increment the
 				// nConnectionAttempts
 				try {
+					DriverManager.setLoginTimeout(5);
 					nConnectionAttempts ++;
 					TRACE.log(TraceLevel.DEBUG,"JDBC connection attempt "+nConnectionAttempts);
 	    			if (jdbcConnectionProps != null){
@@ -207,7 +212,7 @@ public class JDBCClientHelper {
 	// Check if JDBC connection is valid
 	public synchronized boolean isValidConnection() throws SQLException{
 		LOGGER.log(LogLevel.INFO,"JDBC connection validation");
-		if (connection == null || !connection.isValid(0)){
+		if (connection == null || !connection.isValid(checkConnectionTimeOut)){
 			connected = false;
 			LOGGER.log(LogLevel.INFO,"JDBC connection invalid ");
 			return false;

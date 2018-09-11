@@ -162,7 +162,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// sqlStatus attribute for error output port
 	private String[] sqlStatusErrorAttrs = null;
 	// check connection
-	private boolean checkConnection = true;
+	private boolean checkConnection = false;
 
 	
 	private Thread checkConnectionThread;
@@ -231,7 +231,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	// Parameter checkConnection
-	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The default value is `true`.")
+	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The default value is `false`.")
 	public void setcheckConnection(boolean checkConnection) {
 		this.checkConnection = checkConnection;
 	}
@@ -515,14 +515,6 @@ public class JDBCRun extends AbstractJDBCOperator {
 					}
 					
 					}
-				else
-				{
-					
-			        DatabaseMetaData metadata = jdbcClientHelper.getConnection().getMetaData();
-			        // Get database major  version for test
-			        int version = metadata.getDatabaseMajorVersion();
-			        System.out.println("Database Version:  " + version);
-				}
 				} catch (SQLException e3) {
 				}	
 			} // end while
