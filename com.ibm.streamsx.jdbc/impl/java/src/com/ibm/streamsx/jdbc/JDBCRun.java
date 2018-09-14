@@ -5,6 +5,7 @@
 package com.ibm.streamsx.jdbc;
 
 import java.io.IOException;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -69,7 +70,7 @@ import com.ibm.streams.operator.types.XML;
 		+ " The SPL applications based on new JDBC toolkit and created with a new Streams that supports `optional type`"
 		+ " are able to write/read 'null' to/from a `nullable` column in a table. ")
 
-@InputPorts({
+@InputPorts({ 
 		@InputPortSet(cardinality = 1, description = "The `JDBCRun` operator has one required input port. When a tuple is received on the required input port, the operator runs an SQL statement."),
 		@InputPortSet(cardinality = 1, optional = true, controlPort = true, description = "The `JDBCRun` operator has one optional input port. This port allows operator to change jdbc connection information at run time.") })
 @OutputPorts({
@@ -160,7 +161,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 	private String[] sqlStatusDataAttrs = null;
 	// sqlStatus attribute for error output port
 	private String[] sqlStatusErrorAttrs = null;
+	// check connection
+	private boolean checkConnection = false;
 
+	
+	private Thread checkConnectionThread;
+	
+	
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
 
 	@Parameter(optional = true, description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
@@ -223,6 +230,18 @@ public class JDBCRun extends AbstractJDBCOperator {
 		this.commitInterval = commitInterval;
 	}
 
+	// Parameter checkConnection
+	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The therad checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is `false`.")
+	public void setcheckConnection(boolean checkConnection) {
+		this.checkConnection = checkConnection;
+	}
+
+	public boolean getCheckConnection() {
+		return checkConnection;
+	}
+	
+	 
+	
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
@@ -273,12 +292,14 @@ public class JDBCRun extends AbstractJDBCOperator {
 	 * 
 	 * @param checker
 	 */
+
 	@ContextCheck(compile = true)
 	public static void checkDeleteAll(OperatorContextChecker checker) {
 		if (!checker.checkDependentParameters("jdbcDriverLib", "jdbcUrl")){
 			checker.setInvalidContext(Messages.getString("JDBC_URL_NOT_EXIST"), null);
 		}
 	}
+	
 	@ContextCheck(compile = false, runtime = true)
 	public static void checkParameterAttributes(OperatorContextChecker checker) {
 
@@ -423,7 +444,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 			hasErrorPort = true;
 			errorOutputPort = getOutput(1);
 		}
-
+		
+		
+		if (checkConnection) {
+			startCheckConnection(context);
+		}
+		
 		// set the data output port
 		dataOutputPort = getOutput(0);
 
@@ -431,13 +457,84 @@ public class JDBCRun extends AbstractJDBCOperator {
 		initSqlStatusAttr();
 
 		// Initiate PreparedStatement
-		initPreparedStatement();
-
+		initPreparedStatement();		
+	}			
+	
+	/**
+	 * startCheckConnection starts a thread to check the JDBC connection.
+	 * In case of any connection problem it tries to create a new connection
+	 * with reconnectionPolicy parameters.
+	 * When the connection fails it return a sqlcode -1 to the SPL application.
+	 * The SPL application has to use the 2. optional output port of JDBCRun operator.
+	 * @param context
+	 */
+	public void startCheckConnection(OperatorContext context) {
+		checkConnectionThread = context.getThreadFactory().newThread(new Runnable() {
+			
+		@Override
+		public void run() {
+			int i = 0;
+			while(true)
+			{
+				// check the JDBC connection every 5 seconds 
+				try        
+				{
+				    Thread.sleep(5000);
+                    System.out.println("checkConnection " + i++);
+				} 
+				catch(InterruptedException ex) 
+				{
+				    Thread.currentThread().interrupt();
+				}
+				try 
+				{
+				if (!jdbcClientHelper.isValidConnection()) {	
+                    System.out.println("JDBC connection is invalid ");					
+					try 
+					{
+						// f connection files it tries to reset JDBC connection
+						// it is depending to the reconnection policy parameters
+						resetJDBCConnection();
+					}
+					catch (Exception e2) {
+						if (!jdbcClientHelper.isValidConnection() && hasErrorPort){
+		                    try 
+							{
+								// if connection files it sends a sqlcode = -1 to the error output port
+		                        JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
+		                        jSqlStatus.sqlCode = -1;
+		                        jSqlStatus.sqlMessage = "Invalid Connection";
+								// submit error message
+								submitErrorTuple(errorOutputPort, null, jSqlStatus);
+							}
+							catch (Exception e1) {
+								e1.printStackTrace();													
+							}
+	                    
+						}   
+					}
+					
+					}
+				} catch (SQLException e3) {
+				}	
+			} // end while
+		} // end of run()
+		
+		}); 
+		
+		// start checkConnectionThread
+		checkConnectionThread.start();
 	}
 
-	// Process control port
-	// The port allows operator to change JDBC connection information at runtime
-	// The port expects a value with JSON format
+			
+	/**
+	 * Process control port
+	 * he port allows operator to change JDBC connection information at runtime
+	 * The port expects a value with JSON format
+	 * @param stream
+	 * @param tuple
+	 * @throws Exception
+	 */
 	@Override
 	protected void processControlPort(StreamingInput<Tuple> stream, Tuple tuple) throws Exception {
 		super.processControlPort(stream, tuple);
@@ -553,8 +650,14 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 	}
 
-	
-		
+	/**
+	 * handleException
+	 * @param tuple
+	 * @param e
+	 * @throws Exception
+	 * @throws SQLException
+	 * @throws IOException
+	 */
 	private void handleException(Tuple tuple, SQLException e) throws Exception, SQLException, IOException {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
 		// System.out.println(" sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
@@ -960,7 +1063,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 			commitThread.cancel(false);
 		}
 
-		// Roll back transaction & close connection
+		// stop checkConnectionThread
+		if (checkConnectionThread.isAlive()) {
+			checkConnectionThread.interrupt();
+		}
 		super.shutdown();
 
 	}
@@ -1020,6 +1126,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 	}
 
+	/**
+	 * allPortsReady
+	 * @throws Exception
+	 */
 	@Override
 	public void allPortsReady() throws Exception {
 		if ((consistentRegionContext == null 
@@ -1049,13 +1159,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 						try {
 							handleException(null, e);
 						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						} catch (IOException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						} catch (Exception e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						} finally {
 							commitLock.unlock();
