@@ -6,7 +6,7 @@
     
   The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. 
     
-  The JDBCRun operator is commonly used to update, merge, and delete database management system (DBMS) records. 
+  The **JDBCRun** operator is commonly used to update, merge, and delete database management system (DBMS) records. 
   
   This operator is also used to retrieve records, create and drop tables, and to call stored procedures. 
 
@@ -25,6 +25,8 @@
   The JDBCRun operator support **optional type** feature.
 
   It supports also **phoenix jdbc** to connect to the HBASE database.
+  
+  The **JDBCRun** operator has been improved in version 1.4.0 with a new parameter **checkConnection**. This optional parameter specifies whether a **checkConnection** thread should be start. It checks periodically the status of JDBC connection. The JDBCRun sends in case of any failure a SqlCode and a message to SPL application.
   
 
 </info:description>
