@@ -240,7 +240,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		return checkConnection;
 	}
 	
-	
+	 
 	
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
