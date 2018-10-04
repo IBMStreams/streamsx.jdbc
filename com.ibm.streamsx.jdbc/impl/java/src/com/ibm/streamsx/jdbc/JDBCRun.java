@@ -165,7 +165,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	private boolean checkConnection = false;
 
 	
-	private Thread checkConnectionThread;
+	private Thread checkConnectionThread = null;
 	
 	
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
@@ -1064,8 +1064,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 
 		// stop checkConnectionThread
-		if (checkConnectionThread.isAlive()) {
-			checkConnectionThread.interrupt();
+		if (checkConnectionThread != null) {
+			if (checkConnectionThread.isAlive()) {
+				checkConnectionThread.interrupt();
+			}
 		}
 		super.shutdown();
 
