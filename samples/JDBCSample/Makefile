@@ -13,6 +13,7 @@ SPLC = $(STREAMS_INSTALL)/bin/sc
 
 SPL_CMD_ARGS ?= -t $(STREAMS_JDBC_TOOLKIT)
 SPL_MAIN_COMPOSITE = com.ibm.streamsx.jdbc.sample.jdbcrun::JDBCRunSample
+#SPL_MAIN_COMPOSITE = com.ibm.streamsx.jdbc.sample.jdbcrun::JDBCRunErrorPort
 
 all: distributed
 

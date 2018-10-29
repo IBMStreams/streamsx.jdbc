@@ -16,6 +16,9 @@ import java.util.StringTokenizer;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.ArrayList;
+
 
 import com.ibm.json.java.JSONObject;
 import com.ibm.streams.operator.AbstractOperator;
@@ -54,7 +57,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	protected static Logger TRACE = Logger.getLogger(PACKAGE_NAME);
 
 	/**
-	 * Define operator parameters
+	 * Define operator parameters 
 	 */
 	// This parameter specifies the path and the filename of jdbc driver libraries in one comma separated string).
 	private String jdbcDriverLib;
@@ -225,6 +228,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			return trustStorePassword;
 		}
 
+		
+		
 	/*
 	 * The method checkParametersRuntime
 	 */
@@ -233,6 +238,21 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 		OperatorContext context = checker.getOperatorContext();
 
+		String strReconnectionPolicy = "";
+		if (context.getParameterNames().contains("reconnectionPolicy")) {
+			// reconnectionPolicy can be either InfiniteRetry, NoRetry,
+			// BoundedRetry
+			strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
+			if (!(strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_NORETRY)
+					|| strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)
+				    || strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_INFINITERETRY))) {
+				LOGGER.log(LogLevel.ERROR, "reconnectionPolicy has to be set to InfiniteRetry or NoRetry or BoundedRetry");
+				checker.setInvalidContext("reconnectionPolicy has to be set to InfiniteRetry or NoRetry or BoundedRetry", new String[] { context.getParameterValues(
+						"reconnectionPolicy").get(0) });
+		
+			}
+		}
+		
 		// Check reconnection related parameters at runtime
 		if ((context.getParameterNames().contains("reconnectionBound"))) {
 			// reconnectionBound value should be non negative.
@@ -245,7 +265,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (context.getParameterNames().contains("reconnectionPolicy")) {
 				// reconnectionPolicy can be either InfiniteRetry, NoRetry,
 				// BoundedRetry
-				String strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
+				 strReconnectionPolicy = context.getParameterValues("reconnectionPolicy").get(0).trim();
 				// reconnectionBound can appear only when the reconnectionPolicy
 				// parameter is set to BoundedRetry and cannot appear otherwise
 				if (! strReconnectionPolicy.equalsIgnoreCase(IJDBCConstants.RECONNPOLICY_BOUNDEDRETRY)) {
@@ -256,6 +276,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				}
 			}
 		}
+		
 
 	}
 
@@ -463,22 +484,26 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
   
     // Set up JDBC driver class path
 	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
-        // Split the jdbcDriverLib by comma	
-		StringTokenizer st = new StringTokenizer(jdbcDriverLib , ",");
-		while (st.hasMoreElements()) {
-			String jarFile = st.nextElement().toString();
-			// removes all whitespaces and non-visible characters
-			jarFile = jarFile.replaceAll("\\s+","");
-			
-			//  // if relative path, convert to absolute path
-			if (!jarFile.startsWith(File.separator))
-			{
-				jarFile = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jarFile;
-			}
-			// System.out.println("jarFile " + jarFile);
-			// add jar file to the class path
+        	// Split the jdbcDriverLib by "/"	
+		StringTokenizer st = new StringTokenizer(jdbcDriverLib , File.separator);
+		String libDir = st.nextToken();
+		TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jdbcDriverLib + " " + libDir);
+		 	
+		List<String> results = new ArrayList<String>();
+		 
+		String jarDir = getOperatorContext().getPE().getApplicationDirectory() + File.separator + libDir; 
+ 		File[] files = new File(jarDir).listFiles();
+ 		// If this pathname does not denote a directory, then listFiles() returns null. 
+ 		// Search in the "opt" directory and add all jar files to the class path. 
+ 		for (File file : files) {
+ 		    if (file.isFile()) {
+ 			results.add(file.getName());
+ 			String jarFile = jarDir + File.separator + file.getName();
+ 		 	TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
 			context.addClassLibraries(new String[] {jarFile});
-		}
+ 		    }
+ 		}
+ 
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
 	}
 
