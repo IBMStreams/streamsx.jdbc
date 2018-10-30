@@ -485,7 +485,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// Set up JDBC driver class path
 	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
 
-		String libDir = jdbcDriverLib.substring(0, jdbcDriverLib.lastIndexOf(File.separator));
+		String libDir = jdbcDriverLib;
+		if (jdbcDriverLib.lastIndexOf(File.separator) > 0) {
+			libDir = jdbcDriverLib.substring(0, jdbcDriverLib.lastIndexOf(File.separator));
+		}
 		TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jdbcDriverLib + " " + libDir);
 		 	
 		String jarDir = libDir;
