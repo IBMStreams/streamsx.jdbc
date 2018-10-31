@@ -482,28 +482,33 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
     }
   
-    // Set up JDBC driver class path
+	// Set up JDBC driver class path
 	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
-        	// Split the jdbcDriverLib by "/"	
-		StringTokenizer st = new StringTokenizer(jdbcDriverLib , File.separator);
-		String libDir = st.nextToken();
+
+		String libDir = jdbcDriverLib;
+		if (jdbcDriverLib.lastIndexOf(File.separator) > 0) {
+			libDir = jdbcDriverLib.substring(0, jdbcDriverLib.lastIndexOf(File.separator));
+		}
 		TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jdbcDriverLib + " " + libDir);
 		 	
-		List<String> results = new ArrayList<String>();
-		 
-		String jarDir = getOperatorContext().getPE().getApplicationDirectory() + File.separator + libDir; 
- 		File[] files = new File(jarDir).listFiles();
- 		// If this pathname does not denote a directory, then listFiles() returns null. 
- 		// Search in the "opt" directory and add all jar files to the class path. 
- 		for (File file : files) {
- 		    if (file.isFile()) {
- 			results.add(file.getName());
- 			String jarFile = jarDir + File.separator + file.getName();
- 		 	TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
-			context.addClassLibraries(new String[] {jarFile});
- 		    }
- 		}
- 
+		String jarDir = libDir;
+		File f = new File(libDir);
+		if (!f.isAbsolute()) {
+			File appDir = getOperatorContext().getPE().getApplicationDirectory();
+			TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "extending relative path '" + libDir + "' by the '" + appDir + "' directory");
+			jarDir = appDir +  File.separator + libDir;
+		}
+
+		File[] files = new File(jarDir).listFiles();
+		// If this pathname does not denote a directory, then listFiles() returns null. 
+		// Search in the "opt" directory and add all jar files to the class path. 
+		for (File file : files) {
+			if (file.isFile()) {
+				String jarFile = jarDir + File.separator + file.getName();
+				TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
+				context.addClassLibraries(new String[] {jarFile});
+			}
+		}
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
 	}
 
