@@ -1,11 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2015 International Business Machines Corporation
+ * Copyright (C) 2015-2018 International Business Machines Corporation
  * All Rights Reserved
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
 
 import java.io.IOException;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -165,7 +164,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	private boolean checkConnection = false;
 
 	
-	private Thread checkConnectionThread;
+	private Thread checkConnectionThread = null;
 	
 	
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
@@ -241,7 +240,6 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 	
 	 
-	
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
@@ -1064,8 +1062,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 
 		// stop checkConnectionThread
-		if (checkConnectionThread.isAlive()) {
-			checkConnectionThread.interrupt();
+		if (checkConnectionThread != null) {
+			if (checkConnectionThread.isAlive()) {
+				checkConnectionThread.interrupt();
+			}
 		}
 		super.shutdown();
 

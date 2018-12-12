@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2015 International Business Machines Corporation
+ * Copyright (C) 2015-2018 International Business Machines Corporation
  * All Rights Reserved
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
@@ -9,16 +9,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.StringTokenizer;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
-import java.util.List;
-import java.util.ArrayList;
-
 
 import com.ibm.json.java.JSONObject;
 import com.ibm.streams.operator.AbstractOperator;
@@ -71,6 +69,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String jdbcPassword;
 	// This parameter specifies the path name of the file that contains the jdbc connection properties.
 	private String jdbcProperties;
+	// This parameter specifies the path name of the json file that contains the jdbc credentials .
+	private String jdbcCredentials;
 	// This parameter specifies the transaction isolation level at which statement runs.
 	// If omitted, the statement runs at level READ_UNCOMMITTED
 	private String isolationLevel = IJDBCConstants.TRANSACTION_READ_UNCOMMITTED;
@@ -148,6 +148,13 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	this.jdbcProperties = jdbcProperties;
     }
 
+	//Parameter jdbcCredentials
+	@Parameter(optional = true, description="This optional parameter specifies the path name of the json file that contains the jdbc credentials.")
+    public void setJdbcCredentials(String jdbcCredentials){
+    	this.jdbcCredentials = jdbcCredentials;
+    }
+
+	
 	//Parameter isolationLevel
 	@Parameter(optional = true, description="This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level READ_UNCOMMITTED.")
     public void setIsolationLevel(String isolationLevel){
@@ -178,51 +185,51 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	this.reconnectionInterval = reconnectionInterval;
     }
 
-	// Parameter sslConnection
-		@Parameter(optional = true, description="This optional parameter specifies whether an SSL connection should be made to the database. When set to `true`, the **keyStore**, **keyStorePassword**, **trustStore** and **trustStorePassword** parameters can be used to specify the locations and passwords of the keyStore and trustStore. The default value is `false`.")
-		public void setSslConnection(boolean sslConnection) {
-			this.sslConnection = sslConnection;
-		}
+// Parameter sslConnection
+	@Parameter(optional = true, description="This optional parameter specifies whether an SSL connection should be made to the database. When set to `true`, the **keyStore**, **keyStorePassword**, **trustStore** and **trustStorePassword** parameters can be used to specify the locations and passwords of the keyStore and trustStore. The default value is `false`.")
+	public void setSslConnection(boolean sslConnection) {
+		this.sslConnection = sslConnection;
+	}
 
-		public boolean isSslConnection() {
-			return sslConnection;
-		}
+	public boolean isSslConnection() {
+		return sslConnection;
+	}
 
-		// Parameter keyStore
-		@Parameter(optional = true, description="This optional parameter specifies the path to the keyStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
-		public void setKeyStore(String keyStore) {
-			this.keyStore = keyStore;
-		}
+	// Parameter keyStore
+	@Parameter(optional = true, description="This optional parameter specifies the path to the keyStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setKeyStore(String keyStore) {
+		this.keyStore = keyStore;
+	}
 
-		public String getKeyStore() {
-			return keyStore;
-		}
+	public String getKeyStore() {
+		return keyStore;
+	}
 
-		// Parameter keyStorePassword
-		@Parameter(optional = true, description="This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
-		public void setKeyStorePassword(String keyStorePassword) {
-			this.keyStorePassword = keyStorePassword;
-		}
+	// Parameter keyStorePassword
+	@Parameter(optional = true, description="This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setKeyStorePassword(String keyStorePassword) {
+		this.keyStorePassword = keyStorePassword;
+	}
 
-		public String getKeyStorePassword() {
-			return keyStorePassword;
-		}
+	public String getKeyStorePassword() {
+		return keyStorePassword;
+	}
 
-		// Parameter trustStore
-		@Parameter(optional = true, description="This optional parameter specifies the path to the trustStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
-		public void setTrustStore(String trustStore) {
-			this.trustStore = trustStore;
-		}
+	// Parameter trustStore
+	@Parameter(optional = true, description="This optional parameter specifies the path to the trustStore. If a relative path is specified, the path is relative to the application directory. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setTrustStore(String trustStore) {
+		this.trustStore = trustStore;
+	}
 
-		public String getTrustStore() {
-			return trustStore;
-		}
+	public String getTrustStore() {
+		return trustStore;
+	}
 
-		// Parameter trustStorePassword
-		@Parameter(optional = true, description="This parameter specifies the password for the trustStore given by the **trustStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
-		public void setTrustStorePassword(String trustStorePassword) {
-			this.trustStorePassword = trustStorePassword;
-		}
+	// Parameter trustStorePassword
+	@Parameter(optional = true, description="This parameter specifies the password for the trustStore given by the **trustStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setTrustStorePassword(String trustStorePassword) {
+		this.trustStorePassword = trustStorePassword;
+	}
 
 		public String getTrustStorePassword() {
 			return trustStorePassword;
@@ -288,6 +295,11 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
 		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
 		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
+		// If jdbcCredentials is set as parameter, jdbcUser and jdbcPassword can not be set
+		checker.checkExcludedParameters("jdbcUser", "jdbcCredentials");
+		checker.checkExcludedParameters("jdbcPassword", "jdbcCredentials");
+		// If jdbcCredentials is set as parameter, jdbcCredentials can not be set
+		checker.checkExcludedParameters("jdbcProperties", "jdbcCredentials");
 		// check reconnection related parameters
 		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
 		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
@@ -436,6 +448,15 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
+
+			// if jdbcProperties is relative path, convert to absolute path
+			if (jdbcCredentials != null && !jdbcCredentials.trim().isEmpty() && !jdbcCredentials.startsWith(File.separator))
+			{
+				jdbcCredentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+			}
+
+			// System.out.println("jdbcCredentials : " + jdbcCredentials);
+			
 			// Roll back the transaction
 			jdbcClientHelper.rollbackWithClearBatch();
 	        // Reset JDBC connection
@@ -482,28 +503,33 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
     }
   
-    // Set up JDBC driver class path
+	// Set up JDBC driver class path
 	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
-        	// Split the jdbcDriverLib by "/"	
-		StringTokenizer st = new StringTokenizer(jdbcDriverLib , File.separator);
-		String libDir = st.nextToken();
+
+		String libDir = jdbcDriverLib;
+		if (jdbcDriverLib.lastIndexOf(File.separator) > 0) {
+			libDir = jdbcDriverLib.substring(0, jdbcDriverLib.lastIndexOf(File.separator));
+		}
 		TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jdbcDriverLib + " " + libDir);
 		 	
-		List<String> results = new ArrayList<String>();
-		 
-		String jarDir = getOperatorContext().getPE().getApplicationDirectory() + File.separator + libDir; 
- 		File[] files = new File(jarDir).listFiles();
- 		// If this pathname does not denote a directory, then listFiles() returns null. 
- 		// Search in the "opt" directory and add all jar files to the class path. 
- 		for (File file : files) {
- 		    if (file.isFile()) {
- 			results.add(file.getName());
- 			String jarFile = jarDir + File.separator + file.getName();
- 		 	TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
-			context.addClassLibraries(new String[] {jarFile});
- 		    }
- 		}
- 
+		String jarDir = libDir;
+		File f = new File(libDir);
+		if (!f.isAbsolute()) {
+			File appDir = getOperatorContext().getPE().getApplicationDirectory();
+			TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "extending relative path '" + libDir + "' by the '" + appDir + "' directory");
+			jarDir = appDir +  File.separator + libDir;
+		}
+
+		File[] files = new File(jarDir).listFiles();
+		// If this pathname does not denote a directory, then listFiles() returns null. 
+		// Search in the "opt" directory and add all jar files to the class path. 
+		for (File file : files) {
+			if (file.isFile()) {
+				String jarFile = jarDir + File.separator + file.getName();
+				TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
+				context.addClassLibraries(new String[] {jarFile});
+			}
+		}
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
 	}
 
@@ -519,6 +545,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			{
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
+
+			// if jdbcProperties is relative path, convert to absolute path
+			if (jdbcCredentials != null && !jdbcCredentials.trim().isEmpty() && !jdbcCredentials.startsWith(File.separator))
+			{
+				jdbcCredentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcCredentials;
+				getCredentials(jdbcCredentials);
+			}
+					
 			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
 
 			jdbcClientHelper.createConnection();
@@ -530,6 +564,42 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     		throw e;
     	}
 	}
+	
+	// read credentials file and set user name, password und jdbc url.
+	public void getCredentials(String jdbcCredentials) throws IOException {
+		String jsonString = "";
+		// read json file to string
+		try {
+			byte[] encoded = Files.readAllBytes(Paths.get(jdbcCredentials));
+			jsonString = new String(encoded,  Charset.defaultCharset());
+		}catch (IOException e){
+			LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_PROPERTIES_NOT_EXIST"), new Object[]{jdbcCredentials}); 
+			throw e;
+		}
+		
+//		System.out.println(" jsonString  " + jsonString);
+				
+		try {
+			JSONObject obj = JSONObject.parse(jsonString);			
+			jdbcUser = (String)obj.get("username");
+			if (jdbcUser == null) {
+				throw new Exception("String username was incorrect");
+				}
+		 
+			jdbcPassword = (String)obj.get("password");
+			if (jdbcPassword == null){
+				throw new Exception("String password was incorrect");
+				}
+		
+			jdbcUrl = (String)obj.get("jdbcurl");
+			if (jdbcUrl == null) {
+				throw new Exception("String jdbcUrl was incorrect");
+				}
+			} catch (Exception ex) {
+			         ex.printStackTrace();
+		}
+	} 
+	
 
 	// Reset JDBC connection
 	protected void resetJDBCConnection() throws Exception{
