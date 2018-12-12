@@ -230,7 +230,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	// Parameter checkConnection
-	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** therad should be start. The therad checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is `false`.")
+	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** thread should be start. The thread checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is `false`.")
 	public void setcheckConnection(boolean checkConnection) {
 		this.checkConnection = checkConnection;
 	}
