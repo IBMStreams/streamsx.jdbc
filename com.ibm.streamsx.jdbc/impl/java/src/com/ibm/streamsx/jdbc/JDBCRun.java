@@ -293,7 +293,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	@ContextCheck(compile = true)
 	public static void checkDeleteAll(OperatorContextChecker checker) {
-		if (!checker.checkDependentParameters("jdbcDriverLib", "jdbcUrl")){
+		if (!checker.checkDependentParameters("jdbcDriverLib")){
+//		if (!checker.checkDependentParameters("jdbcDriverLib", "jdbcUrl")){
 			checker.setInvalidContext(Messages.getString("JDBC_URL_NOT_EXIST"), null);
 		}
 	}
@@ -414,13 +415,41 @@ public class JDBCRun extends AbstractJDBCOperator {
 	public static void checkParameters(OperatorContextChecker checker) {
 		// If statement is set as parameter, statementAttr can not be set
 		checker.checkExcludedParameters("statement", "statementAttr");
-		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can
-		// not be set
+		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
 		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
 		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
+
+		// If jdbcCredentials is set as parameter, jdbcUser, jdbcPassword and jdbcUrl can not be set.
+		checker.checkExcludedParameters("jdbcUser", "jdbcCredentials");
+		checker.checkExcludedParameters("jdbcPassword", "jdbcCredentials");
+		checker.checkExcludedParameters("jdbcUrl", "jdbcCredentials");
+		checker.checkExcludedParameters("jdbcCredentials", "jdbcUrl");
+
+		// If jdbcCredentials is set as parameter, jdbcCredentials can not be set
+		checker.checkExcludedParameters("jdbcProperties", "jdbcCredentials");
+		
 		// check reconnection related parameters
 		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
 		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
+
+		// check parameters jdbcUrl jdbcUser and jdbcPassword
+		OperatorContext context = checker.getOperatorContext();
+		if ((!context.getParameterNames().contains("jdbcCredentials"))
+				&& (!context.getParameterNames().contains("jdbcUrl"))) {
+					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'jdbcCredentials'", null);
+			}				
+
+		if ((!context.getParameterNames().contains("jdbcCredentials"))
+				&& (!context.getParameterNames().contains("jdbcProperties"))
+				&& (!context.getParameterNames().contains("jdbcUser"))) {
+					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'jdbcCredentials'  or 'jdbcProperties' ", null);
+			}				
+		if ((!context.getParameterNames().contains("jdbcCredentials"))
+				&& (!context.getParameterNames().contains("jdbcProperties"))
+				&& (!context.getParameterNames().contains("jdbcPassword"))) {
+					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'jdbcCredentials'  or 'jdbcProperties'", null);
+			}				
+
 	}
 
 	/**

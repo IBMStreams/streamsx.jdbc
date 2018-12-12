@@ -121,7 +121,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     }
 
 	//Parameter jdbcUrl
-	@Parameter(optional = false, description="This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n\\n"
+	@Parameter(optional = true, description="This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n\\n"
 			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
 			+ ". server, the domain name or IP address of the data source.\\n\\n"
 			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
@@ -287,24 +287,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	}
 
-	/*
-	 * The method checkParameters
-	 */
-	@ContextCheck(compile = true)
-	public static void checkParameters(OperatorContextChecker checker) {
-		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
-		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
-		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
-		// If jdbcCredentials is set as parameter, jdbcUser and jdbcPassword can not be set
-		checker.checkExcludedParameters("jdbcUser", "jdbcCredentials");
-		checker.checkExcludedParameters("jdbcPassword", "jdbcCredentials");
-		// If jdbcCredentials is set as parameter, jdbcCredentials can not be set
-		checker.checkExcludedParameters("jdbcProperties", "jdbcCredentials");
-		// check reconnection related parameters
-		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
-		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
-	}
-
+	
 	@ContextCheck
 	public static void checkControlPortInputAttribute(OperatorContextChecker checker) {
 		OperatorContext context = checker.getOperatorContext();
@@ -434,14 +417,11 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			String jdbcUser = (String)jdbcConnections.get("jdbcUser");
 			String jdbcPassword = (String)jdbcConnections.get("jdbcPassword");
 			String jdbcProperties = (String)jdbcConnections.get("jdbcProperties");
+			String jdbcCredentials = (String)jdbcConnections.get("jdbcCredentials");
 
 			// jdbcClassName is required
 			if (jdbcClassName == null || jdbcClassName.trim().isEmpty()){
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CLASS_NAME_NOT_EXIST")); 
-			}
-			// jdbcUrl is required
-			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
-				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
 			// if jdbcProperties is relative path, convert to absolute path
 			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
@@ -449,10 +429,16 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
 
-			// if jdbcProperties is relative path, convert to absolute path
+			// if jdbcCredentials is relative path, convert to absolute path
 			if (jdbcCredentials != null && !jdbcCredentials.trim().isEmpty() && !jdbcCredentials.startsWith(File.separator))
 			{
 				jdbcCredentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+				getCredentials(jdbcCredentials);
+			}
+
+			// jdbcUrl is required
+			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
+				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
 
 			// System.out.println("jdbcCredentials : " + jdbcCredentials);
@@ -546,13 +532,18 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
 
-			// if jdbcProperties is relative path, convert to absolute path
+			// if jdbcCredentials is relative path, convert to absolute path
 			if (jdbcCredentials != null && !jdbcCredentials.trim().isEmpty() && !jdbcCredentials.startsWith(File.separator))
 			{
 				jdbcCredentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcCredentials;
 				getCredentials(jdbcCredentials);
 			}
-					
+
+			// jdbcUrl is required
+			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
+				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
+			}
+						
 			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
 
 			jdbcClientHelper.createConnection();
@@ -582,19 +573,23 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		try {
 			JSONObject obj = JSONObject.parse(jsonString);			
 			jdbcUser = (String)obj.get("username");
-			if (jdbcUser == null) {
-				throw new Exception("String username was incorrect");
-				}
+			if (jdbcUser == null || jdbcUser.trim().isEmpty()){
+				LOGGER.log(LogLevel.ERROR, Messages.getString("'jdbcUser' is required to create JDBC connection.")); 
+				throw new Exception(Messages.getString("'jdbcUser' is required to create JDBC connection."));
+			}
 		 
 			jdbcPassword = (String)obj.get("password");
-			if (jdbcPassword == null){
-				throw new Exception("String password was incorrect");
-				}
+			if (jdbcPassword == null || jdbcPassword.trim().isEmpty()){
+				LOGGER.log(LogLevel.ERROR, Messages.getString("'jdbcPassword' is required to create JDBC connection.")); 
+				throw new Exception(Messages.getString("'jdbcPassword' is required to create JDBC connection."));
+			}
 		
 			jdbcUrl = (String)obj.get("jdbcurl");
-			if (jdbcUrl == null) {
-				throw new Exception("String jdbcUrl was incorrect");
-				}
+			// jdbcUrl is required
+			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
+				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
+				throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
+			}
 			} catch (Exception ex) {
 			         ex.printStackTrace();
 		}
