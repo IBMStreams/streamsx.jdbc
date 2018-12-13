@@ -32,6 +32,8 @@
 
   * The JDBCRun operators provides a new parameter 'jdbcCredentials'. 
     This optional parameter specifies the path name of the json file that contains the jdbc credentials.
+    The jdbc credentials file must conatain valid JSON format and a set of name/value pairs for
+    'username', 'password' and 'jdbcurl'. 
  
   
 </info:description>
