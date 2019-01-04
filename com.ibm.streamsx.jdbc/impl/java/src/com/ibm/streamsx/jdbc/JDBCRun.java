@@ -54,19 +54,19 @@ import com.ibm.streams.operator.types.XML;
  * input tuple. The statement is run once for each input tuple received. Result
  * sets that are produced by the statement are emitted as output stream tuples.
  */
-@PrimitiveOperator(description = "The `JDBCRun` operator runs a user-defined SQL statement that is based on an input tuple."
-		+ " The statement is run once for each input tuple received."
-		+ " Result sets that are produced by the statement are emitted as output stream tuples."
-		+ " The `JDBCRun` operator is commonly used to update, merge, and delete database management system (DBMS) records."
-		+ " This operator is also used to retrieve records, create and drop tables, and to call stored procedures."
-		+ " # Behavior in a consistent region"
-		+ " The `JDBCRun` operator can be used in a consistent region. It cannot be the start operator of a consistent region."
+@PrimitiveOperator(description = "The **JDBCRun** operator runs a user-defined SQL statement that is based on an input tuple.\\n\\n"
+		+ " The statement is run once for each input tuple received.\\n\\n"
+		+ " Result sets that are produced by the statement are emitted as output stream tuples.\\n\\n"
+		+ " The `JDBCRun` operator is commonly used to update, merge, and delete database management system (DBMS) records.\\n"
+		+ " This operator is also used to retrieve records, create and drop tables, and to call stored procedures.\\n\\n"
+		+ " Behavior in a **consistent region**:\\n\\n"
+		+ " The **JDBCRun** operator can be used in a consistent region. It cannot be the start operator of a consistent region."
 		+ " In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets."
 		+ " On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port."
 		+ " On checkpoint: A database commit is performed."
-		+ " On reset: Any pending statements are discarded. A rollback is performed."
-		+ " The new version of toolkit 1.3.x. supports also `optional type`."  
-		+ " The SPL applications based on new JDBC toolkit and created with a new Streams that supports `optional type`"
+		+ " On reset: Any pending statements are discarded. A rollback is performed.\\n\\n"
+		+ " The new version of toolkit 1.3.x. supports also `optional type`.\\n\\n"  
+		+ " The SPL applications based on new JDBC toolkit and created with a new Streams that supports **optional type**"
 		+ " are able to write/read 'null' to/from a `nullable` column in a table. ")
 
 @InputPorts({ 
