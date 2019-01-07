@@ -98,7 +98,7 @@ public class JDBCClientHelper {
 	}
 
 	// Create the JDBC connection
-	public synchronized void createConnection() throws Exception{
+	public synchronized void createConnection() throws Exception, SQLException{
 		LOGGER.log(LogLevel.INFO, "createConnection \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
 		// Attempt to create connection only when existing connection is invalid.
 		if (!isConnected()){
@@ -146,7 +146,6 @@ public class JDBCClientHelper {
 		 	        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else if (jdbcUser != null && jdbcPassword != null){
 			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- userid password exist "+jdbcUrl);
-			        	;
 			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else{
 			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- using url only "+jdbcUrl);
