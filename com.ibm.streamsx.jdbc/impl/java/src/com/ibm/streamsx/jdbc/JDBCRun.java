@@ -166,22 +166,26 @@ public class JDBCRun extends AbstractJDBCOperator {
 	
 	private Thread checkConnectionThread = null;
 	
-	
+
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
 
-	@Parameter(optional = true, description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
+	// Parameter commitPolicy
+	@Parameter(name = "commitPolicy", optional = true, 
+			description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
 	public void setCommitPolicy(CommitPolicy commitPolicy) {
 		this.commitPolicy = commitPolicy;
 	}
 
 	// Parameter statement
-	@Parameter(optional = true, description = "This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
+	@Parameter(name = "statement", optional = true, 
+			description = "This parameter specifies the value of any valid SQL or stored procedure statement. The statement can contain parameter markers")
 	public void setStatement(String statement) {
 		this.statement = statement;
 	}
 
 	// Parameter statementParameters
-	@Parameter(optional = true, description = "This optional parameter specifies the value of statement parameters. The statementParameter value and SQL statement parameter markers are associated in lexicographic order. For example, the first parameter marker in the SQL statement is associated with the first statementParameter value.")
+	@Parameter(name = "statementParamAttrs", optional = true, 
+			description = "This optional parameter specifies the value of statement parameters. The statementParameter value and SQL statement parameter markers are associated in lexicographic order. For example, the first parameter marker in the SQL statement is associated with the first statementParameter value.")
 	public void setStatementParamAttrs(String statementParamAttrs) {
 		this.statementParamAttrs = statementParamAttrs;
 
@@ -194,47 +198,54 @@ public class JDBCRun extends AbstractJDBCOperator {
 	}
 
 	// Parameter statementAttr
-	@Parameter(optional = true, description = "This parameter specifies the value of complete SQL or stored procedure statement that is from stream attribute (no parameter markers).")
+	@Parameter(name = "statementAttr", optional = true, 
+			description = "This parameter specifies the value of complete SQL or stored procedure statement that is from stream attribute (no parameter markers).")
 	public void setStatementAttr(TupleAttribute<Tuple, String> statementAttr) {
 		this.statementAttr = statementAttr;
 	}
 
 	// Parameter transactionSize
-	@Parameter(optional = true, description = "This optional parameter specifies the number of executions to commit per transaction. The default transaction size is 1 and transactions are automatically committed.")
+	@Parameter(name = "transactionSize", optional = true, 
+			description = "This optional parameter specifies the number of executions to commit per transaction. The default transaction size is 1 and transactions are automatically committed.")
 	public void setTransactionSize(int transactionSize) {
 		this.transactionSize = transactionSize;
 	}
 
 	// Parameter batchSize
-	@Parameter(optional = true, description = "This optional parameter specifies the number of statement to execute as a batch. The default batch size is 1.")
+	@Parameter(name = "batchSize", optional = true, 
+			description = "This optional parameter specifies the number of statement to execute as a batch. The default batch size is 1.")
 	public void setBatchSize(int batchSize) {
 		this.batchSize = batchSize;
 	}
 
 	// Parameter hasResultSetAttr
-	@Parameter(optional = true, description = "This parameter points to an output attribute and returns true if the statement produces result sets, otherwise, returns false")
+	@Parameter(name = "hasResultSetAttr", optional = true, 
+			description = "This parameter points to an output attribute and returns true if the statement produces result sets, otherwise, returns false")
 	public void setHasResultSetAttr(String hasResultSetAttr) {
 		this.hasResultSetAttr = hasResultSetAttr;
 	}
 
 	// Parameter sqlStatusAttr
-	@Parameter(optional = true, description = "This parameter points to one or more output attributes and returns the SQL status information, including SQL code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)")
+	@Parameter(name = "sqlStatusAttr", optional = true, 
+			description = "This parameter points to one or more output attributes and returns the SQL status information, including SQL code (the error number associated with the SQLException) and SQL state (the five-digit XOPEN SQLState code for a database error)")
 	public void setSqlStatusAttr(String sqlStatusAttr) {
 		this.sqlStatusAttr = sqlStatusAttr;
 	}
 
-	// Parameter sqlStatusAttr
-	@Parameter(optional = true, description = "This parameter sets a commit interval for the sql statements that are being processed and overrides the batchSize and transactionSize parameters. ")
+	// Parameter commitInterval
+	@Parameter(name = "commitInterval", optional = true, 
+			description = "This parameter sets a commit interval for the sql statements that are being processed and overrides the batchSize and transactionSize parameters. ")
 	public void setCommitInterval(int commitInterval) {
 		this.commitInterval = commitInterval;
 	}
 
 	// Parameter checkConnection
-	@Parameter(optional = true, description="This optional parameter specifies whether a **checkConnection** thread should be start. The thread checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is `false`.")
+	@Parameter(name = "checkConnection", optional = true, 
+			description = "This optional parameter specifies whether a **checkConnection** thread should be start. The thread checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is `false`.")
 	public void setcheckConnection(boolean checkConnection) {
 		this.checkConnection = checkConnection;
 	}
-
+	
 	public boolean getCheckConnection() {
 		return checkConnection;
 	}
@@ -244,6 +255,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
 	 * and a JdbcSqlStatus_T which will contain the error message in order.
+	 * @param checker
 	 */
 	@ContextCheck
 	public static void checkErrorOutputPort(OperatorContextChecker checker) {
@@ -408,50 +420,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	}
 
-	/*
-	 * The method checkParameters
-	 */
-	@ContextCheck(compile = true)
-	public static void checkParameters(OperatorContextChecker checker) {
-		// If statement is set as parameter, statementAttr can not be set
-		checker.checkExcludedParameters("statement", "statementAttr");
-		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
-		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
-		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
-
-		// If jdbcCredentials is set as parameter, jdbcUser, jdbcPassword and jdbcUrl can not be set.
-		checker.checkExcludedParameters("jdbcUser", "jdbcCredentials");
-		checker.checkExcludedParameters("jdbcPassword", "jdbcCredentials");
-		checker.checkExcludedParameters("jdbcUrl", "jdbcCredentials");
-		checker.checkExcludedParameters("jdbcCredentials", "jdbcUrl");
-
-		// If jdbcCredentials is set as parameter, jdbcCredentials can not be set
-		checker.checkExcludedParameters("jdbcProperties", "jdbcCredentials");
-		
-		// check reconnection related parameters
-		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
-		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
-
-		// check parameters jdbcUrl jdbcUser and jdbcPassword
-		OperatorContext context = checker.getOperatorContext();
-		if ((!context.getParameterNames().contains("jdbcCredentials"))
-				&& (!context.getParameterNames().contains("jdbcUrl"))) {
-					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'jdbcCredentials'", null);
-			}				
-
-		if ((!context.getParameterNames().contains("jdbcCredentials"))
-				&& (!context.getParameterNames().contains("jdbcProperties"))
-				&& (!context.getParameterNames().contains("jdbcUser"))) {
-					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'jdbcCredentials'  or 'jdbcProperties' ", null);
-			}				
-		if ((!context.getParameterNames().contains("jdbcCredentials"))
-				&& (!context.getParameterNames().contains("jdbcProperties"))
-				&& (!context.getParameterNames().contains("jdbcPassword"))) {
-					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'jdbcCredentials'  or 'jdbcProperties'", null);
-			}				
-
-	}
-
+	
 	/**
 	 * Initialize this operator. Called once before any tuples are processed.
 	 * 
@@ -486,6 +455,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 		// Initiate PreparedStatement
 		initPreparedStatement();		
 	}			
+	
+	
 	
 	/**
 	 * startCheckConnection starts a thread to check the JDBC connection.

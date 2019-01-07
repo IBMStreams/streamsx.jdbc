@@ -30,11 +30,12 @@
   
   ++ What is new in version 1.4.3
 
-  * The JDBCRun operators provides a new parameter 'jdbcCredentials'. 
-    This optional parameter specifies the path name of the json file that contains the jdbc credentials.
-    The jdbc credentials file must conatain valid JSON format and a set of name/value pairs for
-    'username', 'password' and 'jdbcurl'. 
- 
+  * The JDBCRun operators provides a new parameter **credentials**. 
+    This optional parameter specifies the path name of the JSON file that contains the JDBC credentials.
+    The JDBC credentials file must contain valid JSON format and a set of name/value pairs for
+    **username**, **password** and **jdbcurl**. 
+
+  * support **Streams application configuration** 
   
 </info:description>
     <info:version>1.4.3</info:version>
