@@ -703,8 +703,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)) {
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Log...");
 			// The error is logged, and the error condition is cleared
-           	LOGGER.log(LogLevel.WARNING, Messages.getString("JDBC_SQL_EXCEPTION_WARNING"), new Object[] { e.toString() }); 
-			// Commit the transactions according to transactionSize
+			if((e.toString() != null ) && (e.toString().length() > 0)){
+				TRACE.log(TraceLevel.WARNING, Messages.getString("JDBC_SQL_EXCEPTION_WARNING"), new Object[] { e.toString() }); 
+			}
+          	// Commit the transactions according to transactionSize
 			if ((consistentRegionContext == null
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))

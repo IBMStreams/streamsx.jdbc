@@ -409,13 +409,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (context.getParameterNames().contains("trustStorePassword"))
 				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
 		}
-		TRACE.log(TraceLevel.DEBUG,"201701191030 propperties: "+System.getProperties().toString());
+		TRACE.log(TraceLevel.DEBUG," propperties: " + System.getProperties().toString());
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " initializing in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());   //$NON-NLS-3$
 
 		// set up JDBC driver class path
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path...");
-		setupClassPath(context);
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed");
+		if(!setupClassPath(context)){
+			TRACE.log(TraceLevel.ERROR, "Operator " + context.getName() + " setting up class path failed.");
+//			throw new FileNotFoundException();
+			throw new IOException();
+		}
+		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed.");
 
 		consistentRegionContext = context.getOptionalContext(ConsistentRegionContext.class);
 
@@ -496,8 +500,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			try{
 				processTuple(inputStream, tuple);
 			}catch (Exception e){
-        		LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CONNECTION_FAILED_ERROR"), new Object[]{e.toString()}); 
-	        	// Check if JDBC connection valid
+				if((e.toString() != null ) && (e.toString().length() > 0)){
+					LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CONNECTION_FAILED_ERROR"), new Object[]{e.toString()}); 
+				}
+        		// Check if JDBC connection valid
 	        	if (jdbcClientHelper.isValidConnection()){
 	        		// Throw exception for operator to process if JDBC connection is valid
 	        		throw e;
@@ -600,9 +606,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     }
   
 	// Set up JDBC driver class path
-	private void setupClassPath(OperatorContext context) throws MalformedURLException{	
+	private boolean setupClassPath(OperatorContext context) throws MalformedURLException{	
 
 		String libDir = jdbcDriverLib;
+				
 		if (jdbcDriverLib.lastIndexOf(File.separator) > 0) {
 			libDir = jdbcDriverLib.substring(0, jdbcDriverLib.lastIndexOf(File.separator));
 		}
@@ -616,17 +623,44 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			jarDir = appDir +  File.separator + libDir;
 		}
 
+		
+		File jarDirectory = new File(jarDir);
+		// Check if directory exists.
+		if(!jarDirectory.exists())
+		{
+			TRACE.log(TraceLevel.ERROR, "Operator " + context.getName() + " ERROR: jdbcDriverLib " + jarDir + " does'nt exists or it is empty.");
+			return false;
+		}
+		
+		// Check if directory contains files
 		File[] files = new File(jarDir).listFiles();
+		if (files.length == 0){
+			TRACE.log(TraceLevel.ERROR, "Operator " + context.getName() + " ERROR: jdbcDriverLib directory " + jarDir + "is empty.");
+			return false;
+		}
+		
 		// If this pathname does not denote a directory, then listFiles() returns null. 
 		// Search in the "opt" directory and add all jar files to the class path. 
+		boolean jarFileFound = false;
 		for (File file : files) {
 			if (file.isFile()) {
-				String jarFile = jarDir + File.separator + file.getName();
-				TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
-				context.addClassLibraries(new String[] {jarFile});
+					String jarFile = jarDir + File.separator + file.getName();
+					// check if the file is a JAR file
+					if (jarFile.endsWith(".jar")){
+						jarFileFound = true;
+						TRACE.log(TraceLevel.INFO, "Operator " + context.getName() + "setupClassPath " + jarFile);
+						context.addClassLibraries(new String[] {jarFile});
+				}
 			}
 		}
-		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
+		if (!jarFileFound){
+			TRACE.log(TraceLevel.ERROR, "Operator " + context.getName() + " ERROR: No JAR file found in jdbcDriverLib directory: " + jarDir);
+			return false;
+		}
+		else {
+			TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " JDBC Driver Lib: " + jdbcDriverLib);
+		}
+		return true;
 	}
 
 	// Set up JDBC connection
