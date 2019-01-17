@@ -545,10 +545,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
 
-			// if credentials is relative path, convert to absolute path
-			if (credentials != null && !credentials.trim().isEmpty() && !credentials.startsWith(File.separator))
+			if (credentials != null && !credentials.trim().isEmpty())
 			{
-				credentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 				getCredentials(credentials);
 			}
 
@@ -676,13 +674,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 			}
 
-			// if credentials is relative path, convert to absolute path
-			if (credentials != null && !credentials.trim().isEmpty() && !credentials.startsWith(File.separator))
-			{
-				credentials = getOperatorContext().getPE().getApplicationDirectory() + File.separator + credentials;
+			if (credentials != null && !credentials.trim().isEmpty()) {
 				getCredentials(credentials);
 			}
-
+			
 			// jdbcUrl is required
 			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
@@ -700,20 +695,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	}
 	}
 	
-	// read credentials file and set user name, password und jdbc url.
+	// read credentials  and set user name, password and jdbcUrl.
 	public void getCredentials(String credentials) throws IOException {
-		String jsonString = "";
-		// read json file to string
-		try {
-			byte[] encoded = Files.readAllBytes(Paths.get(credentials));
-			jsonString = new String(encoded,  Charset.defaultCharset());
-		}catch (IOException e){
-			LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_PROPERTIES_NOT_EXIST"), new Object[]{credentials}); 
-			throw e;
-		}
-		
-//		System.out.println(" jsonString  " + jsonString);
-				
+		String jsonString = credentials;
+
 		try {
 			JSONObject obj = JSONObject.parse(jsonString);			
 			jdbcUser = (String)obj.get("username");
