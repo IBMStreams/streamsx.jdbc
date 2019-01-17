@@ -683,13 +683,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
 		       // get next Exception message and sqlCode and submit it to the error output.
+//		    System.out.println("1111111111 Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
 			SQLException eNext = e.getNextException();
 			while(eNext != null) {
 				jSqlStatus.setSqlCode(eNext.getErrorCode());
 				jSqlStatus.setSqlState(eNext.getSQLState());
 	  			jSqlStatus.setSqlMessage(eNext.getMessage());
-				// System.out.println("NextException    sqlCode: " + eNext.getErrorCode() + " sqlState: " + eNext.getSQLState() + " sqlMessage: " + eNext.getMessage());
 				submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
+//			    System.out.println("2222222222222 Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+				eNext = eNext.getNextException();
 			}
 
 		}
