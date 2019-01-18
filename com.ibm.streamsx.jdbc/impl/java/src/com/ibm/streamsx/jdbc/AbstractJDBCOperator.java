@@ -4,13 +4,10 @@
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -119,7 +116,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
-			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string.")
+			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.")
     public void setJdbcDriverLib(String jdbcDriverLib){
     	this.jdbcDriverLib = jdbcDriverLib;
     }
@@ -449,7 +446,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		for (Map.Entry<String, String> kv : appConfig.entrySet()) {
 		   	LOGGER.log(LogLevel.INFO, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
 		}
-	
+		
+		jdbcUser = (null != appConfig.get("username")) ? appConfig.get("username") : jdbcUser;
+		jdbcPassword  = (null != appConfig.get("password")) ? appConfig.get("password") : jdbcPassword;
+		jdbcUrl  = (null != appConfig.get("jdbcUrl")) ? appConfig.get("jdbcUrl") : jdbcUrl;	
 	}
 
 	

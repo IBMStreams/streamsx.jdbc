@@ -682,15 +682,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (hasErrorPort) {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
-		       // get next Exception message and sqlCode and submit it to the error output.
-//		    System.out.println("1111111111 Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+			// System.out.println("First Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+		    // get next Exception message and sqlCode and submit it to the error output.
 			SQLException eNext = e.getNextException();
 			while(eNext != null) {
 				jSqlStatus.setSqlCode(eNext.getErrorCode());
 				jSqlStatus.setSqlState(eNext.getSQLState());
 	  			jSqlStatus.setSqlMessage(eNext.getMessage());
 				submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
-//			    System.out.println("2222222222222 Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+				// System.out.println("Next Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
 				eNext = eNext.getNextException();
 			}
 
@@ -698,8 +698,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 		// Check if JDBC connection valid
 		if (!jdbcClientHelper.isValidConnection()) {
-			// sqlFailureAction need not process if JDBC Connection is not valid
-                         
+			// sqlFailureAction need not process if JDBC Connection is not valid      
 			throw e;
 		}
 		if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_LOG)) {
