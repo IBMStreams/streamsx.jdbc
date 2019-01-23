@@ -22,7 +22,7 @@
 <div class="body refbody">
 <div class="section">
 <p class="p">
-<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.3.0</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
+<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.4.3</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
 
 </div>
 
@@ -32,7 +32,28 @@
 
 <div class="section">
 
-<p class="p">The <tt class="ph tt">JDBCRun</tt> operator runs a user-defined SQL statement that is based on an input tuple. The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. The <tt class="ph tt">JDBCRun</tt> operator is commonly used to update, merge, and delete database management system (DBMS) records. This operator is also used to retrieve records, create and drop tables, and to call stored procedures. # Behavior in a consistent region The <tt class="ph tt">JDBCRun</tt> operator can be used in a consistent region. It cannot be the start operator of a consistent region. In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets. On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port. On checkpoint: A database commit is performed. On reset: Any pending statements are discarded. A rollback is performed. The new version of toolkit 1.3.x. supports also <tt class="ph tt">optional type</tt>. The SPL applications based on new JDBC toolkit and created with a new Streams that supports <tt class="ph tt">optional type</tt> are able to write/read 'null' to/from a <tt class="ph tt">nullable</tt> column in a table. 
+<p class="p">The <strong class="ph b">JDBCRun</strong> operator runs a user-defined SQL statement that is based on an input tuple.
+</p>
+
+<p class="p"> The statement is run once for each input tuple received.
+</p>
+
+<p class="p"> Result sets that are produced by the statement are emitted as output stream tuples.
+</p>
+
+<p class="p"> The <tt class="ph tt">JDBCRun</tt> operator is commonly used to update, merge, and delete database management system (DBMS) records.  This operator is also used to retrieve records, create and drop tables, and to call stored procedures.
+</p>
+
+<p class="p"> Behavior in a <strong class="ph b">consistent region</strong>:
+</p>
+
+<p class="p"> The <strong class="ph b">JDBCRun</strong> operator can be used in a consistent region. It cannot be the start operator of a consistent region. In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets. On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port. On checkpoint: A database commit is performed. On reset: Any pending statements are discarded. A rollback is performed.
+</p>
+
+<p class="p"> The new version of toolkit 1.3.x. supports also <tt class="ph tt">optional type</tt>.
+</p>
+
+<p class="p"> The SPL applications based on new JDBC toolkit and created with a new Streams that supports <strong class="ph b">optional type</strong> are able to write/read 'null' to/from a <tt class="ph tt">nullable</tt> column in a table. 
 </p>
 
 </div>
@@ -55,14 +76,14 @@
  
   <dt class="dt dlterm">Parameters</dt>
 
-  <dd class="dd">This operator supports 25 parameters.
+  <dd class="dd">This operator supports 28 parameters.
 <p class="p"> Required: 
-<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
+<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>
 
 </p>
 
 <p class="p"> Optional: 
-<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
+<a class="xref" href="#spldoc_operator__parameter__appConfigName">appConfigName</a>, <a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__checkConnection">checkConnection</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__credentials">credentials</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
 
 </p>
 </dd>
@@ -202,7 +223,7 @@
    </ul>
 
    <ul class="sl simple">
-     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__output_port_set__windowpunctuationoutputmode">WindowPunctuationOutputMode</a>: Free
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__output_port_set__windowpunctuationoutputmode">WindowPunctuationOutputMode</a>: Generating
      </li>
 
    </ul>
@@ -260,17 +281,48 @@
 
 <div class="section">
 <p class="p splhead-1"><strong class="ph b"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters">Parameters</a></strong></p>
-This operator supports 25 parameters.
+This operator supports 28 parameters.
 <p class="p"> Required: 
-<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>
+<a class="xref" href="#spldoc_operator__parameter__jdbcClassName">jdbcClassName</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcDriverLib">jdbcDriverLib</a>
 
 </p>
 
 <p class="p"> Optional: 
-<a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
+<a class="xref" href="#spldoc_operator__parameter__appConfigName">appConfigName</a>, <a class="xref" href="#spldoc_operator__parameter__batchSize">batchSize</a>, <a class="xref" href="#spldoc_operator__parameter__checkConnection">checkConnection</a>, <a class="xref" href="#spldoc_operator__parameter__commitInterval">commitInterval</a>, <a class="xref" href="#spldoc_operator__parameter__commitPolicy">commitPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__credentials">credentials</a>, <a class="xref" href="#spldoc_operator__parameter__hasResultSetAttr">hasResultSetAttr</a>, <a class="xref" href="#spldoc_operator__parameter__isolationLevel">isolationLevel</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcPassword">jdbcPassword</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcProperties">jdbcProperties</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUrl">jdbcUrl</a>, <a class="xref" href="#spldoc_operator__parameter__jdbcUser">jdbcUser</a>, <a class="xref" href="#spldoc_operator__parameter__keyStore">keyStore</a>, <a class="xref" href="#spldoc_operator__parameter__keyStorePassword">keyStorePassword</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionBound">reconnectionBound</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionInterval">reconnectionInterval</a>, <a class="xref" href="#spldoc_operator__parameter__reconnectionPolicy">reconnectionPolicy</a>, <a class="xref" href="#spldoc_operator__parameter__sqlFailureAction">sqlFailureAction</a>, <a class="xref" href="#spldoc_operator__parameter__sqlStatusAttr">sqlStatusAttr</a>, <a class="xref" href="#spldoc_operator__parameter__sslConnection">sslConnection</a>, <a class="xref" href="#spldoc_operator__parameter__statement">statement</a>, <a class="xref" href="#spldoc_operator__parameter__statementAttr">statementAttr</a>, <a class="xref" href="#spldoc_operator__parameter__statementParamAttrs">statementParamAttrs</a>, <a class="xref" href="#spldoc_operator__parameter__transactionSize">transactionSize</a>, <a class="xref" href="#spldoc_operator__parameter__trustStore">trustStore</a>, <a class="xref" href="#spldoc_operator__parameter__trustStorePassword">trustStorePassword</a>
 
 </p>
 <dl class="dl">
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__appConfigName"><!-- --></a><tt class="ph tt">appConfigName</tt></dt>
+
+<dd class="dd">
+<p class="p">Specifies the name of the application configuration that contains JDBC connection related configuration parameters. The keys in the application configuration have the same name as the operator parameters.  The 'credentials' is supported as application configuration If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. 
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
 
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__batchSize"><!-- --></a><tt class="ph tt">batchSize</tt></dt>
 
@@ -284,6 +336,37 @@ This operator supports 25 parameters.
  <dd class="dd">
   <ul class="sl simple">
   <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: int32
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__checkConnection"><!-- --></a><tt class="ph tt">checkConnection</tt></dt>
+
+<dd class="dd">
+<p class="p">This optional parameter specifies whether a <strong class="ph b">checkConnection</strong> thread should be start. The thread checks periodically the status of JDBC connection. The JDBCRun sends in case of any connection failure a SqlCode and a message to SPL application.The default value is <tt class="ph tt">false</tt>.
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: boolean
   </li>
 
      <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
@@ -355,6 +438,37 @@ This operator supports 25 parameters.
      </li>
 
      <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__expressionmode">ExpressionMode</a>: CustomLiteral
+     </li>
+
+  </ul>
+
+ </dd>
+
+
+</dl>
+
+</dd>
+
+
+
+<dt class="dt dlterm"><a name="spldoc_operator__parameter__credentials"><!-- --></a><tt class="ph tt">credentials</tt></dt>
+
+<dd class="dd">
+<p class="p">This optional parameter specifies the path name of the JSON file that contains the jdbc credentials: username, password and jdbcUrl
+</p>
+<dl class="dl">
+
+ <dt class="dt dlterm">Properties </dt>
+
+ <dd class="dd">
+  <ul class="sl simple">
+  <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__type">Type</a>: rstring
+  </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
+     </li>
+
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
      </li>
 
   </ul>
@@ -464,7 +578,7 @@ This operator supports 25 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcDriverLib"><!-- --></a><tt class="ph tt">jdbcDriverLib</tt></dt>
 
 <dd class="dd">
-<p class="p">This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string.
+<p class="p">This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.
 </p>
 <dl class="dl">
 
@@ -526,7 +640,7 @@ This operator supports 25 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcProperties"><!-- --></a><tt class="ph tt">jdbcProperties</tt></dt>
 
 <dd class="dd">
-<p class="p">This optional parameter specifies the path name of the file that contains the jdbc connection properties.
+<p class="p">This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user' and 'password'
 </p>
 <dl class="dl">
 
@@ -583,7 +697,7 @@ This operator supports 25 parameters.
      <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__cardinality">Cardinality</a>: 1
      </li>
 
-     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: false
+     <li class="sli"><a class="xref" href="../references/OperatorModel.html#spldoc_reference_operator_model__parameters__parameter__optional">Optional</a>: true
      </li>
 
   </ul>

@@ -98,16 +98,16 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	// consistent region context
-    protected ConsistentRegionContext consistentRegionContext;
+    	protected ConsistentRegionContext consistentRegionContext;
     
 	// The name of the application config object
 	private String appConfigName = null;
 
 	// data from application config object
-    Map<String, String> appConfig = null;
+    	Map<String, String> appConfig = null;
 
     
- // SSL parameters
+ 	// SSL parameters
  	private String keyStore;
  	private String trustStore;
  	private String keyStorePassword;
@@ -162,7 +162,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter credentials
 	@Parameter(name = "credentials", optional = true, 
-			description = "This optional parameter specifies the path name of the JSON file that contains the jdbc credentials: username, password and jdbcUrl")
+			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcUrl")
     public void setcredentials(String credentials){
     	this.credentials = credentials;
     }
@@ -574,11 +574,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
      * @param mark The punctuation mark
      * @throws Exception Operator failure, will cause the enclosing PE to terminate.
      */
-    @Override
-    public void processPunctuation(StreamingInput<Tuple> stream,
+	public void processPunctuation(StreamingInput<Tuple> stream,
     		Punctuation mark) throws Exception {
-    	// For window markers, punctuate all output ports
-    	super.processPunctuation(stream, mark);
+    	// Window markers are not forwarded
+    	// Window markers are generated on data port (port 0) after a statement
+    	// error port (port 1) is punctuation free
+		if (mark == Punctuation.FINAL_MARKER) {
+			super.processPunctuation(stream, mark);
+		}
     }
 
     /**

@@ -1,4 +1,4 @@
-#Wed May 23 12:00:15 CEST 2018
+#Wed Jan 23 03:05:35 PST 2019
 copytosourcelist=
 hreftargetslist=tk$JDBCSample/ns$com.ibm.streamsx.jdbc.sample.jdbcrun.xml,tk$JDBCSample/ix$Namespace.xml,toolkits/ix$Namespace.xml,tk$JDBCSample/tk$JDBCSample.xml,toolkits/toolkits.xml
 fullditatopicfile=fullditatopic.list
@@ -37,7 +37,7 @@ codereffile=coderef.list
 keylist=
 codereflist=
 user.input.file.listfile=usr.input.file.list
-user.input.dir=/home/nouriahm/workspace2/jdbc-master/streamsx.jdbc/samples/JDBCSample/doc/spldoc/dita
+user.input.dir=/home/anouri/workspace/streamsx.jdbc/samples/JDBCSample/doc/spldoc/dita
 uplevels=
 tempdirToinputmapdir.relative.value=
 conrefpushfile=conrefpush.list
