@@ -155,7 +155,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcProperties
 	@Parameter(name = "jdbcProperties", optional = true, 
-			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: jdbcUser and jdbcPassword")
+			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user' and 'password'")
     public void setJdbcProperties(String jdbcProperties){
     	this.jdbcProperties = jdbcProperties;
     }
@@ -261,7 +261,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// Parameter appConfigName
 	@Parameter(name = "appConfigName", optional = true,
 			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. The keys in the application configuration have the same name as the operator parameters. "
-			+ " The following keys are supported: username, password, and jdbcurl . "
+			+ " The 'credentials' is supported as application configuration"
 			+ " If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. "
 		)
 		public void setAppConfigName(String appConfigName) {
@@ -447,14 +447,12 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		   	LOGGER.log(LogLevel.INFO, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
 		}
 		
-		jdbcUser = (null != appConfig.get("username")) ? appConfig.get("username") : jdbcUser;
-		jdbcPassword  = (null != appConfig.get("password")) ? appConfig.get("password") : jdbcPassword;
-		jdbcUrl  = (null != appConfig.get("jdbcUrl")) ? appConfig.get("jdbcUrl") : jdbcUrl;	
+		if (null != appConfig.get("credentials")){
+			credentials = appConfig.get("credentials");
+		}
 	}
 
-	
-	
-	
+		
     /**
      * Process an incoming tuple that arrived on the specified port.
      * <P>
@@ -694,6 +692,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     		throw e;
     	}
 	}
+
+	
 	
 	// read credentials  and set user name, password and jdbcUrl.
 	public void getCredentials(String credentials) throws IOException {

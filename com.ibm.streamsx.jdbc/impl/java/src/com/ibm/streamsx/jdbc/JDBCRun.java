@@ -660,15 +660,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		JDBCSqlStatus jSqlStatus = new JDBCSqlStatus();
 		// System.out.println(" sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
       		
-        	String sqlMessage = e.getMessage();
-
-	       // add cause text to the error message 
-	        Throwable t = e.getCause();
-	        while(t != null) {
-	            // System.out.println("Cause: " + t);
-	            sqlMessage = sqlMessage + t;
- 	           t = t.getCause();
-	        }
+        String sqlMessage = e.getMessage();
 
 		jSqlStatus.setSqlCode(e.getErrorCode());
 		jSqlStatus.setSqlState(e.getSQLState());
@@ -682,16 +674,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (hasErrorPort) {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
-			// System.out.println("First Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+			 // System.out.println("First Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
 		    // get next Exception message and sqlCode and submit it to the error output.
 			SQLException eNext = e.getNextException();
-			while(eNext != null) {
+			if(eNext != null) {
 				jSqlStatus.setSqlCode(eNext.getErrorCode());
 				jSqlStatus.setSqlState(eNext.getSQLState());
 	  			jSqlStatus.setSqlMessage(eNext.getMessage());
 				submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
 				// System.out.println("Next Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
-				eNext = eNext.getNextException();
 			}
 
 		}

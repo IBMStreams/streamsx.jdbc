@@ -111,6 +111,17 @@ public class JDBCClientHelper {
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
+				String user = jdbcConnectionProps.getProperty("user");
+				if (null == user){
+					LOGGER.log(LogLevel.ERROR, "'user' is not defined in property file: " + jdbcProperties); 
+					return;
+				}
+				String password = jdbcConnectionProps.getProperty("password");
+				if (null == password){
+					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
+					return;
+				}
+			
 	        } else {
 	        	// pick up user and password if they are parameters
 	        	if (jdbcUser != null && jdbcPassword != null) {
