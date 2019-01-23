@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2015 International Business Machines Corporation
+ * Copyright (C) 2015-2018 International Business Machines Corporation
  * All Rights Reserved
  *******************************************************************************/
 package com.ibm.streamsx.jdbc;
@@ -38,7 +38,7 @@ public class JDBCClientHelper {
 			+ "." + CLASS_NAME);
     
 	// logger for trace/debug information
-		protected static Logger TRACE = Logger.getLogger("com.ibm.streamsx.jdbc");
+	protected static Logger TRACE = Logger.getLogger("com.ibm.streamsx.jdbc");
 
 	// the class name for jdbc driver.
 	private String jdbcClassName;
@@ -98,7 +98,7 @@ public class JDBCClientHelper {
 	}
 
 	// Create the JDBC connection
-	public synchronized void createConnection() throws Exception{
+	public synchronized void createConnection() throws Exception, SQLException{
 		LOGGER.log(LogLevel.INFO, "createConnection \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
 		// Attempt to create connection only when existing connection is invalid.
 		if (!isConnected()){
@@ -111,13 +111,24 @@ public class JDBCClientHelper {
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
+				String user = jdbcConnectionProps.getProperty("user");
+				if (null == user){
+					LOGGER.log(LogLevel.ERROR, "'user' is not defined in property file: " + jdbcProperties); 
+					return;
+				}
+				String password = jdbcConnectionProps.getProperty("password");
+				if (null == password){
+					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
+					return;
+				}
+			
 	        } else {
-	        	// pick up user and passwrod if they are parameters
+	        	// pick up user and password if they are parameters
 	        	if (jdbcUser != null && jdbcPassword != null) {
-				jdbcConnectionProps.put("user", jdbcUser);
-				jdbcConnectionProps.put("password", jdbcPassword);
-				jdbcConnectionProps.put("avatica_user", jdbcUser);
-				jdbcConnectionProps.put("avatica_password", jdbcPassword);
+					jdbcConnectionProps.put("user", jdbcUser);
+					jdbcConnectionProps.put("password", jdbcPassword);
+					jdbcConnectionProps.put("avatica_user", jdbcUser);
+					jdbcConnectionProps.put("avatica_password", jdbcPassword);
 	        	}
 	        	
 	        }
@@ -139,14 +150,13 @@ public class JDBCClientHelper {
 				try {
 					DriverManager.setLoginTimeout(5);
 					nConnectionAttempts ++;
-					TRACE.log(TraceLevel.DEBUG,"JDBC connection attempt "+nConnectionAttempts);
-	    			if (jdbcConnectionProps != null){
+					TRACE.log(TraceLevel.DEBUG,"JDBC connection attempt "+nConnectionAttempts);					
+					if (jdbcConnectionProps != null){
 	    				TRACE.log(TraceLevel.DEBUG,"JDBC connection -- props not null ");
 	    				TRACE.log(TraceLevel.DEBUG,jdbcConnectionProps.toString());
 		 	        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else if (jdbcUser != null && jdbcPassword != null){
 			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- userid password exist "+jdbcUrl);
-			        	;
 			        	connection = DriverManager.getConnection(jdbcUrl, jdbcConnectionProps);
 			        }else{
 			        	TRACE.log(TraceLevel.DEBUG,"JDBC connection -- using url only "+jdbcUrl);
@@ -154,7 +164,7 @@ public class JDBCClientHelper {
 			        }
 					break;
 				} catch (SQLException e) {
-					// output excpetion info into trace file if in debug mode
+					// output exception info into trace file if in debug mode
 					TRACE.log(LogLevel.ERROR,"JDBC connect threw SQL Exception",e);				
 					System.out.println("createConnection  SQLException  sqlCode: " + e.getErrorCode() + " sqlState: " + e.getSQLState() + " sqlMessage: " + e.getMessage());
 					System.out.println("createConnection  reconnectionPolicy: " + reconnectionPolicy);

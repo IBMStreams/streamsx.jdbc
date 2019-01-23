@@ -4,31 +4,31 @@
   <toolkit name="JDBCSample" requiredProductVersion="4.2.1.0" version="1.0.0">
     <description>JDBCSample</description>
     <uriTable>
-      <uri index="1" value="com.ibm.streamsx.jdbc.sample.jdbcrun/JDBCReconnection.spl"/>
-      <uri index="2" value="com.ibm.streamsx.jdbc.sample.jdbcrun/JDBCRunErrorPort.spl"/>
+      <uri index="2" value="com.ibm.streamsx.jdbc.sample.jdbcrun/JDBCReconnection.spl"/>
+      <uri index="1" value="com.ibm.streamsx.jdbc.sample.jdbcrun/JDBCRunErrorPort.spl"/>
       <uri index="3" value="com.ibm.streamsx.jdbc.sample.jdbcrun/JDBCRunSample.spl"/>
     </uriTable>
     <namespace name="com.ibm.streamsx.jdbc.sample.jdbcrun">
-      <compositeOp column="11" line="32" name="JDBCReconnection" potentialMain="true" uriIndex="1">
-        <description>*****************************************************************************</description>
-        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcDriverLib&quot;, &quot;opt/db2jcc4.jar&quot;)" metaType="Expression" name="jdbcDriverLib" optional="true" type="&lt;rstring>"/>
-        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcClassName&quot;, &quot;com.ibm.db2.jcc.DB2Driver&quot;)" metaType="Expression" name="jdbcClassName" optional="true" type="&lt;rstring>"/>
-        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUrl&quot;, &quot;jdbc:db2://&lt;your-db2-server-name>:50000/&lt;your-db-name>:retrieveMessagesFromServerOnGetMessage=true;&quot;)" metaType="Expression" name="jdbcUrl" optional="true" type="&lt;rstring>"/>
-        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUser&quot;, &quot;&lt;yourdb2-user>&quot;)" metaType="Expression" name="jdbcUser" optional="true" type="&lt;rstring>"/>
-        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcPassword&quot;, &quot;&lt;yourdb2-password&quot;)" metaType="Expression" name="jdbcPassword" optional="true" type="&lt;rstring>"/>
-        <type column="3" line="43" name="rsSchema" type="int32 ID, rstring NAME" uriIndex="1"/>
-        <type column="3" line="44" name="selectSchema" type="rstring sql" uriIndex="1"/>
-      </compositeOp>
-      <compositeOp column="11" line="14" name="JDBCRunErrorPort" potentialMain="true" uriIndex="2">
+      <compositeOp column="11" line="14" name="JDBCRunErrorPort" potentialMain="true" uriIndex="1">
         <description>*****************************************************************************</description>
         <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcDriverLib&quot;, &quot;opt/db2jcc4.jar&quot;)" metaType="Expression" name="jdbcDriverLib" optional="true" type="&lt;rstring>"/>
         <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcClassName&quot;, &quot;com.ibm.db2.jcc.DB2Driver&quot;)" metaType="Expression" name="jdbcClassName" optional="true" type="&lt;rstring>"/>
         <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUrl&quot;, &quot;jdbc:db2://&lt;your-db2-server>/&lt;your-db2-db-name>:retrieveMessagesFromServerOnGetMessage=true;&quot;)" metaType="Expression" name="jdbcUrl" optional="true" type="&lt;rstring>"/>
         <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUser&quot;, &quot;&lt;your-db2-user>&quot;)" metaType="Expression" name="jdbcUser" optional="true" type="&lt;rstring>"/>
         <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcPassword&quot;, &quot;your-db2-password&quot;)" metaType="Expression" name="jdbcPassword" optional="true" type="&lt;rstring>"/>
-        <type column="3" line="25" name="insertSchema" type="int32 ID, rstring NAME" uriIndex="2"/>
-        <type column="3" line="26" name="rsSchema" type="int32 ID, rstring NAME" uriIndex="2"/>
-        <type column="3" line="27" name="selectSchema" type="rstring sql" uriIndex="2"/>
+        <type column="3" line="25" name="insertSchema" type="int32 ID, rstring NAME" uriIndex="1"/>
+        <type column="3" line="26" name="rsSchema" type="int32 ID, rstring NAME" uriIndex="1"/>
+        <type column="3" line="27" name="selectSchema" type="rstring sql" uriIndex="1"/>
+      </compositeOp>
+      <compositeOp column="11" line="32" name="JDBCReconnection" potentialMain="true" uriIndex="2">
+        <description>*****************************************************************************</description>
+        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcDriverLib&quot;, &quot;opt/db2jcc4.jar&quot;)" metaType="Expression" name="jdbcDriverLib" optional="true" type="&lt;rstring>"/>
+        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcClassName&quot;, &quot;com.ibm.db2.jcc.DB2Driver&quot;)" metaType="Expression" name="jdbcClassName" optional="true" type="&lt;rstring>"/>
+        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUrl&quot;, &quot;jdbc:db2://&lt;your-db2-server-name>:50000/&lt;your-db-name>:retrieveMessagesFromServerOnGetMessage=true;&quot;)" metaType="Expression" name="jdbcUrl" optional="true" type="&lt;rstring>"/>
+        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcUser&quot;, &quot;&lt;yourdb2-user>&quot;)" metaType="Expression" name="jdbcUser" optional="true" type="&lt;rstring>"/>
+        <parameter defaultValue="getSubmissionTimeValue(&quot;jdbcPassword&quot;, &quot;&lt;yourdb2-password&quot;)" metaType="Expression" name="jdbcPassword" optional="true" type="&lt;rstring>"/>
+        <type column="3" line="43" name="rsSchema" type="int32 ID, rstring NAME" uriIndex="2"/>
+        <type column="3" line="44" name="selectSchema" type="rstring sql" uriIndex="2"/>
       </compositeOp>
       <compositeOp column="11" line="24" name="JDBCRunSample" potentialMain="true" uriIndex="3">
         <description>*****************************************************************************</description>
