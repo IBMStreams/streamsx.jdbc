@@ -574,11 +574,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
      * @param mark The punctuation mark
      * @throws Exception Operator failure, will cause the enclosing PE to terminate.
      */
-    @Override
-    public void processPunctuation(StreamingInput<Tuple> stream,
+	public void processPunctuation(StreamingInput<Tuple> stream,
     		Punctuation mark) throws Exception {
-    	// For window markers, punctuate all output ports
-    	super.processPunctuation(stream, mark);
+    	// Window markers are not forwarded
+    	// Window markers are generated on data port (port 0) after a statement
+    	// error port (port 1) is punctuation free
+		if (mark == Punctuation.FINAL_MARKER) {
+			super.processPunctuation(stream, mark);
+		}
     }
 
     /**
