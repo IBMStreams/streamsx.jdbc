@@ -47,6 +47,7 @@ import com.ibm.streams.operator.state.ConsistentRegionContext;
 import com.ibm.streams.operator.types.Blob;
 import com.ibm.streams.operator.types.RString;
 import com.ibm.streams.operator.types.Timestamp;
+import com.ibm.streams.operator.types.ValueFactory;
 import com.ibm.streams.operator.types.XML;
 import com.ibm.streams.operator.model.OutputPortSet.WindowPunctuationOutputMode;
 
@@ -984,7 +985,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 						else if (splType.contains("DECIMAL32")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
 						else if (splType.contains("DECIMAL64")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
 						else if (splType.contains("DECIMAL128")) outputTuple.setBigDecimal(splAttrName, rs.getBigDecimal(i));
-						else if (splType.contains("BLOB")) outputTuple.setBlob(splAttrName, (Blob)rs.getBlob(i));
+						else if (splType.contains("BLOB")) outputTuple.setBlob(splAttrName, ValueFactory.readBlob(rs.getBlob(i).getBinaryStream()));
 						else if (splType.contains("TIMESTAMP")) outputTuple.setTimestamp(splAttrName, Timestamp.getTimestamp(rs.getTimestamp(i)));
 						else if (splType.contains("XML")) outputTuple.setXML(splAttrName, (XML)rs.getSQLXML(i));
 						else if (splType.contains("BOOLEAN")) outputTuple.setBoolean(splAttrName, rs.getBoolean(i));
