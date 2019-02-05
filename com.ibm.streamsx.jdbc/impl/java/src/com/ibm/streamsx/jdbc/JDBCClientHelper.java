@@ -15,9 +15,12 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.ibm.streams.operator.Attribute;
+import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
+import com.ibm.streams.operator.types.Blob;
 
 /* This class contains all the JDBC connection related information,
  * creating maintaining and closing a connection to the JDBC driver
@@ -409,15 +412,9 @@ public class JDBCClientHelper {
 
 	// Execute the preparedStatement
 	public ResultSet executePreparedStatement(StatementParameter[] stmtParameters) throws SQLException{
-
 		ResultSet rs = null;
 
-		if (stmtParameters != null){
-			for (int i=0; i< stmtParameters.length; i++){
-				preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
-			}
-		}
-
+		addParametersToStatement(stmtParameters);
 		if (preparedStmt.execute()){
 			rs = preparedStmt.getResultSet();
 		}
@@ -427,15 +424,31 @@ public class JDBCClientHelper {
 	// Add batch for preparedStatement
 	public void addPreparedStatementBatch (StatementParameter[] stmtParameters) throws SQLException{
 
-		if (stmtParameters != null){
-			for (int i=0; i< stmtParameters.length; i++){
-				preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
-			}
-		}
-
+		addParametersToStatement(stmtParameters);
 		preparedStmt.addBatch();
 	}
 
+	// add parameters to the statement 
+	public void addParametersToStatement(StatementParameter[] stmtParameters) throws SQLException{
+		
+		if (stmtParameters != null){
+			for (int i=0; i< stmtParameters.length; i++){
+				Attribute attr = stmtParameters[i].getSplAttribute();
+				
+				// special handling for type Blob
+				if (MetaType.BLOB == attr.getType().getMetaType()) {
+					if (LOGGER.isLoggable(TraceLevel.DEBUG)) {
+						LOGGER.log(TraceLevel.DEBUG, "Converting SPL:Blob to java.sql.Blob");
+					}
+					com.ibm.streams.operator.types.Blob splBlob = (com.ibm.streams.operator.types.Blob) stmtParameters[i].getSplValue();
+					preparedStmt.setBlob(i+1, splBlob.getInputStream());
+				} else {
+					preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
+				}
+			}
+		}		
+	}
+	
 	// Execute batch for preparedStatement
 	public void executePreparedStatementBatch () throws SQLException{
 
