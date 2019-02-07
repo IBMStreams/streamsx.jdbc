@@ -594,8 +594,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " shutting down in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());   //$NON-NLS-3$
 
         // Roll back the transaction
-        jdbcClientHelper.rollback();
-
+        if (sqlFailureAction == "rollback"){
+        	jdbcClientHelper.rollback();
+        }
         // close JDBC connection
         jdbcClientHelper.closeConnection();
 
