@@ -134,21 +134,27 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
 			+ ". server, the domain name or IP address of the data source.\\n\\n"
 			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
-			+ ". database, a name for the data source")
+			+ ". database, a name for the data source"
+			+ ". This parameter can be overwritten by the credentials parameter."
+			)
     public void setJdbcUrl(String jdbcUrl){
     	this.jdbcUrl = jdbcUrl;
     }
 
 	//Parameter jdbcUser
 	@Parameter(name = "jdbcUser", optional = true, 
-			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring.")
+			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring. "
+			+ "This parameter can be overwritten by the credentials parameter."
+			)
     public void setJdbcUser(String jdbcUser){
     	this.jdbcUser = jdbcUser;
     }
 
 	//Parameter jdbcPassword
 	@Parameter(name = "jdbcPassword", optional = true, 
-			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring.")
+			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring. "
+			+ "This parameter can be overwritten by the credentials parameter."
+			)
     public void setJdbcPassword(String jdbcPassword){
     	this.jdbcPassword = jdbcPassword;
     }
@@ -162,7 +168,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter credentials
 	@Parameter(name = "credentials", optional = true, 
-			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcUrl")
+			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcurl. "
+			+ "This parameter can also be specified in an application configuration.")
     public void setcredentials(String credentials){
     	this.credentials = credentials;
     }
@@ -260,8 +267,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// Parameter appConfigName
 	@Parameter(name = "appConfigName", optional = true,
-			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. The keys in the application configuration have the same name as the operator parameters. "
-			+ " The 'credentials' is supported as application configuration"
+			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. "
+			+ " The 'credentials' parameter can be set in an application configuration. "
 			+ " If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. "
 		)
 		public void setAppConfigName(String appConfigName) {
@@ -348,19 +355,22 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// check parameters jdbcUrl jdbcUser and jdbcPassword
 		OperatorContext context = checker.getOperatorContext();
 		if ((!context.getParameterNames().contains("credentials"))
+				&& (!context.getParameterNames().contains("appConfigName"))
 				&& (!context.getParameterNames().contains("jdbcUrl"))) {
-					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'credentials'", null);
+					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'credentials' or via the credentials parameter in an application configuration.", null);
 			}				
 
 		if ((!context.getParameterNames().contains("credentials"))
+				&& (!context.getParameterNames().contains("appConfigName"))				
 				&& (!context.getParameterNames().contains("jdbcProperties"))
 				&& (!context.getParameterNames().contains("jdbcUser"))) {
-					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'credentials'  or 'jdbcProperties' ", null);
+					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'credentials'  or 'jdbcProperties' or via the credentials parameter in an application configuration. ", null);
 			}				
 		if ((!context.getParameterNames().contains("credentials"))
+				&& (!context.getParameterNames().contains("appConfigName"))				
 				&& (!context.getParameterNames().contains("jdbcProperties"))
 				&& (!context.getParameterNames().contains("jdbcPassword"))) {
-					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'credentials'  or 'jdbcProperties'", null);
+					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'credentials'  or 'jdbcProperties' or via the credentials parameter in an application configuration.", null);
 			}				
 
 	}
@@ -444,7 +454,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 		
 		for (Map.Entry<String, String> kv : appConfig.entrySet()) {
-		   	LOGGER.log(LogLevel.INFO, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
+		   	TRACE.log(TraceLevel.DEBUG, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
 		}
 		
 		if (null != appConfig.get("credentials")){
