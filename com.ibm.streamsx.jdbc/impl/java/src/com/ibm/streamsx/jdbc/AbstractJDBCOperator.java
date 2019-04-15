@@ -359,6 +359,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		OperatorContext context = checker.getOperatorContext();
 		if ((!context.getParameterNames().contains("credentials"))
 				&& (!context.getParameterNames().contains("appConfigName"))
+				&& (!context.getParameterNames().contains("jdbcUrl"))
 				&& (!context.getParameterNames().contains("jdbcProperties"))) {
 					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'credentials' or via the credentials parameter in an application configuration or via properties file.", null);
 			}				
