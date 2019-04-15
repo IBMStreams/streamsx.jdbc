@@ -41,8 +41,13 @@
  
  * Insert BLOB bug fixed #82
   
+++ What is new in version 1.5.0
+ 
+ * Add jdbcUrl to jdbc properties.
+ * Support jdbcUrl and jdbcurl in credentials.
+
 </info:description>
-    <info:version>1.4.4</info:version>
+    <info:version>1.5.0</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>
