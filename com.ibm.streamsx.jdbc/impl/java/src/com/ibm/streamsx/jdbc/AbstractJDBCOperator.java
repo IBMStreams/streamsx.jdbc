@@ -552,9 +552,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CLASS_NAME_NOT_EXIST")); 
 			}
 			// if jdbcProperties is relative path, convert to absolute path
-			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
+			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
 			{
-				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 				getProperties(jdbcProperties);
 			}
 
@@ -567,8 +566,6 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
-
-			// System.out.println("credentials : " + credentials);
 			
 			// Roll back the transaction
 			jdbcClientHelper.rollbackWithClearBatch();
@@ -686,9 +683,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
 		try{
 			// if jdbcProperties is relative path, convert to absolute path
-			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
+			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
 			{
-				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
 				getProperties(jdbcProperties);
 			}
 
@@ -717,7 +713,15 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// read properties file and set user name, password and jdbcUrl.
 	public void getProperties(String jdbcProperties) throws IOException {
 		try {
-		        Properties jdbcConnectionProps = new Properties();
+				// if jdbcProperties is relative path, convert to absolute path
+				if (!jdbcProperties.startsWith(File.separator))
+				{
+					jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+				}
+				
+				System.out.println("JDBC Properties file from Operator '" + getOperatorContext().getName() + "' : " + jdbcProperties);
+
+				Properties jdbcConnectionProps = new Properties();
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
@@ -731,11 +735,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
 					throw new Exception(Messages.getString("'jdbcPassword' is required to create JDBC connection."));
 				}
-			
+                // It supports jdbcUrl and jdbcurl 			
 				jdbcUrl = jdbcConnectionProps.getProperty("jdbcUrl");
 				if (null == jdbcUrl){
-					LOGGER.log(LogLevel.ERROR, "'jdbcUrl' is not defined in property file: " + jdbcProperties); 
-					throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
+					jdbcUrl = jdbcConnectionProps.getProperty("jdbcurl");
+					if (null == jdbcUrl){
+						LOGGER.log(LogLevel.ERROR, "'jdbcUrl' is not defined in property file: " + jdbcProperties); 
+						throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
+					}
 				}
 
 			} catch (Exception ex) {
@@ -743,7 +750,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 	} 
 
-	
+
 	// read credentials  and set user name, password and jdbcUrl.
 	public void getCredentials(String credentials) throws IOException {
 		String jsonString = credentials;
@@ -771,6 +778,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 				throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
 			}
+			System.out.println("jdbcUrl from credentials in Operator '" + getOperatorContext().getName() + "' :" + jdbcUrl);
+			
 			} catch (Exception ex) {
 			         ex.printStackTrace();
 		}
