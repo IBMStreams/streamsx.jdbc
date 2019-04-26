@@ -52,8 +52,6 @@ public class JDBCClientHelper {
 	// the user's password.
 	private String jdbcPassword = null;
 	private boolean sslConnection = false;
-	// the jdbc properties file.
-	private String jdbcProperties = null;
 	// the transaction isolation level at which statement runs.
 	private String isolationLevel = IJDBCConstants.TRANSACTION_READ_UNCOMMITTED;
 	// transactions are automatically committed or not.
@@ -87,7 +85,6 @@ public class JDBCClientHelper {
 		this.jdbcUser = jdbcUser;
 		this.jdbcPassword = jdbcPassword;
 		this.sslConnection = sslConnection;
-		this.jdbcProperties = jdbcProperties;
 		this.autoCommit = autoCommit;
 		this.isolationLevel = isolationLevel;
 		this.reconnectionPolicy = reconnectionPolicy;
@@ -108,33 +105,16 @@ public class JDBCClientHelper {
 	        //Load class into memory
 	        Class.forName(jdbcClassName);
 
-	        // Load jdbc properties
 	        Properties jdbcConnectionProps = new Properties();
-	        if (jdbcProperties != null){
-				FileInputStream fileInput = new FileInputStream(jdbcProperties);
-				jdbcConnectionProps.load(fileInput);
-				fileInput.close();
-				String user = jdbcConnectionProps.getProperty("user");
-				if (null == user){
-					LOGGER.log(LogLevel.ERROR, "'user' is not defined in property file: " + jdbcProperties); 
-					return;
-				}
-				String password = jdbcConnectionProps.getProperty("password");
-				if (null == password){
-					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
-					return;
-				}
-			
-	        } else {
-	        	// pick up user and password if they are parameters
-	        	if (jdbcUser != null && jdbcPassword != null) {
-					jdbcConnectionProps.put("user", jdbcUser);
-					jdbcConnectionProps.put("password", jdbcPassword);
-					jdbcConnectionProps.put("avatica_user", jdbcUser);
-					jdbcConnectionProps.put("avatica_password", jdbcPassword);
-	        	}
+        	// pick up user and password if they are parameters
+        	if (jdbcUser != null && jdbcPassword != null) {
+				jdbcConnectionProps.put("user", jdbcUser);
+				jdbcConnectionProps.put("password", jdbcPassword);
+				// properties for phoenix jdbc properties.
+				jdbcConnectionProps.put("avatica_user", jdbcUser);
+				jdbcConnectionProps.put("avatica_password", jdbcPassword);
+        	}
 	        	
-	        }
 	        
 	        // add sslConnection to properties
 	        if (sslConnection)
@@ -257,7 +237,6 @@ public class JDBCClientHelper {
 		this.jdbcUrl = jdbcUrl;
 		this.jdbcUser = jdbcUser;
 		this.jdbcPassword = jdbcPassword;
-		this.jdbcProperties = jdbcProperties;
 
 		// Set JDBC Connection Status as false
 		connected = false;
