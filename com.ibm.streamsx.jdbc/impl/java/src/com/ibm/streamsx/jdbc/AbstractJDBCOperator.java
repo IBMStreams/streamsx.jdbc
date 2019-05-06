@@ -70,7 +70,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String jdbcPassword;
 	// This parameter specifies the path name of the file that contains the jdbc connection properties.
 	private String jdbcProperties;
-	// This parameter specifies the path name of the json file that contains the jdbc credentials .
+	// This parameter specifies the json string that contains the jdbc credentials username, password, jdbcurl.
 	private String credentials;
 	// This parameter specifies the transaction isolation level at which statement runs.
 	// If omitted, the statement runs at level READ_UNCOMMITTED
