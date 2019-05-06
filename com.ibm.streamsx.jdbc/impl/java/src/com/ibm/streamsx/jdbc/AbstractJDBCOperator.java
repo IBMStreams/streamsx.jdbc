@@ -70,7 +70,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String jdbcPassword;
 	// This parameter specifies the path name of the file that contains the jdbc connection properties.
 	private String jdbcProperties;
-	// This parameter specifies the path name of the json file that contains the jdbc credentials .
+	// This parameter specifies the json string that contains the jdbc credentials username, password, jdbcurl.
 	private String credentials;
 	// This parameter specifies the transaction isolation level at which statement runs.
 	// If omitted, the statement runs at level READ_UNCOMMITTED
@@ -137,7 +137,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			+ ". server, the domain name or IP address of the data source.\\n\\n"
 			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
 			+ ". database, a name for the data source"
-			+ ". This parameter can be overwritten by the credentials parameter."
+			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
 			)
     public void setJdbcUrl(String jdbcUrl){
     	this.jdbcUrl = jdbcUrl;
@@ -146,7 +146,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	//Parameter jdbcUser
 	@Parameter(name = "jdbcUser", optional = true, 
 			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring. "
-			+ "This parameter can be overwritten by the credentials parameter."
+			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
 			)
     public void setJdbcUser(String jdbcUser){
     	this.jdbcUser = jdbcUser;
@@ -155,7 +155,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	//Parameter jdbcPassword
 	@Parameter(name = "jdbcPassword", optional = true, 
 			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring. "
-			+ "This parameter can be overwritten by the credentials parameter."
+			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
 			)
     public void setJdbcPassword(String jdbcPassword){
     	this.jdbcPassword = jdbcPassword;
@@ -163,14 +163,15 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcProperties
 	@Parameter(name = "jdbcProperties", optional = true, 
-			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user', 'password' and jdbcUrl")
+			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user', 'password' and jdbcUrl. "
+					+ "It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.")
     public void setJdbcProperties(String jdbcProperties){
     	this.jdbcProperties = jdbcProperties;
     }
 
 	//Parameter credentials
 	@Parameter(name = "credentials", optional = true, 
-			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcurl. "
+			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: 'username', 'password' and 'jdbcurl' or 'jdbcUrl'. "
 			+ "This parameter can also be specified in an application configuration.")
     public void setcredentials(String credentials){
     	this.credentials = credentials;
@@ -725,22 +726,35 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				FileInputStream fileInput = new FileInputStream(jdbcProperties);
 				jdbcConnectionProps.load(fileInput);
 				fileInput.close();
+
+				// It supports 'user' or 'username' or 'jdbcUser' 			
 				jdbcUser = jdbcConnectionProps.getProperty("user");
 				if (null == jdbcUser){
-					LOGGER.log(LogLevel.ERROR, "'user' is not defined in property file: " + jdbcProperties); 
-					throw new Exception(Messages.getString("'jdbcUser' is required to create JDBC connection."));
+						jdbcUser = jdbcConnectionProps.getProperty("username");
+					}
+					if (null == jdbcUser){
+						jdbcUser = jdbcConnectionProps.getProperty("jdbcUser");
+						if (null == jdbcUser){
+							LOGGER.log(LogLevel.ERROR, "'user' or 'username' is not defined in property file: " + jdbcProperties); 
+							throw new Exception(Messages.getString("'jdbcUser' is required to create JDBC connection."));
+						}
 				}
+		        
+				// It supports password or jdbcPassword 			
 				jdbcPassword = jdbcConnectionProps.getProperty("password");
 				if (null == jdbcPassword){
-					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
-					throw new Exception(Messages.getString("'jdbcPassword' is required to create JDBC connection."));
+					jdbcPassword = jdbcConnectionProps.getProperty("jdbcPassword");
+					if (null == jdbcPassword){
+						LOGGER.log(LogLevel.ERROR, "'password' or jdbcPassword' is not defined in property file: " + jdbcProperties); 
+						throw new Exception(Messages.getString("'jdbcPassword' is required to create JDBC connection."));
+					}
 				}
                 // It supports jdbcUrl and jdbcurl 			
 				jdbcUrl = jdbcConnectionProps.getProperty("jdbcUrl");
 				if (null == jdbcUrl){
 					jdbcUrl = jdbcConnectionProps.getProperty("jdbcurl");
 					if (null == jdbcUrl){
-						LOGGER.log(LogLevel.ERROR, "'jdbcUrl' is not defined in property file: " + jdbcProperties); 
+						LOGGER.log(LogLevel.ERROR, "'jdbcUrl' or 'jdbcurl' is not defined in property file: " + jdbcProperties); 
 						throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
 					}
 				}
