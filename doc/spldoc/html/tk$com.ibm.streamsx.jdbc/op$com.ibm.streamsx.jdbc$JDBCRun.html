@@ -22,7 +22,7 @@
 <div class="body refbody">
 <div class="section">
 <p class="p">
-<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.4.4</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
+<a class="xref" href="../toolkits/toolkits.html">IBMStreams com.ibm.streamsx.jdbc Toolkit</a> &gt; <a class="xref" href="tk$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc 1.5.0</a> &gt; <a class="xref" href="ns$com.ibm.streamsx.jdbc.html">com.ibm.streamsx.jdbc</a> &gt; JDBCRun</p>
 
 </div>
 
@@ -296,7 +296,7 @@ This operator supports 28 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__appConfigName"><!-- --></a><tt class="ph tt">appConfigName</tt></dt>
 
 <dd class="dd">
-<p class="p">Specifies the name of the application configuration that contains JDBC connection related configuration parameters. The keys in the application configuration have the same name as the operator parameters.  The 'credentials' is supported as application configuration If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. 
+<p class="p">Specifies the name of the application configuration that contains JDBC connection related configuration parameters.  The 'credentials' parameter can be set in an application configuration.  If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. 
 </p>
 <dl class="dl">
 
@@ -454,7 +454,7 @@ This operator supports 28 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__credentials"><!-- --></a><tt class="ph tt">credentials</tt></dt>
 
 <dd class="dd">
-<p class="p">This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcUrl
+<p class="p">This optional parameter specifies the JSON string that contains the jdbc credentials: 'username', 'password' and 'jdbcurl' or 'jdbcUrl'. This parameter can also be specified in an application configuration.
 </p>
 <dl class="dl">
 
@@ -609,7 +609,7 @@ This operator supports 28 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcPassword"><!-- --></a><tt class="ph tt">jdbcPassword</tt></dt>
 
 <dd class="dd">
-<p class="p">This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring.
+<p class="p">This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring. . This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters.
 </p>
 <dl class="dl">
 
@@ -640,7 +640,7 @@ This operator supports 28 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcProperties"><!-- --></a><tt class="ph tt">jdbcProperties</tt></dt>
 
 <dd class="dd">
-<p class="p">This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user' and 'password'
+<p class="p">This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user', 'password' and jdbcUrl. It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.
 </p>
 <dl class="dl">
 
@@ -683,7 +683,7 @@ This operator supports 28 parameters.
 <p class="p">. port, the TCP/IP server port number that is assigned to the data source.
 </p>
 
-<p class="p">. database, a name for the data source
+<p class="p">. database, a name for the data source. This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters.
 </p>
 <dl class="dl">
 
@@ -714,7 +714,7 @@ This operator supports 28 parameters.
 <dt class="dt dlterm"><a name="spldoc_operator__parameter__jdbcUser"><!-- --></a><tt class="ph tt">jdbcUser</tt></dt>
 
 <dd class="dd">
-<p class="p">This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring.
+<p class="p">This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring. . This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters.
 </p>
 <dl class="dl">
 
