@@ -47,7 +47,8 @@
  * Supports both **jdbcUrl** and **jdbcurl** in credentials and in properties file.
  * Now it is poosible to connect to a database with the following parameters:
       1- **jdbcUser**, **JdbcPassword**, and **jdbcUrl**.
-      2- **jdbcProperties**: specifies the path name of the file that contains **jdbcUser**, **JdbcPassword**, **jdbcUrl** (jdbcurl)
+      2- **jdbcProperties**: specifies the path name of the file that contains **user**, **password**, **jdbcUrl**.
+         It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.
       3- **jdbcCredentials**: A JSON string that cotains **username**, **password**, **jdbcUrl**(jdcburl)
       4- **appConfigName**: Streams application configuration that defines **username**, **password**, **jdbcUrl**(jdcburl)
 
