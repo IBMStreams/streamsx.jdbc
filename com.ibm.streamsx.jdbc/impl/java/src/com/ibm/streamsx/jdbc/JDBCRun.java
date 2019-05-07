@@ -59,13 +59,13 @@ import com.ibm.streams.operator.model.OutputPortSet.WindowPunctuationOutputMode;
 @PrimitiveOperator(description = "The **JDBCRun** operator runs a user-defined SQL statement that is based on an input tuple.\\n\\n"
 		+ " The statement is run once for each input tuple received.\\n\\n"
 		+ " Result sets that are produced by the statement are emitted as output stream tuples.\\n\\n"
-		+ " The `JDBCRun` operator is commonly used to update, merge, and delete database management system (DBMS) records.\\n"
+		+ " The `JDBCRun` operator is commonly used to update, merge, and delete database management system (DBMS) records.\\n\\n"
 		+ " This operator is also used to retrieve records, create and drop tables, and to call stored procedures.\\n\\n"
 		+ " Behavior in a **consistent region**:\\n\\n"
-		+ " The **JDBCRun** operator can be used in a consistent region. It cannot be the start operator of a consistent region."
-		+ " In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets."
-		+ " On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port."
-		+ " On checkpoint: A database commit is performed."
+		+ " The **JDBCRun** operator can be used in a consistent region. It cannot be the start operator of a consistent region.\\n\\n"
+		+ " In a consistent region, the configured value of the transactionSize is ignored. Instead, database commits are performed (when supported by the DBMS) on consistent region checkpoints, and database rollbacks are performed on consistent region resets.\\n\\n"
+		+ " On drain: If there are any pending statements, they are run. If the statement generates a result set and the operator has an output port, tuples are generated from the results and submitted to the output port. If the operator has an error output port and the statement generates any errors, tuples are generated from the errors and submitted to the error output port.\\n\\n"
+		+ " On checkpoint: A database commit is performed.\\n\\n"
 		+ " On reset: Any pending statements are discarded. A rollback is performed.\\n\\n"
 		+ " The new version of toolkit 1.3.x. supports also `optional type`.\\n\\n"  
 		+ " The SPL applications based on new JDBC toolkit and created with a new Streams that supports **optional type**"
@@ -175,7 +175,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 	// Parameter commitPolicy
 	@Parameter(name = "commitPolicy", optional = true, 
-			description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. If set to *OnCheckpoint*, then commits will only occur during checkpointing. If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. The default value is *OnCheckpoint*. It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
+			description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. \\n\\n"
+					+ "If set to *OnCheckpoint*, then commits will only occur during checkpointing. \\n\\n"
+					+ "If set to *OnTransactionAndCheckpoint*, commits will occur during checkpointing as well as whenever the **transactionCount** or **commitInterval** are reached. \\n\\n"
+					+ "The default value is *OnCheckpoint*.\\n\\n"
+					+ "It is recommended that the *OnTransactionAndCheckpoint* value be set if the tables that the statements are being executed against can tolerate duplicate entries as these parameter value may cause the same statements to be executed if the operator is reset. \\n\\n"
+					+ "It is also highly recommended that the **transactionCount** parameter not be set to a value greater than 1 when the policy is *onTransactionAndCheckpoint*, as this can lead to some statements not being executed in the event of a reset. \\n\\n"
+					+ "This parameter is ignored if the operator is not in a consistent region. The default value for this parameter is *OnCheckpoint*.")
 	public void setCommitPolicy(CommitPolicy commitPolicy) {
 		this.commitPolicy = commitPolicy;
 	}
