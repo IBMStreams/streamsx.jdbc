@@ -118,14 +118,20 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
-			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.")
+			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.\\n\\n"
+						+ "Please check the documentation of database vendors and download the latest version of jdbc drivers. ")
     public void setJdbcDriverLib(String jdbcDriverLib){
     	this.jdbcDriverLib = jdbcDriverLib;
     }
 
 	//Parameter jdbcClassName
 	@Parameter(name = "jdbcClassName", optional = false, 
-			description = "This required parameter specifies the class name for jdbc driver and it must have exactly one value of type rstring.")
+			description = "This required parameter specifies the class name for jdbc driver and it must have exactly one value of type rstring.\\n\\n" 
+	                     + "The jdbc class names are defined by database vendors: \\n\\n"
+					     + "For example: \\n\\n "
+	                     + "**DB2**        com.ibm.db2.jcc.DB2Driver \\n\\n"
+					     + "**ORACLE**     oracle.jdbc.driver.OracleDriver\\n\\n"
+	                     + "**PostgreSQL** org.postgresql.Driver")
     public void setJdbcClassName(String jdbcClassName){
     	this.jdbcClassName = jdbcClassName;
     }
@@ -133,11 +139,12 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	//Parameter jdbcUrl
 	@Parameter(name = "jdbcUrl", optional = true, 
 			description = "This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n\\n"
-			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
-			+ ". server, the domain name or IP address of the data source.\\n\\n"
-			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
-			+ ". database, a name for the data source"
-			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
+			+ "  **jdbc:db2** indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
+			+ "  **server**, the domain name or IP address of the data source.\\n\\n"
+			+ "  **port**, the TCP/IP server port number that is assigned to the data source.\\n\\n"
+			+ "  **database**, a name for the data source.\\n\\n"
+			+ " For details about the jdbcUrl string please check the documentation of database vendors\\n\\n"
+			+ " This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
 			)
     public void setJdbcUrl(String jdbcUrl){
     	this.jdbcUrl = jdbcUrl;
@@ -145,8 +152,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcUser
 	@Parameter(name = "jdbcUser", optional = true, 
-			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring. "
-			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
+			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the **jdbcUser** parameter is specified, it must have exactly one value of type rstring.\\n\\n"
+			+ "This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
 			)
     public void setJdbcUser(String jdbcUser){
     	this.jdbcUser = jdbcUser;
@@ -155,7 +162,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	//Parameter jdbcPassword
 	@Parameter(name = "jdbcPassword", optional = true, 
 			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring. "
-			+ ". This parameter can be overwritten by the 'credentials' and 'jdbcProperties' parameters."
+			+ ". This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
 			)
     public void setJdbcPassword(String jdbcPassword){
     	this.jdbcPassword = jdbcPassword;
@@ -163,7 +170,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter jdbcProperties
 	@Parameter(name = "jdbcProperties", optional = true, 
-			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user', 'password' and jdbcUrl. "
+			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: **user**, **password** and **jdbcUrl**. \\n\\n "
 					+ "It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.")
     public void setJdbcProperties(String jdbcProperties){
     	this.jdbcProperties = jdbcProperties;
@@ -171,7 +178,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	//Parameter credentials
 	@Parameter(name = "credentials", optional = true, 
-			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: 'username', 'password' and 'jdbcurl' or 'jdbcUrl'. "
+			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: **username**, **password** and **jdbcurl** or **jdbcUrl**. \\n\\n"
 			+ "This parameter can also be specified in an application configuration.")
     public void setcredentials(String credentials){
     	this.credentials = credentials;
@@ -180,28 +187,36 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	
 	//Parameter isolationLevel
 	@Parameter(name = "isolationLevel", optional = true, 
-			description = "This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level READ_UNCOMMITTED.")
+			description = "This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level **READ_UNCOMMITTED**.")
     public void setIsolationLevel(String isolationLevel){
     	this.isolationLevel = isolationLevel;
     }
 
 	//Parameter sqlFailureAction
 	@Parameter(name = "sqlFailureAction", optional = true, 
-			description = "This optional parameter has values of log, rollback and terminate. If not specified, log is assumed. If sqlFailureAction is log, the error is logged, and the error condition is cleared. If sqlFailureAction is rollback, the error is logged, the transaction rolls back. If sqlFailureAction is terminate, the error is logged, the transaction rolls back and the operator terminates.")
+			description = "This optional parameter has values of log, rollback and terminate. If not specified, log is assumed. \\n\\n"
+					+ "If sqlFailureAction is **log**, the error is logged, and the error condition is cleared. \\n\\n"
+					+ "If sqlFailureAction is **rollback**, the error is logged, the transaction rolls back. \\n\\n"
+					+ "If sqlFailureAction is **terminate**, the error is logged, the transaction rolls back and the operator terminates.")
     public void setSqlFailureAction(String sqlFailureAction){
     	this.sqlFailureAction = sqlFailureAction;
     }
 
 	//Parameter reconnectionPolicy
 	@Parameter(name = "reconnectionPolicy", optional = true, 
-			description = "This optional parameter specifies the policy that is used by the operator to handle database connection failures.  The valid values are: `NoRetry`, `InfiniteRetry`, and `BoundedRetry`. The default value is `BoundedRetry`. If `NoRetry` is specified and a database connection failure occurs, the operator does not try to connect to the database again.  The operator shuts down at startup time if the initial connection attempt fails. If `BoundedRetry` is specified and a database connection failure occurs, the operator tries to connect to the database again up to a maximum number of times. The maximum number of connection attempts is specified in the **reconnectionBound** parameter.  The sequence of connection attempts occurs at startup time. If a connection does not exist, the sequence of connection attempts also occurs before each operator is run.  If `InfiniteRetry` is specified, the operator continues to try and connect indefinitely until a connection is made.  This behavior blocks all other operator operations while a connection is not successful.  For example, if an incorrect connection password is specified in the connection configuration document, the operator remains in an infinite startup loop until a shutdown is requested.")
+			description = "This optional parameter specifies the policy that is used by the operator to handle database connection failures.  The valid values are: **NoRetry**, **InfiniteRetry**, and **BoundedRetry**. \\n\\n"
+					    + "The default value is **BoundedRetry**. If **NoRetry** is specified and a database connection failure occurs, the operator does not try to connect to the database again.  \\n\\n"
+					    + "The operator shuts down at startup time if the initial connection attempt fails. If **BoundedRetry** is specified and a database connection failure occurs, the operator tries to connect to the database again up to a maximum number of times. \\n\\n"
+					    + "The maximum number of connection attempts is specified in the **reconnectionBound** parameter.  The sequence of connection attempts occurs at startup time. If a connection does not exist, the sequence of connection attempts also occurs before each operator is run. \\n\\n"
+					    + "If **InfiniteRetry** is specified, the operator continues to try and connect indefinitely until a connection is made.  This behavior blocks all other operator operations while a connection is not successful.  \\n\\n"
+					    + "For example, if an incorrect connection password is specified in the connection configuration document, the operator remains in an infinite startup loop until a shutdown is requested.")
     public void setReconnectionPolicy(String reconnectionPolicy){
     	this.reconnectionPolicy = reconnectionPolicy;
     }
 
 	//Parameter reconnectionBound
 	@Parameter(name = "reconnectionBound", optional = true, 
-			description = "This optional parameter specifies the number of successive connection attempts that occur when a connection fails or a disconnect occurs.  It is used only when the **reconnectionPolicy** parameter is set to `BoundedRetry`; otherwise, it is ignored. The default value is `5`.")
+			description = "This optional parameter specifies the number of successive connection attempts that occur when a connection fails or a disconnect occurs.  It is used only when the **reconnectionPolicy** parameter is set to **BoundedRetry**; otherwise, it is ignored. The default value is **5**.")
     public void setReconnectionBound(int reconnectionBound){
     	this.reconnectionBound = reconnectionBound;
     }
