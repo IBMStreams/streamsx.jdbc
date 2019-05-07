@@ -9,6 +9,11 @@
   The **JDBCRun** operator is commonly used to update, merge, and delete database management system (DBMS) records. 
   
   This operator is also used to retrieve records, create and drop tables, and to call stored procedures. 
+  
+  it is strongly recommended before you begin with the implementation of a SPL application on JDBCRun operator, read the **documentation of database vendors**.
+  
+  Every database vendor delivers one or more JAR libraries as jdbc driver. Please check the version of your database server and the version of JDBC driver libraries.
+	  
 
   Behavior in a consistent region:
   
