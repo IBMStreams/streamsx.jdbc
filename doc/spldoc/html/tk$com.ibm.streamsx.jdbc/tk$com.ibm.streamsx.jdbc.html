@@ -41,6 +41,12 @@
 <p class="p">  This operator is also used to retrieve records, create and drop tables, and to call stored procedures. 
 </p>
 
+<p class="p">  it is strongly recommended before you begin with the implementation of a SPL application on JDBCRun operator, read the <strong class="ph b">documentation of database vendors</strong>.
+</p>
+
+<p class="p">  Every database vendor delivers one or more JAR libraries as jdbc driver. Please check the version of your database server and the version of JDBC driver libraries.
+</p>
+
 <p class="p">  Behavior in a consistent region:
 </p>
 
@@ -68,7 +74,7 @@
 <p class="p">  The <strong class="ph b">JDBCRun</strong> operator has been improved in version 1.4.0 with a new parameter <strong class="ph b">checkConnection</strong>. This optional parameter specifies whether a <strong class="ph b">checkConnection</strong> thread should be start. It checks periodically the status of JDBC connection. The JDBCRun sends in case of any failure a SqlCode and a message to SPL application.
 </p>
 
-  <dl class="dl"><dt class="dt dlterm"><a class="xref" href="tk$com.ibm.streamsx.jdbc$1.html">What is new in version 1.4.3</a>
+  <dl class="dl"><dt class="dt dlterm"><a class="xref" href="tk$com.ibm.streamsx.jdbc$1.html">What is new:</a>
 </dt>
 <dd class="dd">
 </dd>
