@@ -61,8 +61,12 @@
  * 3- **jdbcCredentials**: A JSON string that cotains **username**, **password**, **jdbcUrl**(jdcburl)
  * 4- **appConfigName**: Streams application configuration that defines **username**, **password**, **jdbcUrl**(jdcburl)
 
+ ++ What is new in version 1.6.0
+   
+ * The JDBCRun operators provides new parameters for SSL configuration:  **keyStoreType**, **trustStoreType**, **securityMechanism**, **pluginName**.
+
 </info:description>
-    <info:version>1.5.0</info:version>
+    <info:version>1.6.0</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>

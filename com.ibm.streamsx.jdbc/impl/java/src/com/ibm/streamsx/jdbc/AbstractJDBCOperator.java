@@ -92,6 +92,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// the operator will be wait before trying to reconnect.
 	// If not specified, the default value is 10.0.
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
+	private String pluginName = null;
+	private int securityMechanism = -1;
 
 	// Create an instance of JDBCConnectionhelper
 	protected JDBCClientHelper jdbcClientHelper;
@@ -112,6 +114,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	// SSL parameters
  	private String keyStore;
  	private String trustStore;
+ 	private String keyStoreType = null;
+ 	private String trustStoreType = null;
  	private String keyStorePassword;
  	private String trustStorePassword;
  	private boolean sslConnection;
@@ -250,6 +254,28 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		return keyStore;
 	}
 
+	// Parameter keyStoreType
+	@Parameter(name = "keyStoreType" , optional = true, 
+			description = "This optional parameter specifies the type of the keyStore file, for example 'PKCS12'. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
+	}
+
+	public String getKeyStoreType() {
+		return keyStoreType;
+	}
+	
+	// Parameter trustStoreType
+	@Parameter(name = "trustStoreType" , optional = true, 
+			description = "This optional parameter specifies the type of the trustStore file, for example 'PKCS12'. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setTrustStoreType(String trustStoreType) {
+		this.trustStoreType = trustStoreType;
+	}
+
+	public String getTrustStoreType() {
+		return trustStoreType;
+	}
+	
 	// Parameter keyStorePassword
 	@Parameter(name = "keyStorePassword", optional = true, 
 			description = "This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
@@ -293,7 +319,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			this.appConfigName = appConfigName;
 		}	
 
-		
+	// Parameter pluginName
+	@Parameter(name = "pluginName", optional = true, description = "Specifies the name of security plugin. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setPluginName(String pluginName) {
+		this.pluginName = pluginName;
+	}
+	
+	// Parameter securityMechanism
+	@Parameter(name = "securityMechanism", optional = true, description = "Specifies the value of securityMechanism as Integer. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setSecurityMechanism(int securityMechanism) {
+		this.securityMechanism = securityMechanism;
+	}
 		
 	/*
 	 * The method checkParametersRuntime
@@ -427,12 +463,20 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		loadAppConfig(context);
 
 		if (isSslConnection()) {
-			if (context.getParameterNames().contains("keyStore"))
+			if (context.getParameterNames().contains("keyStore")) {
 				System.setProperty("javax.net.ssl.keyStore", getAbsolutePath(getKeyStore()));
+				if (null != getKeyStoreType()) {
+					System.setProperty("javax.net.ssl.keyStoreType", getKeyStoreType());
+				}
+			}
 			if (context.getParameterNames().contains("keyStorePassword"))
 				System.setProperty("javax.net.ssl.keyStorePassword", getKeyStorePassword());
-			if (context.getParameterNames().contains("trustStore"))
+			if (context.getParameterNames().contains("trustStore")) {
 				System.setProperty("javax.net.ssl.trustStore", getAbsolutePath(getTrustStore()));
+				if (null != getTrustStoreType()) {
+					System.setProperty("javax.net.ssl.trustStoreType", getTrustStoreType());
+				}
+			}
 			if (context.getParameterNames().contains("trustStorePassword"))
 				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
 		}
@@ -713,7 +757,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
 						
-			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval, pluginName, securityMechanism);
 
 			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
