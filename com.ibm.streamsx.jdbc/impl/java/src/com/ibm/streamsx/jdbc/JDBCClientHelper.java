@@ -66,6 +66,8 @@ public class JDBCClientHelper {
 	// The time period in seconds which it will be wait before trying to reconnect.
 	// If not specified, the default value is 10.0.
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
+	private String pluginName = null;
+	private int securityMechanism = -1;
 	
 	//The time in seconds to wait for the database operation used to validate the connection to complete. 
 	private int checkConnectionTimeOut = 2;
@@ -79,7 +81,8 @@ public class JDBCClientHelper {
 	// This constructor sets the jdbc connection information with reconnection policy
 	public JDBCClientHelper(String jdbcClassName, String jdbcUrl,
 			String jdbcUser, String jdbcPassword, boolean sslConnection, String jdbcProperties, boolean autoCommit, String isolationLevel,
-			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval) {
+			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval,
+			String pluginName, int securityMechanism) {
 		this.jdbcClassName = jdbcClassName;
 		this.jdbcUrl = jdbcUrl;
 		this.jdbcUser = jdbcUser;
@@ -90,6 +93,8 @@ public class JDBCClientHelper {
 		this.reconnectionPolicy = reconnectionPolicy;
 		this.reconnectionBound = reconnectionBound;
 		this.reconnectionInterval = reconnectionInterval;
+		this.pluginName = pluginName;
+		this.securityMechanism = securityMechanism;
 	}
 
 	// getter for connect
@@ -117,9 +122,17 @@ public class JDBCClientHelper {
 	        	
 	        
 	        // add sslConnection to properties
-	        if (sslConnection)
+	        if (sslConnection) {
 	        	jdbcConnectionProps.put("sslConnection","true");
-	       
+	        	if (null != pluginName) {
+	        		TRACE.log(TraceLevel.INFO, "pluginName = " + pluginName);
+	        		jdbcConnectionProps.put("pluginName", pluginName);
+	        	}
+	        	if (-1 != securityMechanism) {
+	        		TRACE.log(TraceLevel.INFO,"securityMechanism = " + securityMechanism);
+	        		jdbcConnectionProps.put("securityMechanism", new String(""+securityMechanism+""));
+	        	}
+	        }
 
 	        //Establish connection
 			int nConnectionAttempts = 0;
