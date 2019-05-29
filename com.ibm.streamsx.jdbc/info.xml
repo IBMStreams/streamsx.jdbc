@@ -63,7 +63,11 @@
 
  ++ What is new in version 1.6.0
    
- * The JDBCRun operators provides new parameters for SSL configuration:  **keyStoreType**, **trustStoreType**, **securityMechanism**, **pluginName**.
+ * The JDBCRun operator provides new parameters for SSL configuration:  **keyStoreType**, **trustStoreType**, **securityMechanism**, **pluginName**.
+
+ ++ What is new in version 1.7.0
+   
+ * The JDBCRun operator provides a new parameter **idleSessionTimeOut**. Once the idle time value is reached, it close the database connection .
 
 </info:description>
     <info:version>1.6.0</info:version>

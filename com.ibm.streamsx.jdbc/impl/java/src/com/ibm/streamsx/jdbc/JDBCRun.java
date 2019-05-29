@@ -168,9 +168,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 	private String[] sqlStatusErrorAttrs = null;
 	// check connection
 	private boolean checkConnection = false;
-
+	private int idleSessionTimeOutSec = 0;
+	private int idleSessionTimeOutTimer = 0;
+	
 	
 	private Thread checkConnectionThread = null;
+	private Thread idleSessionTimeOutSecThread = null;
+	
 	
 
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
@@ -262,7 +266,19 @@ public class JDBCRun extends AbstractJDBCOperator {
 		return checkConnection;
 	}
 	
-	 
+	// Parameter idleSessionTimeOut
+	@Parameter(name = "idleSessionTimeOut", optional = true, 
+			description = "This optional parameter specifies the Idle Session Timeout in seconds. Once the idle time value is reached, teh opearotor close teh database connection. Th timer restarts after a new query.")
+	public void setidleSessionTimeOut(int idleSessionTimeOut) {
+		this.idleSessionTimeOutSec = idleSessionTimeOut;
+	}
+	
+	public int getidleSessionTimeOut() {
+		return idleSessionTimeOutSec;
+	}
+	
+	
+	
 	/*
 	 * The method checkErrorOutputPort validates that the stream on error output
 	 * port contains the optional attribute of type which is the incoming tuple,
@@ -321,6 +337,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 //		if (!checker.checkDependentParameters("jdbcDriverLib", "jdbcUrl")){
 			checker.setInvalidContext(Messages.getString("JDBC_URL_NOT_EXIST"), null);
 		}
+
+		// If checkConnection is set as parameter, idleSessionTimeOut can not be set
+		checker.checkExcludedParameters("checkConnection", "idleSessionTimeOut");
+
 	}
 	
 	@ContextCheck(compile = false, runtime = true)
@@ -457,6 +477,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (checkConnection) {
 			startCheckConnection(context);
 		}
+
+		if (idleSessionTimeOutSec > 1) {
+			startidleSessionTimeOutThread(context);
+		}
 		
 		// set the data output port
 		dataOutputPort = getOutput(0);
@@ -536,7 +560,63 @@ public class JDBCRun extends AbstractJDBCOperator {
 		checkConnectionThread.start();
 	}
 
-			
+	
+	/**
+	 * startidleSessionTimeOutThread starts a thread to check the JDBC connection.
+	 * @param context
+	 */
+	public void startidleSessionTimeOutThread(OperatorContext context) {
+		idleSessionTimeOutSecThread = context.getThreadFactory().newThread(new Runnable() {
+
+	
+		@Override
+		public void run() {
+			while(true)
+			{
+				// check the JDBC connection every 1 seconds 
+				try        
+				{
+				    Thread.sleep(1000);
+				    idleSessionTimeOutTimer ++;
+ //                   System.out.println("idleSessionTimeOut " + idleSessionTimeOutSec + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+				} 
+				catch(InterruptedException ex) 
+				{
+				    Thread.currentThread().interrupt();
+				}
+
+				try 
+				{
+					if (idleSessionTimeOutTimer > idleSessionTimeOutSec){
+				    	
+						if (jdbcClientHelper.isValidConnection()) {	
+							try 
+							{
+								// if connection is valid 
+								// close the connection
+							    Thread.sleep(1000);
+								jdbcClientHelper.closeConnection();
+			                    System.out.println("close connection idleSessionTimeOut " + idleSessionTimeOutSec + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+							}
+					catch (Exception e2) {
+						e2.printStackTrace();													
+	                    
+					}
+				}
+					}
+				} catch (SQLException e3) {
+					e3.printStackTrace();													
+				}	
+			} // end while
+		} // end of run()
+		
+		}); 
+		
+		// start idleSessionTimeOutSecThread
+		idleSessionTimeOutSecThread.start();
+	}
+
+	
 	/**
 	 * Process control port
 	 * he port allows operator to change JDBC connection information at runtime
@@ -548,7 +628,6 @@ public class JDBCRun extends AbstractJDBCOperator {
 	@Override
 	protected void processControlPort(StreamingInput<Tuple> stream, Tuple tuple) throws Exception {
 		super.processControlPort(stream, tuple);
-
 		// Initiate PreparedStatement
 		initPreparedStatement();
 	}
@@ -568,6 +647,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// Process input tuple
 	protected void processTuple(StreamingInput<Tuple> stream, Tuple tuple) throws Exception {
 
+		idleSessionTimeOutTimer = 0;
 		commitLock.lock();
 
 		try {
@@ -1073,6 +1153,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 				checkConnectionThread.interrupt();
 			}
 		}
+
+		// stop idleSessionTimeOutThread
+		if (idleSessionTimeOutSecThread != null) {
+			if (idleSessionTimeOutSecThread.isAlive()) {
+				idleSessionTimeOutSecThread.interrupt();
+			}
+		}
+
+		
 		super.shutdown();
 
 	}
