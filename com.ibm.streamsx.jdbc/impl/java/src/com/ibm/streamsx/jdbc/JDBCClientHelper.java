@@ -15,9 +15,12 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.ibm.streams.operator.Attribute;
+import com.ibm.streams.operator.Type.MetaType;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
+import com.ibm.streams.operator.types.Blob;
 
 /* This class contains all the JDBC connection related information,
  * creating maintaining and closing a connection to the JDBC driver
@@ -49,8 +52,6 @@ public class JDBCClientHelper {
 	// the user's password.
 	private String jdbcPassword = null;
 	private boolean sslConnection = false;
-	// the jdbc properties file.
-	private String jdbcProperties = null;
 	// the transaction isolation level at which statement runs.
 	private String isolationLevel = IJDBCConstants.TRANSACTION_READ_UNCOMMITTED;
 	// transactions are automatically committed or not.
@@ -65,6 +66,8 @@ public class JDBCClientHelper {
 	// The time period in seconds which it will be wait before trying to reconnect.
 	// If not specified, the default value is 10.0.
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
+	private String pluginName = null;
+	private int securityMechanism = -1;
 	
 	//The time in seconds to wait for the database operation used to validate the connection to complete. 
 	private int checkConnectionTimeOut = 2;
@@ -78,18 +81,20 @@ public class JDBCClientHelper {
 	// This constructor sets the jdbc connection information with reconnection policy
 	public JDBCClientHelper(String jdbcClassName, String jdbcUrl,
 			String jdbcUser, String jdbcPassword, boolean sslConnection, String jdbcProperties, boolean autoCommit, String isolationLevel,
-			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval) {
+			String reconnectionPolicy, int reconnectionBound, double reconnectionInterval,
+			String pluginName, int securityMechanism) {
 		this.jdbcClassName = jdbcClassName;
 		this.jdbcUrl = jdbcUrl;
 		this.jdbcUser = jdbcUser;
 		this.jdbcPassword = jdbcPassword;
 		this.sslConnection = sslConnection;
-		this.jdbcProperties = jdbcProperties;
 		this.autoCommit = autoCommit;
 		this.isolationLevel = isolationLevel;
 		this.reconnectionPolicy = reconnectionPolicy;
 		this.reconnectionBound = reconnectionBound;
 		this.reconnectionInterval = reconnectionInterval;
+		this.pluginName = pluginName;
+		this.securityMechanism = securityMechanism;
 	}
 
 	// getter for connect
@@ -105,38 +110,29 @@ public class JDBCClientHelper {
 	        //Load class into memory
 	        Class.forName(jdbcClassName);
 
-	        // Load jdbc properties
 	        Properties jdbcConnectionProps = new Properties();
-	        if (jdbcProperties != null){
-				FileInputStream fileInput = new FileInputStream(jdbcProperties);
-				jdbcConnectionProps.load(fileInput);
-				fileInput.close();
-				String user = jdbcConnectionProps.getProperty("user");
-				if (null == user){
-					LOGGER.log(LogLevel.ERROR, "'user' is not defined in property file: " + jdbcProperties); 
-					return;
-				}
-				String password = jdbcConnectionProps.getProperty("password");
-				if (null == password){
-					LOGGER.log(LogLevel.ERROR, "'password' is not defined in property file: " + jdbcProperties); 
-					return;
-				}
-			
-	        } else {
-	        	// pick up user and password if they are parameters
-	        	if (jdbcUser != null && jdbcPassword != null) {
-					jdbcConnectionProps.put("user", jdbcUser);
-					jdbcConnectionProps.put("password", jdbcPassword);
-					jdbcConnectionProps.put("avatica_user", jdbcUser);
-					jdbcConnectionProps.put("avatica_password", jdbcPassword);
-	        	}
+        	// pick up user and password if they are parameters
+        	if (jdbcUser != null && jdbcPassword != null) {
+				jdbcConnectionProps.put("user", jdbcUser);
+				jdbcConnectionProps.put("password", jdbcPassword);
+				// properties for phoenix jdbc properties.
+				jdbcConnectionProps.put("avatica_user", jdbcUser);
+				jdbcConnectionProps.put("avatica_password", jdbcPassword);
+        	}
 	        	
-	        }
 	        
 	        // add sslConnection to properties
-	        if (sslConnection)
+	        if (sslConnection) {
 	        	jdbcConnectionProps.put("sslConnection","true");
-	       
+	        	if (null != pluginName) {
+	        		TRACE.log(TraceLevel.INFO, "pluginName = " + pluginName);
+	        		jdbcConnectionProps.put("pluginName", pluginName);
+	        	}
+	        	if (-1 != securityMechanism) {
+	        		TRACE.log(TraceLevel.INFO,"securityMechanism = " + securityMechanism);
+	        		jdbcConnectionProps.put("securityMechanism", new String(""+securityMechanism+""));
+	        	}
+	        }
 
 	        //Establish connection
 			int nConnectionAttempts = 0;
@@ -254,7 +250,6 @@ public class JDBCClientHelper {
 		this.jdbcUrl = jdbcUrl;
 		this.jdbcUser = jdbcUser;
 		this.jdbcPassword = jdbcPassword;
-		this.jdbcProperties = jdbcProperties;
 
 		// Set JDBC Connection Status as false
 		connected = false;
@@ -409,15 +404,9 @@ public class JDBCClientHelper {
 
 	// Execute the preparedStatement
 	public ResultSet executePreparedStatement(StatementParameter[] stmtParameters) throws SQLException{
-
 		ResultSet rs = null;
 
-		if (stmtParameters != null){
-			for (int i=0; i< stmtParameters.length; i++){
-				preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
-			}
-		}
-
+		addParametersToStatement(stmtParameters);
 		if (preparedStmt.execute()){
 			rs = preparedStmt.getResultSet();
 		}
@@ -427,15 +416,31 @@ public class JDBCClientHelper {
 	// Add batch for preparedStatement
 	public void addPreparedStatementBatch (StatementParameter[] stmtParameters) throws SQLException{
 
-		if (stmtParameters != null){
-			for (int i=0; i< stmtParameters.length; i++){
-				preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
-			}
-		}
-
+		addParametersToStatement(stmtParameters);
 		preparedStmt.addBatch();
 	}
 
+	// add parameters to the statement 
+	public void addParametersToStatement(StatementParameter[] stmtParameters) throws SQLException{
+		
+		if (stmtParameters != null){
+			for (int i=0; i< stmtParameters.length; i++){
+				Attribute attr = stmtParameters[i].getSplAttribute();
+				
+				// special handling for type Blob
+				if (MetaType.BLOB == attr.getType().getMetaType()) {
+					if (LOGGER.isLoggable(TraceLevel.DEBUG)) {
+						LOGGER.log(TraceLevel.DEBUG, "Converting SPL:Blob to java.sql.Blob");
+					}
+					com.ibm.streams.operator.types.Blob splBlob = (com.ibm.streams.operator.types.Blob) stmtParameters[i].getSplValue();
+					preparedStmt.setBlob(i+1, splBlob.getInputStream());
+				} else {
+					preparedStmt.setObject(i+1, stmtParameters[i].getSplValue());
+				}
+			}
+		}		
+	}
+	
 	// Execute batch for preparedStatement
 	public void executePreparedStatementBatch () throws SQLException{
 

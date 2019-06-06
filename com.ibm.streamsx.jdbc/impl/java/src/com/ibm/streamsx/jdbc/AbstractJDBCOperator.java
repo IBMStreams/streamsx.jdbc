@@ -5,6 +5,7 @@
 package com.ibm.streamsx.jdbc;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
@@ -68,7 +70,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String jdbcPassword;
 	// This parameter specifies the path name of the file that contains the jdbc connection properties.
 	private String jdbcProperties;
-	// This parameter specifies the path name of the json file that contains the jdbc credentials .
+	// This parameter specifies the json string that contains the jdbc credentials username, password, jdbcurl.
 	private String credentials;
 	// This parameter specifies the transaction isolation level at which statement runs.
 	// If omitted, the statement runs at level READ_UNCOMMITTED
@@ -90,6 +92,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// the operator will be wait before trying to reconnect.
 	// If not specified, the default value is 10.0.
 	private double reconnectionInterval = IJDBCConstants.RECONN_INTERVAL_DEFAULT;
+	private String pluginName = null;
+	private int securityMechanism = -1;
 
 	// Create an instance of JDBCConnectionhelper
 	protected JDBCClientHelper jdbcClientHelper;
@@ -110,20 +114,28 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	// SSL parameters
  	private String keyStore;
  	private String trustStore;
+ 	private String keyStoreType = null;
+ 	private String trustStoreType = null;
  	private String keyStorePassword;
  	private String trustStorePassword;
  	private boolean sslConnection;
 
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
-			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.")
+			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.\\n\\n"
+						+ "Please check the documentation of database vendors and download the latest version of jdbc drivers. ")
     public void setJdbcDriverLib(String jdbcDriverLib){
     	this.jdbcDriverLib = jdbcDriverLib;
     }
 
 	//Parameter jdbcClassName
 	@Parameter(name = "jdbcClassName", optional = false, 
-			description = "This required parameter specifies the class name for jdbc driver and it must have exactly one value of type rstring.")
+			description = "This required parameter specifies the class name for jdbc driver and it must have exactly one value of type rstring.\\n\\n" 
+	                     + "The jdbc class names are defined by database vendors: \\n\\n"
+					     + "For example: \\n\\n "
+	                     + "**DB2**        com.ibm.db2.jcc.DB2Driver \\n\\n"
+					     + "**ORACLE**     oracle.jdbc.driver.OracleDriver\\n\\n"
+	                     + "**PostgreSQL** org.postgresql.Driver")
     public void setJdbcClassName(String jdbcClassName){
     	this.jdbcClassName = jdbcClassName;
     }
@@ -131,38 +143,47 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	//Parameter jdbcUrl
 	@Parameter(name = "jdbcUrl", optional = true, 
 			description = "This parameter specifies the database url that JDBC driver uses to connect to a database and it must have exactly one value of type rstring. The syntax of jdbc url is specified by database vendors. For example, jdbc:db2://<server>:<port>/<database>\\n\\n"
-			+ ". jdbc:db2 indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
-			+ ". server, the domain name or IP address of the data source.\\n\\n"
-			+ ". port, the TCP/IP server port number that is assigned to the data source.\\n\\n"
-			+ ". database, a name for the data source")
+			+ "  **jdbc:db2** indicates that the connection is to a DB2 for z/OS, DB2 for Linux, UNIX, and Windows.\\n\\n"
+			+ "  **server**, the domain name or IP address of the data source.\\n\\n"
+			+ "  **port**, the TCP/IP server port number that is assigned to the data source.\\n\\n"
+			+ "  **database**, a name for the data source.\\n\\n"
+			+ " For details about the jdbcUrl string please check the documentation of database vendors\\n\\n"
+			+ " This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
+			)
     public void setJdbcUrl(String jdbcUrl){
     	this.jdbcUrl = jdbcUrl;
     }
 
 	//Parameter jdbcUser
 	@Parameter(name = "jdbcUser", optional = true, 
-			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the jdbcUser parameter is specified, it must have exactly one value of type rstring.")
+			description = "This optional parameter specifies the database user on whose behalf the connection is being made. If the **jdbcUser** parameter is specified, it must have exactly one value of type rstring.\\n\\n"
+			+ "This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
+			)
     public void setJdbcUser(String jdbcUser){
     	this.jdbcUser = jdbcUser;
     }
 
 	//Parameter jdbcPassword
 	@Parameter(name = "jdbcPassword", optional = true, 
-			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring.")
+			description = "This optional parameter specifies the user’s password. If the jdbcPassword parameter is specified, it must have exactly one value of type rstring. "
+			+ ". This parameter can be overwritten by the **credentials** and **jdbcProperties** parameters."
+			)
     public void setJdbcPassword(String jdbcPassword){
     	this.jdbcPassword = jdbcPassword;
     }
 
 	//Parameter jdbcProperties
 	@Parameter(name = "jdbcProperties", optional = true, 
-			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: 'user' and 'password'")
+			description = "This optional parameter specifies the path name of the file that contains the jdbc connection properties: **user**, **password** and **jdbcUrl**. \\n\\n "
+					+ "It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.")
     public void setJdbcProperties(String jdbcProperties){
     	this.jdbcProperties = jdbcProperties;
     }
 
 	//Parameter credentials
 	@Parameter(name = "credentials", optional = true, 
-			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: username, password and jdbcUrl")
+			description = "This optional parameter specifies the JSON string that contains the jdbc credentials: **username**, **password** and **jdbcurl** or **jdbcUrl**. \\n\\n"
+			+ "This parameter can also be specified in an application configuration.")
     public void setcredentials(String credentials){
     	this.credentials = credentials;
     }
@@ -170,28 +191,36 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	
 	//Parameter isolationLevel
 	@Parameter(name = "isolationLevel", optional = true, 
-			description = "This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level READ_UNCOMMITTED.")
+			description = "This optional parameter specifies the transaction isolation level at which statement runs. If omitted, the statement runs at level **READ_UNCOMMITTED**.")
     public void setIsolationLevel(String isolationLevel){
     	this.isolationLevel = isolationLevel;
     }
 
 	//Parameter sqlFailureAction
 	@Parameter(name = "sqlFailureAction", optional = true, 
-			description = "This optional parameter has values of log, rollback and terminate. If not specified, log is assumed. If sqlFailureAction is log, the error is logged, and the error condition is cleared. If sqlFailureAction is rollback, the error is logged, the transaction rolls back. If sqlFailureAction is terminate, the error is logged, the transaction rolls back and the operator terminates.")
+			description = "This optional parameter has values of log, rollback and terminate. If not specified, log is assumed. \\n\\n"
+					+ "If sqlFailureAction is **log**, the error is logged, and the error condition is cleared. \\n\\n"
+					+ "If sqlFailureAction is **rollback**, the error is logged, the transaction rolls back. \\n\\n"
+					+ "If sqlFailureAction is **terminate**, the error is logged, the transaction rolls back and the operator terminates.")
     public void setSqlFailureAction(String sqlFailureAction){
     	this.sqlFailureAction = sqlFailureAction;
     }
 
 	//Parameter reconnectionPolicy
 	@Parameter(name = "reconnectionPolicy", optional = true, 
-			description = "This optional parameter specifies the policy that is used by the operator to handle database connection failures.  The valid values are: `NoRetry`, `InfiniteRetry`, and `BoundedRetry`. The default value is `BoundedRetry`. If `NoRetry` is specified and a database connection failure occurs, the operator does not try to connect to the database again.  The operator shuts down at startup time if the initial connection attempt fails. If `BoundedRetry` is specified and a database connection failure occurs, the operator tries to connect to the database again up to a maximum number of times. The maximum number of connection attempts is specified in the **reconnectionBound** parameter.  The sequence of connection attempts occurs at startup time. If a connection does not exist, the sequence of connection attempts also occurs before each operator is run.  If `InfiniteRetry` is specified, the operator continues to try and connect indefinitely until a connection is made.  This behavior blocks all other operator operations while a connection is not successful.  For example, if an incorrect connection password is specified in the connection configuration document, the operator remains in an infinite startup loop until a shutdown is requested.")
+			description = "This optional parameter specifies the policy that is used by the operator to handle database connection failures.  The valid values are: **NoRetry**, **InfiniteRetry**, and **BoundedRetry**. \\n\\n"
+					    + "The default value is **BoundedRetry**. If **NoRetry** is specified and a database connection failure occurs, the operator does not try to connect to the database again.  \\n\\n"
+					    + "The operator shuts down at startup time if the initial connection attempt fails. If **BoundedRetry** is specified and a database connection failure occurs, the operator tries to connect to the database again up to a maximum number of times. \\n\\n"
+					    + "The maximum number of connection attempts is specified in the **reconnectionBound** parameter.  The sequence of connection attempts occurs at startup time. If a connection does not exist, the sequence of connection attempts also occurs before each operator is run. \\n\\n"
+					    + "If **InfiniteRetry** is specified, the operator continues to try and connect indefinitely until a connection is made.  This behavior blocks all other operator operations while a connection is not successful.  \\n\\n"
+					    + "For example, if an incorrect connection password is specified in the connection configuration document, the operator remains in an infinite startup loop until a shutdown is requested.")
     public void setReconnectionPolicy(String reconnectionPolicy){
     	this.reconnectionPolicy = reconnectionPolicy;
     }
 
 	//Parameter reconnectionBound
 	@Parameter(name = "reconnectionBound", optional = true, 
-			description = "This optional parameter specifies the number of successive connection attempts that occur when a connection fails or a disconnect occurs.  It is used only when the **reconnectionPolicy** parameter is set to `BoundedRetry`; otherwise, it is ignored. The default value is `5`.")
+			description = "This optional parameter specifies the number of successive connection attempts that occur when a connection fails or a disconnect occurs.  It is used only when the **reconnectionPolicy** parameter is set to **BoundedRetry**; otherwise, it is ignored. The default value is **5**.")
     public void setReconnectionBound(int reconnectionBound){
     	this.reconnectionBound = reconnectionBound;
     }
@@ -225,6 +254,28 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		return keyStore;
 	}
 
+	// Parameter keyStoreType
+	@Parameter(name = "keyStoreType" , optional = true, 
+			description = "This optional parameter specifies the type of the keyStore file, for example 'PKCS12'. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setKeyStoreType(String keyStoreType) {
+		this.keyStoreType = keyStoreType;
+	}
+
+	public String getKeyStoreType() {
+		return keyStoreType;
+	}
+	
+	// Parameter trustStoreType
+	@Parameter(name = "trustStoreType" , optional = true, 
+			description = "This optional parameter specifies the type of the trustStore file, for example 'PKCS12'. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setTrustStoreType(String trustStoreType) {
+		this.trustStoreType = trustStoreType;
+	}
+
+	public String getTrustStoreType() {
+		return trustStoreType;
+	}
+	
 	// Parameter keyStorePassword
 	@Parameter(name = "keyStorePassword", optional = true, 
 			description = "This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
@@ -260,15 +311,25 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// Parameter appConfigName
 	@Parameter(name = "appConfigName", optional = true,
-			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. The keys in the application configuration have the same name as the operator parameters. "
-			+ " The 'credentials' is supported as application configuration"
+			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. "
+			+ " The 'credentials' parameter can be set in an application configuration. "
 			+ " If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. "
 		)
 		public void setAppConfigName(String appConfigName) {
 			this.appConfigName = appConfigName;
 		}	
 
-		
+	// Parameter pluginName
+	@Parameter(name = "pluginName", optional = true, description = "Specifies the name of security plugin. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setPluginName(String pluginName) {
+		this.pluginName = pluginName;
+	}
+	
+	// Parameter securityMechanism
+	@Parameter(name = "securityMechanism", optional = true, description = "Specifies the value of securityMechanism as Integer. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+	public void setSecurityMechanism(int securityMechanism) {
+		this.securityMechanism = securityMechanism;
+	}
 		
 	/*
 	 * The method checkParametersRuntime
@@ -328,9 +389,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	public static void checkParameters(OperatorContextChecker checker) {
 		// If statement is set as parameter, statementAttr can not be set
 		checker.checkExcludedParameters("statement", "statementAttr");
-		// If jdbcProperties is set as parameter, jdbcUser and jdbcPassword can not be set
+		// If jdbcProperties is set as parameter, jdbcUser, jdbcPassword and jdbcUrl can not be set
 		checker.checkExcludedParameters("jdbcUser", "jdbcProperties");
 		checker.checkExcludedParameters("jdbcPassword", "jdbcProperties");
+		checker.checkExcludedParameters("jdbcUrl", "jdbcProperties");
 
 		// If credentials is set as parameter, jdbcUser, jdbcPassword and jdbcUrl can not be set.
 		checker.checkExcludedParameters("jdbcUser", "credentials");
@@ -338,7 +400,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		checker.checkExcludedParameters("jdbcUrl", "credentials");
 		checker.checkExcludedParameters("credentials", "jdbcUrl");
 
-		// If credentials is set as parameter, credentials can not be set
+		// If credentials is set as parameter, jdbcProperties can not be set
 		checker.checkExcludedParameters("jdbcProperties", "credentials");
 		
 		// check reconnection related parameters
@@ -348,19 +410,23 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// check parameters jdbcUrl jdbcUser and jdbcPassword
 		OperatorContext context = checker.getOperatorContext();
 		if ((!context.getParameterNames().contains("credentials"))
-				&& (!context.getParameterNames().contains("jdbcUrl"))) {
-					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'credentials'", null);
+				&& (!context.getParameterNames().contains("appConfigName"))
+				&& (!context.getParameterNames().contains("jdbcUrl"))
+				&& (!context.getParameterNames().contains("jdbcProperties"))) {
+					checker.setInvalidContext("The parameter 'jdbcUrl' is not defined. It must be set in one of these parameters: 'jdbcUrl' or 'credentials' or via the credentials parameter in an application configuration or via properties file.", null);
 			}				
 
 		if ((!context.getParameterNames().contains("credentials"))
+				&& (!context.getParameterNames().contains("appConfigName"))				
 				&& (!context.getParameterNames().contains("jdbcProperties"))
 				&& (!context.getParameterNames().contains("jdbcUser"))) {
-					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'credentials'  or 'jdbcProperties' ", null);
+					checker.setInvalidContext("The 'jdbcUser' is not defined. It must be set in one of these parameters: 'jdbcUser' or 'credentials'  or 'jdbcProperties' or via the credentials parameter in an application configuration. ", null);
 			}				
 		if ((!context.getParameterNames().contains("credentials"))
+				&& (!context.getParameterNames().contains("appConfigName"))				
 				&& (!context.getParameterNames().contains("jdbcProperties"))
 				&& (!context.getParameterNames().contains("jdbcPassword"))) {
-					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'credentials'  or 'jdbcProperties'", null);
+					checker.setInvalidContext("The 'jdbcPassword' is not defined. It must be set in one of these parameters: 'jdbcPassword' or 'credentials'  or 'jdbcProperties' or via the credentials parameter in an application configuration.", null);
 			}				
 
 	}
@@ -397,12 +463,20 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		loadAppConfig(context);
 
 		if (isSslConnection()) {
-			if (context.getParameterNames().contains("keyStore"))
+			if (context.getParameterNames().contains("keyStore")) {
 				System.setProperty("javax.net.ssl.keyStore", getAbsolutePath(getKeyStore()));
+				if (null != getKeyStoreType()) {
+					System.setProperty("javax.net.ssl.keyStoreType", getKeyStoreType());
+				}
+			}
 			if (context.getParameterNames().contains("keyStorePassword"))
 				System.setProperty("javax.net.ssl.keyStorePassword", getKeyStorePassword());
-			if (context.getParameterNames().contains("trustStore"))
+			if (context.getParameterNames().contains("trustStore")) {
 				System.setProperty("javax.net.ssl.trustStore", getAbsolutePath(getTrustStore()));
+				if (null != getTrustStoreType()) {
+					System.setProperty("javax.net.ssl.trustStoreType", getTrustStoreType());
+				}
+			}
 			if (context.getParameterNames().contains("trustStorePassword"))
 				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
 		}
@@ -444,7 +518,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		}
 		
 		for (Map.Entry<String, String> kv : appConfig.entrySet()) {
-		   	LOGGER.log(LogLevel.INFO, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
+		   	TRACE.log(TraceLevel.DEBUG, "Found application config entry: " + kv.getKey() + "=" + kv.getValue());
 		}
 		
 		if (null != appConfig.get("credentials")){
@@ -538,9 +612,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_CLASS_NAME_NOT_EXIST")); 
 			}
 			// if jdbcProperties is relative path, convert to absolute path
-			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
+			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
 			{
-				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+				getProperties(jdbcProperties);
 			}
 
 			if (credentials != null && !credentials.trim().isEmpty())
@@ -552,8 +626,6 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
-
-			// System.out.println("credentials : " + credentials);
 			
 			// Roll back the transaction
 			jdbcClientHelper.rollbackWithClearBatch();
@@ -594,8 +666,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " shutting down in PE: " + context.getPE().getPEId() + " in Job: " + context.getPE().getJobId());   //$NON-NLS-3$
 
         // Roll back the transaction
-        jdbcClientHelper.rollback();
-
+        if (sqlFailureAction == "rollback"){
+        	jdbcClientHelper.rollback();
+        }
         // close JDBC connection
         jdbcClientHelper.closeConnection();
 
@@ -670,9 +743,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
 		try{
 			// if jdbcProperties is relative path, convert to absolute path
-			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty() && !jdbcProperties.startsWith(File.separator))
+			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
 			{
-				jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+				getProperties(jdbcProperties);
 			}
 
 			if (credentials != null && !credentials.trim().isEmpty()) {
@@ -684,7 +757,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 			}
 						
-			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval);
+			jdbcClientHelper = new JDBCClientHelper(jdbcClassName, jdbcUrl, jdbcUser, jdbcPassword, sslConnection, jdbcProperties, isAutoCommit(), isolationLevel, reconnectionPolicy, reconnectionBound, reconnectionInterval, pluginName, securityMechanism);
 
 			jdbcClientHelper.createConnection();
         }catch (FileNotFoundException e){
@@ -696,8 +769,61 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	}
 	}
 
-	
-	
+
+	// read properties file and set user name, password and jdbcUrl.
+	public void getProperties(String jdbcProperties) throws IOException {
+		try {
+				// if jdbcProperties is relative path, convert to absolute path
+				if (!jdbcProperties.startsWith(File.separator))
+				{
+					jdbcProperties = getOperatorContext().getPE().getApplicationDirectory() + File.separator + jdbcProperties;
+				}
+				
+				System.out.println("JDBC Properties file from Operator '" + getOperatorContext().getName() + "' : " + jdbcProperties);
+
+				Properties jdbcConnectionProps = new Properties();
+				FileInputStream fileInput = new FileInputStream(jdbcProperties);
+				jdbcConnectionProps.load(fileInput);
+				fileInput.close();
+
+				// It supports 'user' or 'username' or 'jdbcUser' 			
+				jdbcUser = jdbcConnectionProps.getProperty("user");
+				if (null == jdbcUser){
+						jdbcUser = jdbcConnectionProps.getProperty("username");
+					}
+					if (null == jdbcUser){
+						jdbcUser = jdbcConnectionProps.getProperty("jdbcUser");
+						if (null == jdbcUser){
+							LOGGER.log(LogLevel.ERROR, "'user' or 'username' is not defined in property file: " + jdbcProperties); 
+							throw new Exception(Messages.getString("'jdbcUser' is required to create JDBC connection."));
+						}
+				}
+		        
+				// It supports password or jdbcPassword 			
+				jdbcPassword = jdbcConnectionProps.getProperty("password");
+				if (null == jdbcPassword){
+					jdbcPassword = jdbcConnectionProps.getProperty("jdbcPassword");
+					if (null == jdbcPassword){
+						LOGGER.log(LogLevel.ERROR, "'password' or jdbcPassword' is not defined in property file: " + jdbcProperties); 
+						throw new Exception(Messages.getString("'jdbcPassword' is required to create JDBC connection."));
+					}
+				}
+                // It supports jdbcUrl and jdbcurl 			
+				jdbcUrl = jdbcConnectionProps.getProperty("jdbcUrl");
+				if (null == jdbcUrl){
+					jdbcUrl = jdbcConnectionProps.getProperty("jdbcurl");
+					if (null == jdbcUrl){
+						LOGGER.log(LogLevel.ERROR, "'jdbcUrl' or 'jdbcurl' is not defined in property file: " + jdbcProperties); 
+						throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
+					}
+				}
+
+			} catch (Exception ex) {
+				     ex.printStackTrace();
+		}
+	} 
+
+
 	// read credentials  and set user name, password and jdbcUrl.
 	public void getCredentials(String credentials) throws IOException {
 		String jsonString = credentials;
@@ -717,11 +843,16 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			}
 		
 			jdbcUrl = (String)obj.get("jdbcurl");
+			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
+			    jdbcUrl = (String)obj.get("jdbcUrl");
+			}			
 			// jdbcUrl is required
 			if (jdbcUrl == null || jdbcUrl.trim().isEmpty()){
 				LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_URL_NOT_EXIST")); 
 				throw new Exception(Messages.getString("JDBC_URL_NOT_EXIST"));
 			}
+			System.out.println("jdbcUrl from credentials in Operator '" + getOperatorContext().getName() + "' :" + jdbcUrl);
+			
 			} catch (Exception ex) {
 			         ex.printStackTrace();
 		}

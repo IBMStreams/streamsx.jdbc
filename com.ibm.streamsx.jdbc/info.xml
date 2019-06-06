@@ -9,6 +9,11 @@
   The **JDBCRun** operator is commonly used to update, merge, and delete database management system (DBMS) records. 
   
   This operator is also used to retrieve records, create and drop tables, and to call stored procedures. 
+  
+  it is strongly recommended before you begin with the implementation of a SPL application on JDBCRun operator, read the **documentation of database vendors**.
+  
+  Every database vendor delivers one or more JAR libraries as jdbc driver. Please check the version of your database server and the version of JDBC driver libraries.
+	  
 
   Behavior in a consistent region:
   
@@ -27,6 +32,8 @@
   It supports also **phoenix jdbc** to connect to the HBASE database.
   
   The **JDBCRun** operator has been improved in version 1.4.0 with a new parameter **checkConnection**. This optional parameter specifies whether a **checkConnection** thread should be start. It checks periodically the status of JDBC connection. The JDBCRun sends in case of any failure a SqlCode and a message to SPL application.
+ 
+  ++ What is new:
   
   ++ What is new in version 1.4.3
 
@@ -36,9 +43,30 @@
     **username**, **password** and **jdbcurl**. 
 
   * support **Streams application configuration** 
+ 
+ 
+  ++ What is new in version 1.4.4
   
+ * Insert BLOB bug fixed #82
+  
+ ++ What is new in version 1.5.0
+   
+ * Add **jdbcUrl** to the jdbc properties.
+ * Supports both **jdbcUrl** and **jdbcurl** in credentials and in properties file.
+ * Now it is poosible to connect to a database with the following parameters:
+  
+ * 1- **jdbcUser**, **JdbcPassword**, and **jdbcUrl**.
+ * 2- **jdbcProperties**: specifies the path name of the file that contains **user**, **password**, **jdbcUrl**.
+ It supports also 'username' or 'jdbcUser' as 'user' and 'jdbcPassword' as 'password' and 'jdbcurl' as 'jdbcUrl'.
+ * 3- **jdbcCredentials**: A JSON string that cotains **username**, **password**, **jdbcUrl**(jdcburl)
+ * 4- **appConfigName**: Streams application configuration that defines **username**, **password**, **jdbcUrl**(jdcburl)
+
+ ++ What is new in version 1.6.0
+   
+ * The JDBCRun operators provides new parameters for SSL configuration:  **keyStoreType**, **trustStoreType**, **securityMechanism**, **pluginName**.
+
 </info:description>
-    <info:version>1.4.3</info:version>
+    <info:version>1.6.0</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>
