@@ -268,7 +268,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 	
 	// Parameter idleSessionTimeOut
 	@Parameter(name = "idleSessionTimeOut", optional = true, 
-			description = "This optional parameter specifies the Idle Session Timeout in minute. Once the idle time value is reached, teh opearotor close teh database connection. Th timer restarts after a new query.")
+			description = "This optional parameter specifies the Idle Session Timeout in minute. Once the idle time value is reached, the operator close the database connection. Th timer restarts after a new query.")
 	public void setidleSessionTimeOut(int idleSessionTimeOut) {
 		this.idleSessionTimeOutMinute = idleSessionTimeOut;
 	}
