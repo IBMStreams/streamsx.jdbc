@@ -168,12 +168,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 	private String[] sqlStatusErrorAttrs = null;
 	// check connection
 	private boolean checkConnection = false;
-	private int idleSessionTimeOutSec = 0;
+	private int idleSessionTimeOutMinute = 0;
 	private int idleSessionTimeOutTimer = 0;
 	
 	
 	private Thread checkConnectionThread = null;
-	private Thread idleSessionTimeOutSecThread = null;
+	private Thread idleSessionTimeOutThread = null;
 	
 	
 
@@ -268,15 +268,14 @@ public class JDBCRun extends AbstractJDBCOperator {
 	
 	// Parameter idleSessionTimeOut
 	@Parameter(name = "idleSessionTimeOut", optional = true, 
-			description = "This optional parameter specifies the Idle Session Timeout in seconds. Once the idle time value is reached, teh opearotor close teh database connection. Th timer restarts after a new query.")
+			description = "This optional parameter specifies the Idle Session Timeout in minute. Once the idle time value is reached, teh opearotor close teh database connection. Th timer restarts after a new query.")
 	public void setidleSessionTimeOut(int idleSessionTimeOut) {
-		this.idleSessionTimeOutSec = idleSessionTimeOut;
+		this.idleSessionTimeOutMinute = idleSessionTimeOut;
 	}
 	
 	public int getidleSessionTimeOut() {
-		return idleSessionTimeOutSec;
+		return idleSessionTimeOutMinute;
 	}
-	
 	
 	
 	/*
@@ -397,6 +396,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 		}
 
+		if (!checker.getOperatorContext().getParameterValues("idleSessionTimeOut").isEmpty()) {
+			if (Integer.valueOf(checker.getOperatorContext().getParameterValues("idleSessionTimeOut").get(0)) < 1) {
+				LOGGER.log(LogLevel.ERROR, "The value of the idleSessionTimeOut parameter must be greater than zero");
+				checker.setInvalidContext("The value of the idleSessionTimeOut parameter must be greater than zero", null); 
+			}
+		}
 	}
 
 	// Find sqlStatusAttr on data port and error port
@@ -478,7 +483,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 			startCheckConnection(context);
 		}
 
-		if (idleSessionTimeOutSec > 1) {
+		if (idleSessionTimeOutMinute > 1) {
 			startidleSessionTimeOutThread(context);
 		}
 		
@@ -566,19 +571,19 @@ public class JDBCRun extends AbstractJDBCOperator {
 	 * @param context
 	 */
 	public void startidleSessionTimeOutThread(OperatorContext context) {
-		idleSessionTimeOutSecThread = context.getThreadFactory().newThread(new Runnable() {
+		idleSessionTimeOutThread = context.getThreadFactory().newThread(new Runnable() {
 
 	
 		@Override
 		public void run() {
 			while(true)
 			{
-				// check the JDBC connection every 1 seconds 
+				// check the JDBC connection every minute
 				try        
 				{
-				    Thread.sleep(1000);
+				    Thread.sleep(60000);
 				    idleSessionTimeOutTimer ++;
- //                   System.out.println("idleSessionTimeOut " + idleSessionTimeOutSec + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+ //                   System.out.println("idleSessionTimeOut " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
 				} 
 				catch(InterruptedException ex) 
 				{
@@ -587,7 +592,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 				try 
 				{
-					if (idleSessionTimeOutTimer > idleSessionTimeOutSec){
+					if (idleSessionTimeOutTimer > idleSessionTimeOutMinute){
 				    	
 						if (jdbcClientHelper.isValidConnection()) {	
 							try 
@@ -596,7 +601,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 								// close the connection
 							    Thread.sleep(1000);
 								jdbcClientHelper.closeConnection();
-			                    System.out.println("close connection idleSessionTimeOut " + idleSessionTimeOutSec + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+			                    System.out.println("close connection idleSessionTimeOut " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
 							}
 					catch (Exception e2) {
 						e2.printStackTrace();													
@@ -612,8 +617,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 		
 		}); 
 		
-		// start idleSessionTimeOutSecThread
-		idleSessionTimeOutSecThread.start();
+		// start idleSessionTimeOutThread
+		idleSessionTimeOutThread.start();
 	}
 
 	
@@ -1155,9 +1160,9 @@ public class JDBCRun extends AbstractJDBCOperator {
 		}
 
 		// stop idleSessionTimeOutThread
-		if (idleSessionTimeOutSecThread != null) {
-			if (idleSessionTimeOutSecThread.isAlive()) {
-				idleSessionTimeOutSecThread.interrupt();
+		if (idleSessionTimeOutThread != null) {
+			if (idleSessionTimeOutThread.isAlive()) {
+				idleSessionTimeOutThread.interrupt();
 			}
 		}
 
