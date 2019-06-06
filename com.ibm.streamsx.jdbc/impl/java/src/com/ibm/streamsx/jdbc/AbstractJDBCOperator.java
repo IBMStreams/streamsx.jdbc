@@ -116,8 +116,8 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	private String trustStore;
  	private String keyStoreType = null;
  	private String trustStoreType = null;
- 	private String keyStorePassword;
- 	private String trustStorePassword;
+ 	private String keyStorePassword = null;
+ 	private String trustStorePassword = null;
  	private boolean sslConnection;
 
 	//Parameter jdbcDriverLib
@@ -278,7 +278,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	
 	// Parameter keyStorePassword
 	@Parameter(name = "keyStorePassword", optional = true, 
-			description = "This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+			description = "This parameter specifies the password for the keyStore given by the **keyStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect. This parameter can also be specified in an application configuration.")
 	public void setKeyStorePassword(String keyStorePassword) {
 		this.keyStorePassword = keyStorePassword;
 	}
@@ -300,7 +300,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 
 	// Parameter trustStorePassword
 	@Parameter(name = "trustStorePassword", optional = true, 
-			description = "This parameter specifies the password for the trustStore given by the **trustStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect.")
+			description = "This parameter specifies the password for the trustStore given by the **trustStore** parameter. The **sslConnection** parameter must be set to `true` for this parameter to have any effect. This parameter can also be specified in an application configuration.")
 	public void setTrustStorePassword(String trustStorePassword) {
 		this.trustStorePassword = trustStorePassword;
 	}
@@ -312,7 +312,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// Parameter appConfigName
 	@Parameter(name = "appConfigName", optional = true,
 			description = "Specifies the name of the application configuration that contains JDBC connection related configuration parameters. "
-			+ " The 'credentials' parameter can be set in an application configuration. "
+			+ " The 'credentials', 'keyStorePassword' and 'trustStorePassword' parameter can be set in an application configuration. "
 			+ " If a value is specified in the application configuration and as operator parameter, the application configuration parameter value takes precedence. "
 		)
 		public void setAppConfigName(String appConfigName) {
@@ -469,7 +469,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 					System.setProperty("javax.net.ssl.keyStoreType", getKeyStoreType());
 				}
 			}
-			if (context.getParameterNames().contains("keyStorePassword"))
+			if (null != getKeyStorePassword())
 				System.setProperty("javax.net.ssl.keyStorePassword", getKeyStorePassword());
 			if (context.getParameterNames().contains("trustStore")) {
 				System.setProperty("javax.net.ssl.trustStore", getAbsolutePath(getTrustStore()));
@@ -477,7 +477,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 					System.setProperty("javax.net.ssl.trustStoreType", getTrustStoreType());
 				}
 			}
-			if (context.getParameterNames().contains("trustStorePassword"))
+			if (null != getTrustStorePassword())
 				System.setProperty("javax.net.ssl.trustStorePassword", getTrustStorePassword());
 		}
 		TRACE.log(TraceLevel.DEBUG," propperties: " + System.getProperties().toString());
@@ -523,6 +523,12 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		
 		if (null != appConfig.get("credentials")){
 			credentials = appConfig.get("credentials");
+		}
+		if (null != appConfig.get("keyStorePassword")){
+			keyStorePassword = appConfig.get("keyStorePassword");
+		}
+		if (null != appConfig.get("trustStorePassword")){
+			trustStorePassword = appConfig.get("trustStorePassword");
 		}
 	}
 

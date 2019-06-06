@@ -65,8 +65,13 @@
    
  * The JDBCRun operators provides new parameters for SSL configuration:  **keyStoreType**, **trustStoreType**, **securityMechanism**, **pluginName**.
 
+ ++ What is new in version 1.7.0
+   
+ * Supports two new application configuration properties:  **keyStorePassword** and **trustStorePassword**
+
+
 </info:description>
-    <info:version>1.6.0</info:version>
+    <info:version>1.6.1</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>
