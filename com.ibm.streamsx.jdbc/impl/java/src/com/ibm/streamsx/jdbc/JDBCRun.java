@@ -578,10 +578,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		public void run() {
 			while(true)
 			{
-				// check the JDBC connection every minute
+				// check the JDBC connection every 10 seconds
 				try        
 				{
-				    Thread.sleep(60000);
+				    Thread.sleep(10000);
 				    idleSessionTimeOutTimer ++;
                     // System.out.println("idleSessionTimeOutThread " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
 				} 
@@ -592,7 +592,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 				try 
 				{
-					if (idleSessionTimeOutTimer >= idleSessionTimeOutMinute){
+					// 10 seconds * 6 = i minute
+					if (idleSessionTimeOutTimer >= idleSessionTimeOutMinute * 6){
 				    	
 						if (jdbcClientHelper.isValidConnection()) {	
 							try 
