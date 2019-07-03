@@ -72,27 +72,27 @@
       ><set attributeName="visibility" from="hidden" end="sdt0.mouseout" to="visible" begin="sdt0.mouseover"
     /></g
     ><g visibility="hidden" style="stroke:none;font-style:italic;font-size:12px;font-family:&apos;Helvetica&apos;,&apos;SansSerif&apos;;"
-    ><rect x="47.65" y="-45.0" width="427.05997" style="fill:rgb(230,230,255);stroke:rgb(0,0,80);" rx="2.0" ry="2.0" height="152.0"
+    ><rect x="47.65" y="-45.0" width="430.24" style="fill:rgb(230,230,255);stroke:rgb(0,0,80);" rx="2.0" ry="2.0" height="152.0"
       /><text x="48.65" y="-32.0"
       >Required: jdbcClassName, jdbcDriverLib / Optional: </text
       ><text x="48.65" y="-17.0"
       >appConfigName, batchSize, checkConnection, commitInterval, </text
       ><text x="48.65" y="-2.0"
-      >commitPolicy, credentials, hasResultSetAttr, isolationLevel, </text
+      >commitPolicy, credentials, hasResultSetAttr, idleSessionTimeOut, </text
       ><text x="48.65" y="13.0"
-      >jdbcPassword, jdbcProperties, jdbcUrl, jdbcUser, </text
+      >isolationLevel, jdbcPassword, jdbcProperties, jdbcUrl, </text
       ><text x="48.65" y="28.0"
-      >keyStore, keyStorePassword, keyStoreType, pluginName, </text
+      >jdbcUser, keyStore, keyStorePassword, keyStoreType, </text
       ><text x="48.65" y="43.0"
-      >reconnectionBound, reconnectionInterval, reconnectionPolicy, </text
+      >pluginName, reconnectionBound, reconnectionInterval, </text
       ><text x="48.65" y="58.0"
-      >securityMechanism, sqlFailureAction, sqlStatusAttr, </text
+      >reconnectionPolicy, securityMechanism, sqlFailureAction, </text
       ><text x="48.65" y="73.0"
-      >sslConnection, statement, statementAttr, statementParamAttrs, </text
+      >sqlStatusAttr, sslConnection, statement, statementAttr, </text
       ><text x="48.65" y="88.0"
-      >transactionSize, trustStore, trustStorePassword, </text
+      >statementParamAttrs, transactionSize, trustStore, </text
       ><text x="48.65" y="103.0"
-      >trustStoreType</text
+      >trustStorePassword, trustStoreType</text
       ><set attributeName="visibility" from="hidden" end="sdt1.mouseout" to="visible" begin="sdt1.mouseover"
     /></g
     ><g visibility="hidden" style="stroke:none;font-style:italic;font-size:12px;font-family:&apos;Helvetica&apos;,&apos;SansSerif&apos;;"
