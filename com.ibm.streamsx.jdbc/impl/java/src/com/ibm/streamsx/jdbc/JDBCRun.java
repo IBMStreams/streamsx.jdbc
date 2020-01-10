@@ -399,7 +399,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (!checker.getOperatorContext().getParameterValues("idleSessionTimeOut").isEmpty()) {
 			if (Integer.valueOf(checker.getOperatorContext().getParameterValues("idleSessionTimeOut").get(0)) < 1) {
 				LOGGER.log(LogLevel.ERROR, "The value of the idleSessionTimeOut parameter must be greater than zero");
-				checker.setInvalidContext(Messages.getString("JDBC_INVALID_SESSION_TIMEOUT_VALUA"), null); 
+				checker.setInvalidContext(Messages.getString("JDBC_INVALID_SESSION_TIMEOUT_VALUE"), null); 
 			}
 		}
 	}
