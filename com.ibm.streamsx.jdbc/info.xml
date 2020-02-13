@@ -71,11 +71,15 @@
  
  * Supports two new application configuration properties:  **keyStorePassword** and **trustStorePassword**
 
- ++ What is new in version 1.7.1
+++ What is new in version 1.7.1
+
+The idle session timer issue fixed. 
+
+++ What is new in version 1.7.2
  * New error messages for globalization.
 
 </info:description>
-    <info:version>1.7.1</info:version>
+    <info:version>1.7.2</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>

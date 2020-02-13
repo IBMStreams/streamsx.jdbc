@@ -483,7 +483,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 			startCheckConnection(context);
 		}
 
-		if (idleSessionTimeOutMinute > 1) {
+		if (idleSessionTimeOutMinute > 0) {
 			startidleSessionTimeOutThread(context);
 		}
 		
@@ -578,12 +578,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 		public void run() {
 			while(true)
 			{
-				// check the JDBC connection every minute
+				// check the JDBC connection every second
 				try        
 				{
-				    Thread.sleep(60000);
+				    Thread.sleep(1000);
 				    idleSessionTimeOutTimer ++;
- //                   System.out.println("idleSessionTimeOut " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+                    // System.out.println("idleSessionTimeOutThread " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
 				} 
 				catch(InterruptedException ex) 
 				{
@@ -592,7 +592,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 				try 
 				{
-					if (idleSessionTimeOutTimer > idleSessionTimeOutMinute){
+					// 60 seconds = i minute
+					if (idleSessionTimeOutTimer >= idleSessionTimeOutMinute * 60){
 				    	
 						if (jdbcClientHelper.isValidConnection()) {	
 							try 
@@ -601,7 +602,9 @@ public class JDBCRun extends AbstractJDBCOperator {
 								// close the connection
 							    Thread.sleep(1000);
 								jdbcClientHelper.closeConnection();
-			                    System.out.println("close connection idleSessionTimeOut " + idleSessionTimeOutMinute + " idleSessionTimeOutTimer " + idleSessionTimeOutTimer);
+								if (!jdbcClientHelper.isValidConnection()) {	
+									System.out.println("The idleSessionTimeOut closed the current JDBC connection after " + idleSessionTimeOutMinute  + " minutes ");
+								}
 							}
 					catch (Exception e2) {
 						e2.printStackTrace();													
