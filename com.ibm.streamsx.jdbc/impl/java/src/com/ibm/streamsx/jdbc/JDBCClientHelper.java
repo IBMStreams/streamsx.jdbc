@@ -105,6 +105,7 @@ public class JDBCClientHelper {
 	// Create the JDBC connection
 	public synchronized void createConnection() throws Exception, SQLException{
 		LOGGER.log(LogLevel.INFO, "createConnection \njdbcUser = " + jdbcUser + "\njdbcUrl  = " + jdbcUrl);
+		// System.out.println("createConnection dbcUser = " + jdbcUser + "jdbcUrl  = " + jdbcUrl);
 		// Attempt to create connection only when existing connection is invalid.
 		if (!isConnected()){
 	        //Load class into memory
