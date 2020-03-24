@@ -774,6 +774,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if (hasErrorPort) {
 			// submit error message
 			submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
+			TRACE.log(TraceLevel.ERROR, "First SQL Exception sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage()); 
 			 // System.out.println("First Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
 		    // get next Exception message and sqlCode and submit it to the error output.
 			SQLException eNext = e.getNextException();
@@ -782,7 +783,8 @@ public class JDBCRun extends AbstractJDBCOperator {
 				jSqlStatus.setSqlState(eNext.getSQLState());
 	  			jSqlStatus.setSqlMessage(eNext.getMessage());
 				submitErrorTuple(errorOutputPort, tuple, jSqlStatus);
-				// System.out.println("Next Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
+				TRACE.log(TraceLevel.ERROR, "Next SQL Exception sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage()); 
+	        	// System.out.println("Next Exception    sqlCode: " + jSqlStatus.getSqlCode() + " sqlState: " + jSqlStatus.getSqlState() + " sqlMessage: " + jSqlStatus.getSqlMessage());
 			}
 
 		}

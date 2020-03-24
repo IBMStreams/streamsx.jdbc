@@ -78,8 +78,12 @@ The idle session timer issue fixed.
 ++ What is new in version 1.7.2
  * New error messages for globalization.
 
+++ What is new in version 1.8.0
+ * Add property **retrieveMessagesFromServerOnGetMessage=true** to the Db2 URL to retrieve full SQL error message.
+ 
+
 </info:description>
-    <info:version>1.7.2</info:version>
+    <info:version>1.8.0</info:version>
     <info:requiredProductVersion>4.2.0.0</info:requiredProductVersion>
   </info:identity>
   <info:dependencies/>
