@@ -764,7 +764,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			}
 			
 			// check if the database is a Db2 add etrieveMessagesFromServerOnGetMessage=true to URL to get SQL error message
-			if ( (jdbcUrl.contains("db2")) && (!jdbcUrl.contains("retrieveMessagesFromServerOnGetMessage") ))
+			if ( (jdbcUrl.contains("db2:")) && (!jdbcUrl.contains("retrieveMessagesFromServerOnGetMessage") ))
 			{
 				jdbcUrl = jdbcUrl +":retrieveMessagesFromServerOnGetMessage=true;";
 			}
