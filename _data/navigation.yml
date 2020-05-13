@@ -28,7 +28,7 @@ userdocs:
         url: /docs/user/postgressql
       - title: "How to connect to a Teradata"
         url: /docs/user/teradata
-      - title: "How to connect to a DB2 database on IBM Cloud"
+      - title: "How to connect to DB2 on cloud"
         url: /docs/user/db2-cloud
       - title: "How to connect to a MSSQL"
         url: /docs/user/mssql
