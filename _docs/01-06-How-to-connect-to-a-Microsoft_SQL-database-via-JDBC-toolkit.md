@@ -1,3 +1,16 @@
+---
+title: "How to connect to a Oracle"
+permalink: /docs/user/mssql/
+excerpt: "How to connect to MSSQL."
+last_modified_at: 2020-05-13T12:37:48-04:00
+redirect_from:
+   - /theme-setup/
+sidebar:
+   nav: "userdocs"
+---
+{% include toc %}
+{% include editme %}
+
 # How to connect to a Microsoft SQL database via JDBC toolkit
 
 This document describes a step by step instruction to connect to a Microsoft SQL database via JDBC toolkit and insert/select rows into/from database.
