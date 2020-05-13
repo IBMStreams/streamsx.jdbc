@@ -11,6 +11,7 @@ sidebar:
 {% include toc %}
 {% include editme %}
 
+
 # How to connect to the HBASE database of Analytics Engine on IBM Cloud via JDBC toolkit
 
 HBase is not a direct replacement for a classic SQL database, however Apache Phoenix project provides a SQL layer for HBase as well as JDBC driver that can be integrated with various analytics and business intelligence applications. 
