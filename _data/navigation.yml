@@ -28,6 +28,12 @@ userdocs:
         url: /docs/user/postgressql
       - title: "How to connect to a Teradata"
         url: /docs/user/teradata
+      - title: "How to connect to a DB2 database on IBM Cloud"
+        url: /docs/user/db2-cloud
+      - title: "How to connect to a MSSQL"
+        url: /docs/user/mssql
+      - title: "How to connect to HBase"
+        url: /docs/user/hbase
 
 # developer documentation links
 developerdocs:
