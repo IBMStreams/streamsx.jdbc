@@ -1,5 +1,5 @@
 ---
-title: "How to connect to a Oracle"
+title: "How to connect to a MSSQL"
 permalink: /docs/user/mssql/
 excerpt: "How to connect to MSSQL."
 last_modified_at: 2020-05-13T12:37:48-04:00
