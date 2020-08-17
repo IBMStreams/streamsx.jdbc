@@ -2,6 +2,9 @@
 
 The IBMStreams/streamsx.jdbc toolkit project is an open source Streams toolkit project focused on the development of operators and functions that extend IBM Streams ability to interact with database via JDBC.
 
+## Changes
+[CHANGELOG.md](com.ibm.streamsx.jdbc/CHANGELOG.md)
+
 ### Remark
 This toolkit implements the NLS feature. Use the guidelines for the message bundle that are described in the [Messages and National Language Support for toolkits](https://github.com/IBMStreams/administration/wiki/Messages-and-National-Language-Support-for-toolkits) document.
 
