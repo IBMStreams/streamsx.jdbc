@@ -29,7 +29,19 @@
 <div class="section"><h2 class="title sectiontitle splhead-1">General Information</h2>
 
 
-<p class="p">The JDBCRun operator runs a user-defined SQL statement that is based on an input tuple. 
+<p class="p">  The <strong class="ph b">streamsx.jdbc</strong> toolkit uses Java Database Connectivity (JDBC) API for accessing relational databases.    
+</p>
+
+<p class="p">  It supports all databases that provide a JDBC drive in a JAR library.
+</p>
+
+<p class="p">  The streamsx.jdbc toolkit has been tested with following databases:	    
+</p>
+
+<p class="p">  <strong class="ph b">IBM Db2, ORACLE, Teradata, PostgresSql, Microsoft SQL Server, MySql</strong>.
+</p>
+
+<p class="p">  The <strong class="ph b">JDBCRun</strong> operator is the main operator in the streamsx.jdbc toolkit. It runs a user-defined SQL statement that is based on an input tuple.
 </p>
 
 <p class="p">  The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. 
