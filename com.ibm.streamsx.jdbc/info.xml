@@ -2,8 +2,18 @@
 <info:toolkitInfoModel xmlns:common="http://www.ibm.com/xmlns/prod/streams/spl/common" xmlns:info="http://www.ibm.com/xmlns/prod/streams/spl/toolkitInfo">
   <info:identity>
     <info:name>com.ibm.streamsx.jdbc</info:name>
-    <info:description>The JDBCRun operator runs a user-defined SQL statement that is based on an input tuple. 
+    <info:description>
     
+  The **streamsx.jdbc** toolkit uses Java Database Connectivity (JDBC) API for accessing relational databases.
+
+  It supports all databases that provide a JDBC drive in a JAR library.
+
+  The streamsx.jdbc toolkit has been tested with following databases:
+
+  **IBM Db2, ORACLE, Teradata, PostgresSql, Microsoft SQL Server, MySql**.
+
+  The JDBCRun operator is the main operator in the streamsx.jdbc toolkit. It runs a user-defined SQL statement that is based on an input tuple.
+   
   The statement is run once for each input tuple received. Result sets that are produced by the statement are emitted as output stream tuples. 
     
   The **JDBCRun** operator is commonly used to update, merge, and delete database management system (DBMS) records. 
