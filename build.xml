@@ -77,9 +77,12 @@
 		</subant>
 	</target>
 	<target name="cleansamples">
-		<subant target="cleantoolkit" genericantfile="${basedir}/build.xml">
-			<dirset dir="samples" includes="*" />
-		</subant>
+		<echo message="Sample to clean: ${basedir}/samples/JDBCSample"/>
+		<exec executable="make" failonerror="true" dir="${basedir}/samples/JDBCSample">
+			<arg value="-f" />
+			<arg value="Makefile" />
+			<arg value="clean" />
+		</exec>
 	</target>
 
 	<!-- Targets called on samples -->
