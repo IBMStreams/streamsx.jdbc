@@ -494,7 +494,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		initSqlStatusAttr();
 
 		// Initiate PreparedStatement
-		initPreparedStatement();		
+		initPreparedStatement();
+
+		// initialize metrics
+		initMetrics(context);		
 	}			
 	
 	
@@ -643,10 +646,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit() {
-		if ((consistentRegionContext != null && commitPolicy == CommitPolicy.OnCheckpoint) || (transactionSize > 1)
-				|| (commitInterval > 0)) {
+		if ((consistentRegionContext != null) || (transactionSize > 1)
+				|| (commitInterval > 0) || (commitOnPunct)) {
 			// Set automatic commit to false when transaction size is more than
-			// 1 or it is a consistent region.
+			// 1 or it is a consistent region or commit on punct is enabled.
 			return false;
 		}
 		return true;
@@ -702,10 +705,11 @@ public class JDBCRun extends AbstractJDBCOperator {
 			if ((consistentRegionContext == null
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
-					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
+					&& (transactionSize > 1) && (transactionCount >= transactionSize) && (!commitOnPunct)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
 				jdbcClientHelper.commit();
+				incrementCommitsMetric();
 			}
 
 			if (rs != null) {
@@ -804,10 +808,11 @@ public class JDBCRun extends AbstractJDBCOperator {
 			if ((consistentRegionContext == null
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
-					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
+					&& (transactionSize > 1) && (transactionCount >= transactionSize) && (!commitOnPunct)) {
 				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 				transactionCount = 0;
 				jdbcClientHelper.commit();
+				incrementCommitsMetric();
 			}
 		} else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)) {
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
@@ -1183,6 +1188,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		// Commit the transaction
 		TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 		jdbcClientHelper.commit();
+		incrementCommitsMetric();
 		transactionCount = 0;
 		
 		// Save current batch information
@@ -1240,7 +1246,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if ((consistentRegionContext == null 
 				|| (consistentRegionContext != null 
 				&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)) 
-			&& commitInterval > 0) {
+			&& commitInterval > 0 && (!commitOnPunct)) {
 			commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
 				@Override
 				public void run() {
@@ -1255,10 +1261,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 									jdbcClientHelper.executeStatementBatch();
 								}
 							}
-
 							TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 							transactionCount = 0;
 							jdbcClientHelper.commit();
+							incrementCommitsMetric();
 						}
 					} catch (SQLException e) {
 						try {
@@ -1281,4 +1287,5 @@ public class JDBCRun extends AbstractJDBCOperator {
 
 		super.allPortsReady();
 	}
+
 }

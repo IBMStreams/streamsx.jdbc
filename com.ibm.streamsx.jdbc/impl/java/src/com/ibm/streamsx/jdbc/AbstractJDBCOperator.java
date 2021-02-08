@@ -32,6 +32,9 @@ import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
+import com.ibm.streams.operator.metrics.Metric;
+import com.ibm.streams.operator.metrics.OperatorMetrics;
+import com.ibm.streams.operator.model.CustomMetric;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.model.Parameter;
 import com.ibm.streams.operator.state.Checkpoint;
@@ -110,8 +113,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// data from application config object
     	Map<String, String> appConfig = null;
 
-    
- 	// SSL parameters
+    protected boolean commitOnPunct = false;
+ 
+    // SSL parameters
  	private String keyStore;
  	private String trustStore;
  	private String keyStoreType = null;
@@ -120,6 +124,16 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	private String trustStorePassword = null;
  	private boolean sslConnection;
 
+	// metrics
+	private Metric nCommits; // custom metric, created only if auto-commit is false
+	
+	// Parameter commitOnPunct
+	@Parameter(name = "commitOnPunct", optional = true, 
+			description = "This parameter defines the commit of transactions when a window punctuation marker is received. The default value is `false`. When set to true the following parameter are ignored: commitInterval, batchSize and transactionSize.")
+	public void setcommitOnPunct(boolean commitOnPunct) {
+		this.commitOnPunct = commitOnPunct;
+	}
+	
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
 			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.\\n\\n"
@@ -493,6 +507,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed.");
 
 		consistentRegionContext = context.getOptionalContext(ConsistentRegionContext.class);
+		if (consistentRegionContext != null) {
+			this.commitOnPunct = false; // disable when consistent region is configured
+		}
 
 		// Create the JDBC connection
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");
@@ -657,6 +674,10 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
     	// Window markers are not forwarded
     	// Window markers are generated on data port (port 0) after a statement
     	// error port (port 1) is punctuation free
+		if ((commitOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
+			jdbcClientHelper.commit();
+			incrementCommitsMetric();
+		}
 		if (mark == Punctuation.FINAL_MARKER) {
 			super.processPunctuation(stream, mark);
 		}
@@ -885,6 +906,20 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
         	return false;
         }
 		return true;
+	}
+	
+	protected void initMetrics(OperatorContext context) {
+		OperatorMetrics opMetrics = getOperatorContext().getMetrics();
+		this.nCommits = null;
+		if (!isAutoCommit()) {
+			this.nCommits = opMetrics.createCustomMetric("nCommits", "Number of commits", Metric.Kind.COUNTER);
+		}
+	}
+	
+	public void incrementCommitsMetric() {
+		if (this.nCommits != null) {
+			this.nCommits.increment();
+		}
 	}
 
 
