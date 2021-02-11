@@ -679,6 +679,14 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			incrementCommitsMetric();
 		}
 		if (mark == Punctuation.FINAL_MARKER) {
+			if (commitOnPunct) {
+				try{
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}catch (Exception e){
+			       TRACE.log(TraceLevel.WARNING, "Commit on final marker failed");
+				}
+			}
 			super.processPunctuation(stream, mark);
 		}
     }
@@ -768,6 +776,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// Initiate JDBCConnectionHelper instance
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName);
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
+        TRACE.log(TraceLevel.INFO, "JDBC autoCommit = " + isAutoCommit());
 		try{
 			// if jdbcProperties is relative path, convert to absolute path
 			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
@@ -900,13 +909,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	}
 
 	// JDBC connection need to be auto-committed or not
-	protected boolean isAutoCommit(){
-        if (consistentRegionContext != null){
-        	// Set automatic commit to false when it is a consistent region.
-        	return false;
-        }
-		return true;
-	}
+	protected abstract boolean isAutoCommit();
 	
 	protected void initMetrics(OperatorContext context) {
 		OperatorMetrics opMetrics = getOperatorContext().getMetrics();
