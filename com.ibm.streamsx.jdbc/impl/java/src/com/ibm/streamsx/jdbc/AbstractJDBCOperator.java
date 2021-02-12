@@ -34,7 +34,6 @@ import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
 import com.ibm.streams.operator.metrics.Metric;
 import com.ibm.streams.operator.metrics.OperatorMetrics;
-import com.ibm.streams.operator.model.CustomMetric;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.model.Parameter;
 import com.ibm.streams.operator.state.Checkpoint;
@@ -111,7 +110,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String appConfigName = null;
 
 	// data from application config object
-    	Map<String, String> appConfig = null;
+	Map<String, String> appConfig = null;
 
     protected boolean commitOnPunct = false;
  

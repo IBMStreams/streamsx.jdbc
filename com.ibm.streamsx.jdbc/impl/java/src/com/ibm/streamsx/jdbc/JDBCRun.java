@@ -50,6 +50,8 @@ import com.ibm.streams.operator.types.Timestamp;
 import com.ibm.streams.operator.types.ValueFactory;
 import com.ibm.streams.operator.types.XML;
 import com.ibm.streams.operator.model.OutputPortSet.WindowPunctuationOutputMode;
+import com.ibm.streams.operator.model.CustomMetric;
+import com.ibm.streams.operator.metrics.*;
 
 /** 
  * The JDBCRun operator runs a user-defined SQL statement that is based on an
@@ -174,11 +176,19 @@ public class JDBCRun extends AbstractJDBCOperator {
 	
 	private Thread checkConnectionThread = null;
 	private Thread idleSessionTimeOutThread = null;
-	
-	
 
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
+	
+	Metric nFailures = null;
 
+    @CustomMetric (kind = Metric.Kind.COUNTER, name = "nFailures", description = "Number of requests that failed with SQL error.")
+    public void setnFailures (Metric nFailures) {
+        this.nFailures = nFailures;
+    }
+	public Metric getFailuresMetric() {
+		return this.nFailures;
+	}
+	
 	// Parameter commitPolicy
 	@Parameter(name = "commitPolicy", optional = true, 
 			description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. \\n\\n"
@@ -497,7 +507,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		initPreparedStatement();
 
 		// initialize metrics
-		initMetrics(context);		
+		initMetrics(context);
 	}			
 	
 	
@@ -705,11 +715,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 			if ((consistentRegionContext == null
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
-					&& (transactionSize > 1) && (transactionCount >= transactionSize) && (!commitOnPunct)) {
-				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-				transactionCount = 0;
-				jdbcClientHelper.commit();
-				incrementCommitsMetric();
+					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
+				if (!commitOnPunct) {
+					TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+					transactionCount = 0;
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}
 			}
 
 			if (rs != null) {
@@ -774,6 +786,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
 		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
 		
+		getFailuresMetric().increment();
 		
 		if (hasErrorPort) {
 			// submit error message
@@ -808,11 +821,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 			if ((consistentRegionContext == null
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
-					&& (transactionSize > 1) && (transactionCount >= transactionSize) && (!commitOnPunct)) {
-				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-				transactionCount = 0;
-				jdbcClientHelper.commit();
-				incrementCommitsMetric();
+					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
+				if (!commitOnPunct) {
+					TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+					transactionCount = 0;
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}
 			}
 		} else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)) {
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
@@ -1246,43 +1261,45 @@ public class JDBCRun extends AbstractJDBCOperator {
 		if ((consistentRegionContext == null 
 				|| (consistentRegionContext != null 
 				&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)) 
-			&& commitInterval > 0 && (!commitOnPunct)) {
-			commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
-					commitLock.lock();
-					try {
-						synchronized (this) {
-							if (batchSize > 1) {
-								batchCount = 0;
-								if (isStaticStatement) {
-									jdbcClientHelper.executePreparedStatementBatch();
-								} else {
-									jdbcClientHelper.executeStatementBatch();
-								}
-							}
-							TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-							transactionCount = 0;
-							jdbcClientHelper.commit();
-							incrementCommitsMetric();
-						}
-					} catch (SQLException e) {
+			&& commitInterval > 0) {
+			if (!commitOnPunct) {
+				commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
+					@Override
+					public void run() {
+						commitLock.lock();
 						try {
-							handleException(null, e);
-						} catch (SQLException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						} catch (Exception e1) {
-							e1.printStackTrace();
+							synchronized (this) {
+								if (batchSize > 1) {
+									batchCount = 0;
+									if (isStaticStatement) {
+										jdbcClientHelper.executePreparedStatementBatch();
+									} else {
+										jdbcClientHelper.executeStatementBatch();
+									}
+								}
+								TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+								transactionCount = 0;
+								jdbcClientHelper.commit();
+								incrementCommitsMetric();
+							}
+						} catch (SQLException e) {
+							try {
+								handleException(null, e);
+							} catch (SQLException e1) {
+								e1.printStackTrace();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							} catch (Exception e1) {
+								e1.printStackTrace();
+							} finally {
+								commitLock.unlock();
+							}
 						} finally {
 							commitLock.unlock();
 						}
-					} finally {
-						commitLock.unlock();
 					}
-				}
-			}, 0, commitInterval, TimeUnit.MILLISECONDS);
+				}, 0, commitInterval, TimeUnit.MILLISECONDS);
+			}
 		}
 
 		super.allPortsReady();
