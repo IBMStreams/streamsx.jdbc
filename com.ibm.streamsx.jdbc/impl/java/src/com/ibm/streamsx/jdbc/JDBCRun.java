@@ -668,11 +668,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 	@Override
 	protected void commitBatch() throws Exception {
 		try {
-		
-			if ((batchOnPunct) && (!isStaticStatement)) {
+			if (batchOnPunct) {
 				batchCount = 0;
 				transactionCount++;
-				jdbcClientHelper.executeStatementBatch();
+				if (isStaticStatement) {
+					jdbcClientHelper.executePreparedStatementBatch();
+				}
+				else {
+					jdbcClientHelper.executeStatementBatch();
+				}
 				incrementBatchesMetric();
 			}
 		} catch (SQLException e) {
@@ -691,11 +695,11 @@ public class JDBCRun extends AbstractJDBCOperator {
 			// Execute the statement
 			ResultSet rs = null;
 			if (isStaticStatement) {
-				if (batchSize > 1) {
+				if ((batchSize > 1) || (batchOnPunct)) {
 					batchCount++;
 					jdbcClientHelper
 							.addPreparedStatementBatch(getStatementParameterArrays(statementParamArrays, tuple));
-					if (batchCount >= batchSize) {
+					if ((batchCount >= batchSize) && (!batchOnPunct)) {
 						batchCount = 0;
 						transactionCount++;
 						jdbcClientHelper.executePreparedStatementBatch();
