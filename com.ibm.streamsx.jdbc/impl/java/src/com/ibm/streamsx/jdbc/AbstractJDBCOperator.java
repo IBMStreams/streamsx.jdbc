@@ -113,6 +113,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	Map<String, String> appConfig = null;
 
     protected boolean commitOnPunct = false;
+    protected boolean batchOnPunct = false;
  
     // SSL parameters
  	private String keyStore;
@@ -126,12 +127,22 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	// metrics
 	private Metric nCommits; // custom metric, created only if auto-commit is false
 	
+	// metrics
+	private Metric nBatches; // custom metric, created only if batchOnPunct is true
+	
 	// Parameter commitOnPunct
 	@Parameter(name = "commitOnPunct", optional = true, 
 			description = "This parameter defines the commit of transactions when a window punctuation marker is received. The default value is `false`. When set to true the following parameter are ignored: commitInterval, batchSize and transactionSize.")
 	public void setcommitOnPunct(boolean commitOnPunct) {
 		this.commitOnPunct = commitOnPunct;
 	}
+
+	// Parameter batchOnPunct
+	@Parameter(name = "batchOnPunct", optional = true, 
+			description = "This parameter executes the batch when a window punctuation marker is received. The default value is `false`. When set to true the following parameter are ignored: commitInterval, batchSize and transactionSize.")
+	public void setbatchOnPunct(boolean batchOnPunct) {
+		this.batchOnPunct = batchOnPunct;
+	}	
 	
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
@@ -416,6 +427,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// If credentials is set as parameter, jdbcProperties can not be set
 		checker.checkExcludedParameters("jdbcProperties", "credentials");
 		
+		// If commitOnPunct is set as parameter, batchOnPunct can not be set
+		checker.checkExcludedParameters("commitOnPunct", "batchOnPunct");
+		
 		// check reconnection related parameters
 		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
 		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
@@ -677,6 +691,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			jdbcClientHelper.commit();
 			incrementCommitsMetric();
 		}
+		if ((batchOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
+			commitBatch();
+		}
 		if (mark == Punctuation.FINAL_MARKER) {
 			if (commitOnPunct) {
 				try{
@@ -686,9 +703,19 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			       TRACE.log(TraceLevel.WARNING, "Commit on final marker failed");
 				}
 			}
+			if (batchOnPunct) {
+				try{
+					commitBatch();
+				}catch (Exception e){
+			       TRACE.log(TraceLevel.WARNING, "Batch on final marker failed");
+				}
+			}
 			super.processPunctuation(stream, mark);
 		}
     }
+
+	protected abstract void commitBatch() throws Exception;
+	
 
     /**
      * Shutdown this operator.
@@ -916,6 +943,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		if (!isAutoCommit()) {
 			this.nCommits = opMetrics.createCustomMetric("nCommits", "Number of commits", Metric.Kind.COUNTER);
 		}
+		if (batchOnPunct) {
+			this.nBatches = opMetrics.createCustomMetric("nBatches", "Number of batches", Metric.Kind.COUNTER);
+		}
 	}
 	
 	public void incrementCommitsMetric() {
@@ -923,6 +953,12 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 			this.nCommits.increment();
 		}
 	}
+	
+	public void incrementBatchesMetric() {
+		if (this.nBatches != null) {
+			this.nBatches.increment();
+		}
+	}	
 
 
 	@Override

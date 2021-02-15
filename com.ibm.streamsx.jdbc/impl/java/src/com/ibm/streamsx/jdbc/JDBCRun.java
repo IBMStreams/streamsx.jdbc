@@ -665,6 +665,22 @@ public class JDBCRun extends AbstractJDBCOperator {
 		return true;
 	}
 
+	@Override
+	protected void commitBatch() throws Exception {
+		try {
+		
+			if ((batchOnPunct) && (!isStaticStatement)) {
+				batchCount = 0;
+				transactionCount++;
+				jdbcClientHelper.executeStatementBatch();
+				incrementBatchesMetric();
+			}
+		} catch (SQLException e) {
+			// SQL Code & SQL State
+			handleException(null, e);
+		}
+	}
+
 	// Process input tuple
 	protected void processTuple(StreamingInput<Tuple> stream, Tuple tuple) throws Exception {
 
@@ -693,18 +709,23 @@ public class JDBCRun extends AbstractJDBCOperator {
 				String statementFromAttribute = statementAttr.getValue(tuple);
 				if (statementFromAttribute != null && !statementFromAttribute.isEmpty()) {
 					TRACE.log(TraceLevel.DEBUG, "Statement: " + statementFromAttribute);
-					if (batchSize > 1) {
+					if ((batchSize > 1) || (batchOnPunct)) {
 						batchCount++;
 						jdbcClientHelper.addStatementBatch(statementFromAttribute);
-						if (batchCount >= batchSize) {
+						if ((batchCount >= batchSize) && (!batchOnPunct)) {
 							batchCount = 0;
 							transactionCount++;
 							jdbcClientHelper.executeStatementBatch();
 						}
 					} else {
-						transactionCount++;
-						rs = jdbcClientHelper.executeStatement(statementFromAttribute);
-						TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
+						if (this.commitOnPunct) {
+							jdbcClientHelper.executeUpdateStatement(statementFromAttribute);
+						}
+						else  {
+							transactionCount++;
+							rs = jdbcClientHelper.executeStatement(statementFromAttribute);
+							TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
+						}
 					}
 				} else {
 	                LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SQL_STATEMENT_NULL")); 
@@ -782,9 +803,13 @@ public class JDBCRun extends AbstractJDBCOperator {
 		jSqlStatus.setSqlState(e.getSQLState());
 		jSqlStatus.setSqlMessage(sqlMessage);
 
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
+		TraceLevel tl = TraceLevel.ERROR;
+		if (hasErrorPort) {
+			tl = TraceLevel.DEBUG;
+		}
+		TRACE.log(tl, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		TRACE.log(tl, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
+		TRACE.log(tl, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
 		
 		getFailuresMetric().increment();
 		

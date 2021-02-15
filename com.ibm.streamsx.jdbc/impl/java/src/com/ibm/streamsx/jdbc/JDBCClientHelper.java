@@ -194,7 +194,7 @@ public class JDBCClientHelper {
 				}
 			}
 			LOGGER.log(LogLevel.INFO,"JDBC connectioned ");
-			
+			//System.out.println("autoCommit: " + autoCommit);
 	        connection.setAutoCommit(autoCommit);
 
 	        // set isolation level
@@ -371,6 +371,15 @@ public class JDBCClientHelper {
 
 		return rs;
 	}
+	
+	// Execute the update statement
+	public void executeUpdateStatement(String statement) throws SQLException{
+        // Init Statement interface
+		if (stmt == null){
+			stmt = connection.createStatement();
+		}
+		stmt.executeUpdate(statement);
+	}	
 
 	// Add batch for statement
 	public void addStatementBatch(String statement) throws SQLException{
