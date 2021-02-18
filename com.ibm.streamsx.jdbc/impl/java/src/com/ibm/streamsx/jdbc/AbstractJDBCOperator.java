@@ -684,15 +684,17 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
      */
 	public void processPunctuation(StreamingInput<Tuple> stream,
     		Punctuation mark) throws Exception {
-    	// Window markers are not forwarded
+    	// Window markers are not forwarded, but batchOnPunct and commitOnPunct forward the markers
     	// Window markers are generated on data port (port 0) after a statement
     	// error port (port 1) is punctuation free
 		if ((commitOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
 			jdbcClientHelper.commit();
 			incrementCommitsMetric();
+			super.processPunctuation(stream, mark);
 		}
 		if ((batchOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
 			commitBatch();
+			super.processPunctuation(stream, mark);
 		}
 		if (mark == Punctuation.FINAL_MARKER) {
 			if (commitOnPunct) {
