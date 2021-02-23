@@ -92,7 +92,8 @@ The idle session timer issue fixed.
  * Add property **retrieveMessagesFromServerOnGetMessage=true** to the Db2 URL to retrieve full SQL error message.
  
 ++ What is new in version 1.9.0
- * New parameter commitOnPunct.
+ * New parameters commitOnPunct and batchOnPunct.
+ * Metrics introduced: nFailures, nCommits (commitOnPunct==true), nBatches (batchOnPunct==true)
 
 </info:description>
     <info:version>1.9.0</info:version>
