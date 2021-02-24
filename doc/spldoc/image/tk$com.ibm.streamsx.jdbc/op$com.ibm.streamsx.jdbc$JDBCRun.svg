@@ -72,27 +72,29 @@
       ><set attributeName="visibility" from="hidden" end="sdt0.mouseout" to="visible" begin="sdt0.mouseover"
     /></g
     ><g visibility="hidden" style="stroke:none;font-style:italic;font-size:12px;font-family:&apos;Helvetica&apos;,&apos;SansSerif&apos;;"
-    ><rect x="47.65" y="-45.0" width="430.24" style="fill:rgb(230,230,255);stroke:rgb(0,0,80);" rx="2.0" ry="2.0" height="152.0"
-      /><text x="48.65" y="-32.0"
+    ><rect x="47.65" y="-60.0" width="427.05997" style="fill:rgb(230,230,255);stroke:rgb(0,0,80);" rx="2.0" ry="2.0" height="167.0"
+      /><text x="48.65" y="-47.0"
       >Required: jdbcClassName, jdbcDriverLib / Optional: </text
+      ><text x="48.65" y="-32.0"
+      >appConfigName, batchOnPunct, batchSize, checkConnection, </text
       ><text x="48.65" y="-17.0"
-      >appConfigName, batchSize, checkConnection, commitInterval, </text
+      >commitInterval, commitOnPunct, commitPolicy, credentials, </text
       ><text x="48.65" y="-2.0"
-      >commitPolicy, credentials, hasResultSetAttr, idleSessionTimeOut, </text
+      >hasResultSetAttr, idleSessionTimeOut, isolationLevel, </text
       ><text x="48.65" y="13.0"
-      >isolationLevel, jdbcPassword, jdbcProperties, jdbcUrl, </text
+      >jdbcPassword, jdbcProperties, jdbcUrl, jdbcUser, </text
       ><text x="48.65" y="28.0"
-      >jdbcUser, keyStore, keyStorePassword, keyStoreType, </text
+      >keyStore, keyStorePassword, keyStoreType, pluginName, </text
       ><text x="48.65" y="43.0"
-      >pluginName, reconnectionBound, reconnectionInterval, </text
+      >reconnectionBound, reconnectionInterval, reconnectionPolicy, </text
       ><text x="48.65" y="58.0"
-      >reconnectionPolicy, securityMechanism, sqlFailureAction, </text
+      >securityMechanism, sqlFailureAction, sqlStatusAttr, </text
       ><text x="48.65" y="73.0"
-      >sqlStatusAttr, sslConnection, statement, statementAttr, </text
+      >sslConnection, statement, statementAttr, statementParamAttrs, </text
       ><text x="48.65" y="88.0"
-      >statementParamAttrs, transactionSize, trustStore, </text
+      >transactionSize, trustStore, trustStorePassword, </text
       ><text x="48.65" y="103.0"
-      >trustStorePassword, trustStoreType</text
+      >trustStoreType</text
       ><set attributeName="visibility" from="hidden" end="sdt1.mouseout" to="visible" begin="sdt1.mouseover"
     /></g
     ><g visibility="hidden" style="stroke:none;font-style:italic;font-size:12px;font-family:&apos;Helvetica&apos;,&apos;SansSerif&apos;;"
