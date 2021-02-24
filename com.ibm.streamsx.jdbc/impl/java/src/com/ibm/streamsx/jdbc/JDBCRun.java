@@ -50,6 +50,8 @@ import com.ibm.streams.operator.types.Timestamp;
 import com.ibm.streams.operator.types.ValueFactory;
 import com.ibm.streams.operator.types.XML;
 import com.ibm.streams.operator.model.OutputPortSet.WindowPunctuationOutputMode;
+import com.ibm.streams.operator.model.CustomMetric;
+import com.ibm.streams.operator.metrics.*;
 
 /** 
  * The JDBCRun operator runs a user-defined SQL statement that is based on an
@@ -174,11 +176,19 @@ public class JDBCRun extends AbstractJDBCOperator {
 	
 	private Thread checkConnectionThread = null;
 	private Thread idleSessionTimeOutThread = null;
-	
-	
 
 	private CommitPolicy commitPolicy = DEFAULT_COMMIT_POLICY;
+	
+	Metric nFailures = null;
 
+    @CustomMetric (kind = Metric.Kind.COUNTER, name = "nFailures", description = "Number of requests that failed with SQL error.")
+    public void setnFailures (Metric nFailures) {
+        this.nFailures = nFailures;
+    }
+	public Metric getFailuresMetric() {
+		return this.nFailures;
+	}
+	
 	// Parameter commitPolicy
 	@Parameter(name = "commitPolicy", optional = true, 
 			description = "This parameter specifies the commit policy that should be used when the operator is in a consistent region. \\n\\n"
@@ -494,7 +504,10 @@ public class JDBCRun extends AbstractJDBCOperator {
 		initSqlStatusAttr();
 
 		// Initiate PreparedStatement
-		initPreparedStatement();		
+		initPreparedStatement();
+
+		// initialize metrics
+		initMetrics(context);
 	}			
 	
 	
@@ -643,13 +656,33 @@ public class JDBCRun extends AbstractJDBCOperator {
 	// JDBC connection need to be auto-committed or not
 	@Override
 	protected boolean isAutoCommit() {
-		if ((consistentRegionContext != null && commitPolicy == CommitPolicy.OnCheckpoint) || (transactionSize > 1)
-				|| (commitInterval > 0)) {
+		if ((consistentRegionContext != null) || (transactionSize > 1)
+				|| (commitInterval > 0) || (commitOnPunct)) {
 			// Set automatic commit to false when transaction size is more than
-			// 1 or it is a consistent region.
+			// 1 or it is a consistent region or commit on punct is enabled.
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	protected void commitBatch() throws Exception {
+		try {
+			if (batchOnPunct) {
+				batchCount = 0;
+				transactionCount++;
+				if (isStaticStatement) {
+					jdbcClientHelper.executePreparedStatementBatch();
+				}
+				else {
+					jdbcClientHelper.executeStatementBatch();
+				}
+				incrementBatchesMetric();
+			}
+		} catch (SQLException e) {
+			// SQL Code & SQL State
+			handleException(null, e);
+		}
 	}
 
 	// Process input tuple
@@ -662,11 +695,11 @@ public class JDBCRun extends AbstractJDBCOperator {
 			// Execute the statement
 			ResultSet rs = null;
 			if (isStaticStatement) {
-				if (batchSize > 1) {
+				if ((batchSize > 1) || (batchOnPunct)) {
 					batchCount++;
 					jdbcClientHelper
 							.addPreparedStatementBatch(getStatementParameterArrays(statementParamArrays, tuple));
-					if (batchCount >= batchSize) {
+					if ((batchCount >= batchSize) && (!batchOnPunct)) {
 						batchCount = 0;
 						transactionCount++;
 						jdbcClientHelper.executePreparedStatementBatch();
@@ -680,18 +713,23 @@ public class JDBCRun extends AbstractJDBCOperator {
 				String statementFromAttribute = statementAttr.getValue(tuple);
 				if (statementFromAttribute != null && !statementFromAttribute.isEmpty()) {
 					TRACE.log(TraceLevel.DEBUG, "Statement: " + statementFromAttribute);
-					if (batchSize > 1) {
+					if ((batchSize > 1) || (batchOnPunct)) {
 						batchCount++;
 						jdbcClientHelper.addStatementBatch(statementFromAttribute);
-						if (batchCount >= batchSize) {
+						if ((batchCount >= batchSize) && (!batchOnPunct)) {
 							batchCount = 0;
 							transactionCount++;
 							jdbcClientHelper.executeStatementBatch();
 						}
 					} else {
-						transactionCount++;
-						rs = jdbcClientHelper.executeStatement(statementFromAttribute);
-						TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
+						if (this.commitOnPunct) {
+							jdbcClientHelper.executeUpdateStatement(statementFromAttribute);
+						}
+						else  {
+							transactionCount++;
+							rs = jdbcClientHelper.executeStatement(statementFromAttribute);
+							TRACE.log(TraceLevel.DEBUG, "Transaction Count: " + transactionCount);
+						}
 					}
 				} else {
 	                LOGGER.log(LogLevel.ERROR, Messages.getString("JDBC_SQL_STATEMENT_NULL")); 
@@ -703,9 +741,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
 					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
-				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-				transactionCount = 0;
-				jdbcClientHelper.commit();
+				if (!commitOnPunct) {
+					TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+					transactionCount = 0;
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}
 			}
 
 			if (rs != null) {
@@ -766,10 +807,15 @@ public class JDBCRun extends AbstractJDBCOperator {
 		jSqlStatus.setSqlState(e.getSQLState());
 		jSqlStatus.setSqlMessage(sqlMessage);
 
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
-		TRACE.log(TraceLevel.DEBUG, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
+		TraceLevel tl = TraceLevel.ERROR;
+		if (hasErrorPort) {
+			tl = TraceLevel.DEBUG;
+		}
+		TRACE.log(tl, "SQL Exception SQL Code: " + jSqlStatus.getSqlCode());
+		TRACE.log(tl, "SQL Exception SQL State: " + jSqlStatus.getSqlState());
+		TRACE.log(tl, "SQL Exception SQL Message: " + jSqlStatus.getSqlMessage());
 		
+		getFailuresMetric().increment();
 		
 		if (hasErrorPort) {
 			// submit error message
@@ -805,9 +851,12 @@ public class JDBCRun extends AbstractJDBCOperator {
 					|| (consistentRegionContext != null 
 					&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint))
 					&& (transactionSize > 1) && (transactionCount >= transactionSize)) {
-				TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-				transactionCount = 0;
-				jdbcClientHelper.commit();
+				if (!commitOnPunct) {
+					TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+					transactionCount = 0;
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}
 			}
 		} else if (sqlFailureAction.equalsIgnoreCase(IJDBCConstants.SQLFAILURE_ACTION_ROLLBACK)) {
 			TRACE.log(TraceLevel.DEBUG, "SQL Failure - Roll back...");
@@ -1183,6 +1232,7 @@ public class JDBCRun extends AbstractJDBCOperator {
 		// Commit the transaction
 		TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
 		jdbcClientHelper.commit();
+		incrementCommitsMetric();
 		transactionCount = 0;
 		
 		// Save current batch information
@@ -1241,44 +1291,47 @@ public class JDBCRun extends AbstractJDBCOperator {
 				|| (consistentRegionContext != null 
 				&& commitPolicy == CommitPolicy.OnTransactionAndCheckpoint)) 
 			&& commitInterval > 0) {
-			commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
-					commitLock.lock();
-					try {
-						synchronized (this) {
-							if (batchSize > 1) {
-								batchCount = 0;
-								if (isStaticStatement) {
-									jdbcClientHelper.executePreparedStatementBatch();
-								} else {
-									jdbcClientHelper.executeStatementBatch();
-								}
-							}
-
-							TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
-							transactionCount = 0;
-							jdbcClientHelper.commit();
-						}
-					} catch (SQLException e) {
+			if (!commitOnPunct) {
+				commitThread = getOperatorContext().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
+					@Override
+					public void run() {
+						commitLock.lock();
 						try {
-							handleException(null, e);
-						} catch (SQLException e1) {
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						} catch (Exception e1) {
-							e1.printStackTrace();
+							synchronized (this) {
+								if (batchSize > 1) {
+									batchCount = 0;
+									if (isStaticStatement) {
+										jdbcClientHelper.executePreparedStatementBatch();
+									} else {
+										jdbcClientHelper.executeStatementBatch();
+									}
+								}
+								TRACE.log(TraceLevel.DEBUG, "Transaction Commit...");
+								transactionCount = 0;
+								jdbcClientHelper.commit();
+								incrementCommitsMetric();
+							}
+						} catch (SQLException e) {
+							try {
+								handleException(null, e);
+							} catch (SQLException e1) {
+								e1.printStackTrace();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							} catch (Exception e1) {
+								e1.printStackTrace();
+							} finally {
+								commitLock.unlock();
+							}
 						} finally {
 							commitLock.unlock();
 						}
-					} finally {
-						commitLock.unlock();
 					}
-				}
-			}, 0, commitInterval, TimeUnit.MILLISECONDS);
+				}, 0, commitInterval, TimeUnit.MILLISECONDS);
+			}
 		}
 
 		super.allPortsReady();
 	}
+
 }

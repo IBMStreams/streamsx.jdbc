@@ -32,6 +32,8 @@ import com.ibm.streams.operator.Tuple;
 import com.ibm.streams.operator.compile.OperatorContextChecker;
 import com.ibm.streams.operator.logging.LoggerNames;
 import com.ibm.streams.operator.logging.TraceLevel;
+import com.ibm.streams.operator.metrics.Metric;
+import com.ibm.streams.operator.metrics.OperatorMetrics;
 import com.ibm.streams.operator.logging.LogLevel;
 import com.ibm.streams.operator.model.Parameter;
 import com.ibm.streams.operator.state.Checkpoint;
@@ -108,10 +110,12 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	private String appConfigName = null;
 
 	// data from application config object
-    	Map<String, String> appConfig = null;
+	Map<String, String> appConfig = null;
 
-    
- 	// SSL parameters
+    protected boolean commitOnPunct = false;
+    protected boolean batchOnPunct = false;
+ 
+    // SSL parameters
  	private String keyStore;
  	private String trustStore;
  	private String keyStoreType = null;
@@ -120,6 +124,26 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
  	private String trustStorePassword = null;
  	private boolean sslConnection;
 
+	// metrics
+	private Metric nCommits; // custom metric, created only if auto-commit is false
+	
+	// metrics
+	private Metric nBatches; // custom metric, created only if batchOnPunct is true
+	
+	// Parameter commitOnPunct
+	@Parameter(name = "commitOnPunct", optional = true, 
+			description = "This parameter defines the commit of transactions when a window punctuation marker is received. The default value is `false`. When set to true the following parameter are ignored: commitInterval, batchSize and transactionSize.")
+	public void setcommitOnPunct(boolean commitOnPunct) {
+		this.commitOnPunct = commitOnPunct;
+	}
+
+	// Parameter batchOnPunct
+	@Parameter(name = "batchOnPunct", optional = true, 
+			description = "This parameter executes the batch when a window punctuation marker is received. The default value is `false`. When set to true the following parameter are ignored: commitInterval, batchSize and transactionSize.")
+	public void setbatchOnPunct(boolean batchOnPunct) {
+		this.batchOnPunct = batchOnPunct;
+	}	
+	
 	//Parameter jdbcDriverLib
 	@Parameter(name = "jdbcDriverLib", optional = false, 
 			description = "This required parameter of type rstring specifies the path and the file name of jdbc driver librarirs with comma separated in one string. It is recommended to set the value of this parameter without slash at begin, like 'opt/db2jcc4.jar'. In this case the SAB file will contain the driver libraries.\\n\\n"
@@ -403,6 +427,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// If credentials is set as parameter, jdbcProperties can not be set
 		checker.checkExcludedParameters("jdbcProperties", "credentials");
 		
+		// If commitOnPunct is set as parameter, batchOnPunct can not be set
+		checker.checkExcludedParameters("commitOnPunct", "batchOnPunct");
+		
 		// check reconnection related parameters
 		checker.checkDependentParameters("reconnecionInterval", "reconnectionPolicy");
 		checker.checkDependentParameters("reconnecionBound", "reconnectionPolicy");
@@ -493,6 +520,9 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up class path - Completed.");
 
 		consistentRegionContext = context.getOptionalContext(ConsistentRegionContext.class);
+		if (consistentRegionContext != null) {
+			this.commitOnPunct = false; // disable when consistent region is configured
+		}
 
 		// Create the JDBC connection
 		TRACE.log(TraceLevel.DEBUG, "Operator " + context.getName() + " setting up JDBC connection...");
@@ -654,13 +684,40 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
      */
 	public void processPunctuation(StreamingInput<Tuple> stream,
     		Punctuation mark) throws Exception {
-    	// Window markers are not forwarded
+    	// Window markers are not forwarded, but batchOnPunct and commitOnPunct forward the markers
     	// Window markers are generated on data port (port 0) after a statement
     	// error port (port 1) is punctuation free
+		if ((commitOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
+			jdbcClientHelper.commit();
+			incrementCommitsMetric();
+			super.processPunctuation(stream, mark);
+		}
+		if ((batchOnPunct) && (mark == Punctuation.WINDOW_MARKER)) {
+			commitBatch();
+			super.processPunctuation(stream, mark);
+		}
 		if (mark == Punctuation.FINAL_MARKER) {
+			if (commitOnPunct) {
+				try{
+					jdbcClientHelper.commit();
+					incrementCommitsMetric();
+				}catch (Exception e){
+			       TRACE.log(TraceLevel.WARNING, "Commit on final marker failed");
+				}
+			}
+			if (batchOnPunct) {
+				try{
+					commitBatch();
+				}catch (Exception e){
+			       TRACE.log(TraceLevel.WARNING, "Batch on final marker failed");
+				}
+			}
 			super.processPunctuation(stream, mark);
 		}
     }
+
+	protected abstract void commitBatch() throws Exception;
+	
 
     /**
      * Shutdown this operator.
@@ -747,6 +804,7 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 		// Initiate JDBCConnectionHelper instance
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcClassName: " + jdbcClassName);
         TRACE.log(TraceLevel.DEBUG, "Create JDBC Connection, jdbcUrl: " + jdbcUrl);
+        TRACE.log(TraceLevel.INFO, "JDBC autoCommit = " + isAutoCommit());
 		try{
 			// if jdbcProperties is relative path, convert to absolute path
 			if (jdbcProperties != null && !jdbcProperties.trim().isEmpty())
@@ -879,13 +937,30 @@ public abstract class AbstractJDBCOperator extends AbstractOperator implements S
 	}
 
 	// JDBC connection need to be auto-committed or not
-	protected boolean isAutoCommit(){
-        if (consistentRegionContext != null){
-        	// Set automatic commit to false when it is a consistent region.
-        	return false;
-        }
-		return true;
+	protected abstract boolean isAutoCommit();
+	
+	protected void initMetrics(OperatorContext context) {
+		OperatorMetrics opMetrics = getOperatorContext().getMetrics();
+		this.nCommits = null;
+		if (!isAutoCommit()) {
+			this.nCommits = opMetrics.createCustomMetric("nCommits", "Number of commits", Metric.Kind.COUNTER);
+		}
+		if (batchOnPunct) {
+			this.nBatches = opMetrics.createCustomMetric("nBatches", "Number of batches", Metric.Kind.COUNTER);
+		}
 	}
+	
+	public void incrementCommitsMetric() {
+		if (this.nCommits != null) {
+			this.nCommits.increment();
+		}
+	}
+	
+	public void incrementBatchesMetric() {
+		if (this.nBatches != null) {
+			this.nBatches.increment();
+		}
+	}	
 
 
 	@Override
